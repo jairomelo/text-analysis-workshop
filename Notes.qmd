@@ -5,12 +5,14 @@ format:
     fig-width: 10
     fig-height: 12
     dpi: 300
+editor_options: 
+  chunk_output_type: inline
 ---
 
 ## Script to fetch textual data from x source
 
 ``` bash
-install.packages(c("tidyverse", "tidytext", "devtools"))
+install.packages(c("tidyverse", "tidytext", "devtools", "tokenizers", "nsyllable", "GGally", "corrr"))
 ```
 
 ### Get Harry Potter files
@@ -27,8 +29,16 @@ devtools::install_github("bradleyboehmke/harrypotter")
 library(tidyverse)
 library(tidytext)
 library(harrypotter)
-library(dplyr) # this package is part of the tidyverse
+library(dplyr)
 library(tibble)
+library(readr)
+library(stringr)
+library(purrr)
+library(stringr)
+library(tokenizers)
+library(nsyllable)
+library(GGally)
+library(corrr)
 
 theme_set(theme_minimal())
 ```
@@ -56,7 +66,7 @@ sprintf("%d chapters", length(bookvar))
 hp_books <- c( 
   "philosophers_stone", 
   "chamber_of_secrets", 
-  "prisoners_of_azkaban", 
+  "prisoner_of_azkaban", 
   "goblet_of_fire", 
   "order_of_the_phoenix", 
   "half_blood_prince", 
@@ -212,7 +222,7 @@ r2 <- summary(model)$r.squared
 
 ggplot(lexical_density, aes(x = total_words, y = vocab_density)) +
   geom_point(size = 2, shape = 23) +
-  geom_smooth(method = lm, se = FALSE, color = "steelblue") +
+  geom_smooth(method = lm, se = FALSE, color = "steelblue", formula = 'y ~ x') +
   geom_text(aes(label = book), vjust = 1.5) +
   annotate("text", x = 3000, y = 19, hjust = 0,
            label = paste0("y = ", round(slope, 4), "x + ", round(intercept, 2),
@@ -229,8 +239,7 @@ ggplot(lexical_density, aes(x = total_words, y = vocab_density)) +
 
 What this is basically saying is that for every additional 1,000 words in a book, the lexical density decreases by about 0.1 (since -0.0001 × 1000 = -0.1).
 
-R² = 0.8615
-This means that 86.15% of the variation in lexical density can be explained by the variation in total word count.
+R² = 0.8615 This means that 86.15% of the variation in lexical density can be explained by the variation in total word count.
 
 That’s a very strong correlation for such a small sample size (n = 7 books), suggesting a clear and consistent downward trend.
 
@@ -247,18 +256,492 @@ books_meta <- tribble(
   "Herman Melville", "Moby Dick", 1851, "https://www.gutenberg.org/ebooks/2701.txt.utf-8",
   "Louisa May Alcott", "Little Women", 1868, "https://www.gutenberg.org/ebooks/37106.txt.utf-8",
   "Mark Twain", "Tom Sawyer", 1876, "https://www.gutenberg.org/ebooks/74.txt.utf-8",
-  "Jonathan Swift", "Gulliver's Travels", 1726, "https://www.gutenberg.org/ebooks/17157.txt.utf-8",
+  "Jonathan Swift", "Gulliver's Travels - Thomas M. Balliet ed.", 1726, "https://www.gutenberg.org/ebooks/17157.txt.utf-8",
   "E. M. Forster", "A Room with a View", 1908, "https://www.gutenberg.org/ebooks/2641.txt.utf-8",
   "Elizabeth Von Arnim", "The Enchanted April", 1922, "https://www.gutenberg.org/ebooks/16389.txt.utf-8",
   "Lewis Carroll", "Alice's Adventures in Wonderland", 1865, "https://www.gutenberg.org/ebooks/11.txt.utf-8",
   "George Eliot", "Middlemarch", 1871, "https://www.gutenberg.org/ebooks/145.txt.utf-8",
   "Elizabeth Gaskell", "Cranford", 1853, "https://www.gutenberg.org/ebooks/394.txt.utf-8",
-  "R. L. Stevenson", "Dr. Jekyll and Mr. Hyde", 1886, "https://www.gutenberg.org/ebooks/43.txt.utf-8"
+  "R. L. Stevenson", "Dr. Jekyll and Mr. Hyde", 1886, "https://www.gutenberg.org/ebooks/43.txt.utf-8",
+  "Charles Dickens", "The Pickwick Papers", 1836, "https://www.gutenberg.org/ebooks/580.txt.utf-8",
+  "Daniel Defoe", "The Life and Adventures of Robinson Crusoe", 1719, "https://www.gutenberg.org/ebooks/521.txt.utf-8",
+  "J. M. Barrie", "Peter Pan", 1911, "https://www.gutenberg.org/ebooks/16.txt.utf-8",
+  "Charles Dickens", "Great Expectations", 1861, "https://www.gutenberg.org/ebooks/1400.txt.utf-8",
+  "Harriet Beecher Stowe", "Uncle Tom's Cabin", 1852, "https://www.gutenberg.org/ebooks/203.txt.utf-8",
+  "Robert Louis Stevenson", "Treasure Island", 1881, "https://www.gutenberg.org/ebooks/120.txt.utf-8",
+  "Kenneth Grahame", "The Wind in the Willows", 1908, "https://www.gutenberg.org/ebooks/27805.txt.utf-8",
+  "Jonathan Swift", "Gulliver's Travels - Richard Simpson ed", 1726, "https://www.gutenberg.org/ebooks/829.txt.utf-8",
+  "Jules Verne", "Twenty Thousand Leagues Under the Seas", 1871, "https://www.gutenberg.org/ebooks/2488.txt.utf-8",
+  "Jules Verne", "A Journey to the Centre of the Earth", 1864, "https://www.gutenberg.org/ebooks/18857.txt.utf-8",
+  "Jules Verne", "Around the World in Eighty Days", 1872, "https://www.gutenberg.org/ebooks/103.txt.utf-8"
 )
 
 books_meta
 
 ```
+
+-   **Processing Function**
+
+```{r}
+
+safe_read_lines <- function(url) {
+  lines <- tryCatch(read_lines(url,locale = locale(encoding = "UTF-8")), error = function(e) return(NA))
+  return(lines)
+}
+
+clean_guthenbergs <- function(lines) {
+  start <- grep("\\*\\*\\* START OF (THE|THIS)", lines)
+  end <- grep("\\*\\*\\* END OF (THE|THIS)", lines)
+  
+  text <- tryCatch(lines[(start + 1):(end - 1)], error = function(e) return(lines))
+  
+  text <- str_remove_all(paste(text, collapse = "\n"), "(?s)\\[.*?\\]") %>%
+    str_split("\n") %>%
+    .[[1]] %>%
+    str_trim() %>%
+    discard(~ .x == "")
+}
+
+process_books <- function(url) {
+  # check if the book was downloaded, if not, save text in data folder
+  if (!dir.exists("data")) dir.create("data")
+  
+  file_name <- basename(url) %>% str_remove(".utf-8")
+  
+  local_file_path <- file.path("data", file_name)
+  
+  if (!file.exists(local_file_path)) {
+    lines <- safe_read_lines(url)
+    if (!(length(lines) == 1 && is.na(lines))) {
+      writeLines(lines, local_file_path)
+    }
+  }
+  
+  lines <- safe_read_lines(local_file_path)
+
+}
+
+
+tf_idf_books <- function(url) {
+  
+  book_processed <- process_books(url)
+  text <- clean_guthenbergs(book_processed)
+  
+  if (length(text) == 1 && is.na(text)) {
+    return(tibble(total_words = NA, unique_words = NA, lexical_density = NA))
+  }
+  
+  # create the df/tibble
+  text_df <- tibble(text = text) %>%
+    unnest_tokens(word, text) %>%
+    anti_join(stop_words, by = "word")
+  
+  # tf/idf of the book
+  total_words <- nrow(text_df)
+  unique_words <- n_distinct(text_df$word)
+  
+  tibble(
+    total_words = total_words,
+    unique_words = unique_words,
+    lexical_density = round((unique_words / total_words) * 100, 2)
+  )
+
+  }
+
+```
+
+```{r}
+# apply the tf_idf_books function to a single book
+sample_book <- books_meta %>%
+  filter(title == "Pride and Prejudice") %>%
+  pull(url) %>%
+  tf_idf_books()
+
+sample_book
+```
+
+And now that we know that our function works, we can apply it to all books in the `books_meta` data frame:
+
+```{r}
+
+results <- books_meta %>%
+  mutate(metrics = map(url, tf_idf_books)) %>%
+  unnest(metrics)
+
+
+results
+```
+
+-   Add the Harry Potter Books
+
+```{r}
+
+hp_lexical <- lexical_density %>%
+  rename(
+    title = book,
+    lexical_density = vocab_density
+  ) %>%
+  mutate(
+    author = "J.K. Rowling",
+    year = case_when(
+      title == "philosophers_stone" ~ 1997,
+      title == "chamber_of_secrets" ~ 1998,
+      title == "prisoner_of_azkaban" ~ 1999,
+      title == "goblet_of_fire" ~ 2000,
+      title == "order_of_the_phoenix" ~ 2003,
+      title == "half_blood_prince" ~ 2005,
+      title == "deathly_hallows" ~ 2007
+    ),
+    url = NA_character_,
+    text = case_when(
+      title == "philosophers_stone" ~ list(philosophers_stone),
+      title == "chamber_of_secrets" ~ list(chamber_of_secrets),
+      title == "prisoner_of_azkaban" ~ list(prisoner_of_azkaban),
+      title == "goblet_of_fire" ~ list(goblet_of_fire),
+      title == "order_of_the_phoenix" ~ list(order_of_the_phoenix),
+      title == "half_blood_prince" ~ list(half_blood_prince),
+      title == "deathly_hallows" ~ list(deathly_hallows)
+     )
+  ) %>%
+  select(author, title, year, url, text, total_words, unique_words, lexical_density)
+
+hp_lexical
+
+```
+
+```{r}
+all_books <- bind_rows(results %>% mutate(text = NA), hp_lexical) %>%
+  arrange(desc(lexical_density))
+
+all_books
+```
+
+-   Visualize lexical density over time
+
+```{r}
+#| fig-height: 7
+
+model <- lm(lexical_density ~ year, data = all_books)
+
+slope <- coef(model)[2]
+intercept <- coef(model)[1]
+r2 <- summary(model)$r.squared
+
+sprintf("y = % s, x + % s, R² = % s", round(slope, 4), round(intercept, 2), round(r2, 4))
+
+ggplot(all_books, aes(x=year, y=lexical_density)) +
+  geom_point(color = "steelblue", size = 3) + 
+  geom_smooth(method = "lm", se = FALSE, formula = 'y ~ x') +
+  geom_text(aes(label = title), hjust = 0, vjust = 1.3, size = 3) +
+  labs(
+    title = "Lexical Density over Time",
+    x = "publication year",
+    y = "Lexical Density %"
+  ) + 
+  theme_minimal()
+
+
+```
+
+The regression model shows a very weak negative correlation between publication year and lexical density (R² = 0.0406). While there is a slight downward trend toward simpler vocabulary in more recent fiction (approximately 0.0163 percentage points less lexical density per year, or about 1.63 per century) the variation between individual works suggests that this is not a strong or consistent pattern across literary history. This indicates that authorial style, genre, and intended audience likely play a more significant role in shaping vocabulary diversity than time alone.
+
+## Readability
+
+Now that we have explored the lexical complexity of each book, let's explore their readability using the Flesch Reading Ease Score. This formula assesses how easy or difficult it is to read a piece of text, like a book. The higher the score, the easier it is to read. The formula is as follows:
+
+$$
+FRE = 206.835 - 1.015 \left( \frac{\text{total words}}{\text{total sentences}} \right) - 84.6 \left( \frac{\text{total syllables}}{\text{total words}} \right)
+$$
+
+Now, we can write a function that help us to calculate this:
+
+```{r}
+
+calculate_sentences <- function(text) {
+  tokenized_text <- tokenize_sentences(paste(text, collapse = "\n")) %>%
+    unlist()
+  
+  return(length(tokenized_text))
+}
+
+calculate_words <- function(text) {
+  tokenized_text <- tokenize_words(paste(text, collapse = "\n")) %>%
+    unlist()
+  
+  return(length(tokenized_text))
+}
+
+calculate_syllabes <- function(text) {
+  # Tokenize the text into words
+  words <- tokenize_words(paste(text, collapse = "\n")) %>%
+    unlist()
+  
+  # Count syllables in each word
+  syllable_counts <- nsyllable::nsyllable(words)
+  total_syllables <- sum(syllable_counts, na.rm = TRUE)
+  return(total_syllables)
+}
+
+flesch_reading_ease <- function(url, text = NULL) {
+  if (is.na(url) && !is.null(text)) {
+    lines <- text
+  } else if (!is.na(url)) {
+    # Check if the URL is valid
+    if (!grepl("^https?://", url)) {
+      stop("Invalid URL provided.")
+    }
+    book_processed <- process_books(url)
+    lines <- clean_guthenbergs(book_processed)
+  } else {
+    return(tibble(flesch_score = NA))
+  }
+  
+  if (length(lines) == 1 && is.na(lines)) {
+    return(tibble(flesch_score = NA))
+  }
+  
+  # calculate the number of sentences
+  total_sentences <- calculate_sentences(lines)
+  total_words <- calculate_words(lines)
+  total_syllables <- calculate_syllabes(lines)
+  
+  ASL <- total_words / total_sentences
+  ASW <- total_syllables / total_words
+  
+  # calculate the Flesch Reading Ease score
+  flesch_score <- 206.835 - (1.015 * ASL) - (84.6 * ASW)
+  
+  # create the tibble
+  tibble(
+    total_sentences = total_sentences,
+    total_syllables = total_syllables,
+    average_sentence_length = round(ASL, 2),
+    average_syllables_per_word = round(ASW, 2),
+    flesch_score = round(flesch_score, 2)
+  )
+  
+}
+
+```
+
+```{r}
+
+sample_book <- all_books %>%
+  filter(title == "Pride and Prejudice") %>%
+  pull(url) %>%
+  flesch_reading_ease()
+
+sample_book
+
+```
+
+And, now that we have the function, we can apply it to all books:
+
+```{r}
+all_books_readability <- all_books %>%
+  mutate(metrics = map2(url, text, flesch_reading_ease)) %>%
+  unnest(metrics)
+
+all_books_readability
+```
+
+So, we can expect that the Flesch Reading Ease Score is higher in books with lower lexical density, and vice versa. Let's visualize this relationship:
+
+```{r}
+#| fig-height: 6
+
+model <- lm(flesch_score ~ lexical_density, data = all_books_readability)
+slope <- coef(model)[2]
+intercept <- coef(model)[1]
+r2 <- summary(model)$r.squared
+sprintf("y = % s, x + % s, R² = % s", round(slope, 4), round(intercept, 2), round(r2, 4))
+
+fre_plot <- ggplot(all_books_readability, aes(x = lexical_density, y = flesch_score, color = as.Date(as.character(year), "%Y"))) +
+  geom_point(size = 3) + 
+  scale_colour_date(
+    name = "Publication Year",
+    date_labels = "%Y",
+    date_breaks = "50 years"
+  ) +
+  geom_text(aes(label = title), hjust = 0, vjust = 1.3, size = 3) +
+  labs(
+    title = "Flesch Reading Ease Score vs Lexical Density",
+    x = "Lexical Density (%)",
+    y = "Flesch Reading Ease Score"
+  ) + 
+  theme_minimal()
+
+fre_plot +
+  geom_smooth(
+    data = all_books_readability,
+    mapping = aes(x = lexical_density, y = flesch_score),
+    method = "lm",
+    se = FALSE,
+    inherit.aes = FALSE,
+    formula = 'y ~ x'
+  )
+
+```
+
+The regression analysis of Flesch Reading Ease score as a function of lexical density reveals a negligible positive correlation (R² = 0.0075). Although the model suggests that texts with higher lexical density may be slightly easier to read, this relationship is extremely weak and likely not meaningful. This result suggests that lexical variety alone is a poor predictor of readability when considered independently of sentence length and syllabic complexity.
+
+## Understandability
+
+Similarly to the readability, the Automated Readability Index (ARI) is a formula that estimates what school grade level is required to understand a piece of text. The formula is as follows:
+
+$$
+ARI = 4.71 \left( \frac{\text{total characters}}{\text{total words}} \right) + 0.5 \left( \frac{\text{total words}}{\text{total sentences}} \right) - 21.43
+$$
+So, as we did with the Flesch Reading Ease Score, we can write a function to calculate the ARI:
+
+```{r}
+calculate_characters <- function(text) {
+  # Count the number of characters in the text
+  total_characters <- nchar(paste(text, collapse = "\n"))
+  return(total_characters)
+}
+
+automated_readability_index <- function(url, text = NULL) {
+  if (is.na(url) && !is.null(text)) {
+    lines <- text
+  } else if (!is.na(url)) {
+    # Check if the URL is valid
+    if (!grepl("^https?://", url)) {
+      stop("Invalid URL provided.")
+    }
+    book_processed <- process_books(url)
+    lines <- clean_guthenbergs(book_processed)
+  } else {
+    return(tibble(ari_score = NA))
+  }
+  
+  if (length(lines) == 1 && is.na(lines)) {
+    return(tibble(ari_score = NA))
+  }
+  
+  # calculate the number of sentences
+  total_sentences <- calculate_sentences(lines)
+  total_words <- calculate_words(lines)
+  total_characters <- calculate_characters(lines)
+  
+  # calculate the ARI score
+  ari_score <- (4.71 * (total_characters / total_words)) + (0.5 * (total_words / total_sentences)) - 21.43
+  
+  # create the tibble
+  tibble(
+    total_characters = total_characters,
+    ari_score = round(ari_score, 2)
+  )
+}
+
+```
+
+And, now we can apply it to the sample book, just to check if it works:
+
+```{r}
+sample_book <- all_books_readability %>%
+  filter(title == "Pride and Prejudice") %>%
+  pull(url) %>%
+  automated_readability_index()
+
+sample_book
+```
+
+And now we can apply it to all books:
+
+```{r}
+all_books_ari <- all_books_readability %>%
+  mutate(metrics = map2(url, text, automated_readability_index)) %>%
+  unnest(metrics)
+all_books_ari[, c("title", "year", "ari_score", "total_characters", "total_words", "total_sentences")]
+```
+
+And now we can try to figure out if there is a relationship between the ARI and FLesch scores. What we're expecting is that as the ARI increases, Flesch decreases:
+
+```{r}
+#| fig-height: 6
+
+model <- lm(ari_score ~ flesch_score, data = all_books_ari)
+slope <- coef(model)[2]
+intercept <- coef(model)[1]
+r2 <- summary(model)$r.squared
+sprintf("y = % s, x + % s, R² = % s", round(slope, 4), round(intercept, 2), round(r2, 4))
+
+ari_plot <- ggplot(all_books_ari, aes(x = flesch_score, y = ari_score, color = as.Date(as.character(year), "%Y"))) +
+  geom_point(size = 3) + 
+  scale_colour_date(
+    name = "Publication Year",
+    date_labels = "%Y",
+    date_breaks = "50 years"
+  ) +
+  geom_text(aes(label = title), hjust = 0, vjust = 1.3, size = 3) +
+  labs(
+    title = "Automated Readability Index vs Flesch Score",
+    x = "Flesch Score",
+    y = "Automated Readability Index"
+  ) + 
+  theme_minimal()
+ari_plot +
+  geom_smooth(
+    data = all_books_ari,
+    mapping = aes(x = flesch_score, y = ari_score),
+    method = "lm",
+    se = FALSE,
+    inherit.aes = FALSE,
+    formula = 'y ~ x'
+  )
+```
+
+The regression model reveals a strong inverse relationship between ARI and Flesch Reading Ease Score (R² = 0.8371). This confirms that, despite relying on different formulas, both readability indices capture similar aspects of textual complexity. As the ARI increases — indicating higher required education level — the Flesch score decreases, reflecting reduced ease of reading. This alignment strengthens the validity of both measures as proxies for syntactic and lexical complexity.
+
+## Metrics Combined
+
+With all these metrics, would be fun to visualize them together, just to explore any relationship between them that can help us to understand our corpus better. So, let's create a correlation matrix to visualize the relationships between the metrics.
+
+- Build the matrix
+
+```{r}
+all_books_metrics <- all_books_ari %>%
+  select(title, year, lexical_density, flesch_score, ari_score, total_words) %>%
+  drop_na()
+
+correlation_matrix <- all_books_metrics %>%
+  select(-title) %>%
+  correlate() %>%
+  shave() %>%
+  fashion()
+
+correlation_matrix
+
+```
+
+- Visualize the matrix
+
+```{r}
+cor_data <- all_books_metrics %>%
+  select(-title) %>%
+  cor(use="complete.obs")
+
+melted_cor <- melt(cor_data)
+
+# plot
+
+ggplot(melted_cor, aes(Var1, Var2, fill = value)) +
+  geom_tile(color = "white") +
+  geom_text(aes(label = round(value, 2)), size = 4) +
+  scale_fill_gradient2(low = "red", high = "blue", mid = "white", 
+                       midpoint = 0, limit = c(-1, 1), space = "Lab") +
+  theme_minimal() +
+  labs(
+    title = "Correlation Matrix of Readability Metrics",
+    x = NULL,
+    y = NULL
+  ) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1))
+
+
+```
+
 
 ### Frequency calculation
 

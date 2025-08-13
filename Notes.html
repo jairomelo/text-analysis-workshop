@@ -127,7 +127,7 @@ window.Quarto = {
 
 <section id="script-to-fetch-textual-data-from-x-source" class="level2">
 <h2 class="anchored" data-anchor-id="script-to-fetch-textual-data-from-x-source">Script to fetch textual data from x source</h2>
-<div class="sourceCode" id="cb1"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="ex">install.packages</span><span class="er">(</span><span class="ex">c</span><span class="er">(</span><span class="st">"tidyverse"</span><span class="ex">,</span> <span class="st">"tidytext"</span>, <span class="st">"devtools"</span><span class="kw">))</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode" id="cb1"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="ex">install.packages</span><span class="er">(</span><span class="ex">c</span><span class="er">(</span><span class="st">"tidyverse"</span><span class="ex">,</span> <span class="st">"tidytext"</span>, <span class="st">"devtools"</span>, <span class="st">"tokenizers"</span>, <span class="st">"nsyllable"</span>, <span class="st">"GGally"</span>, <span class="st">"corrr"</span><span class="kw">))</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <section id="get-harry-potter-files" class="level3">
 <h3 class="anchored" data-anchor-id="get-harry-potter-files">Get Harry Potter files</h3>
 <div class="sourceCode" id="cb2"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="ex">devtools::install_github</span><span class="er">(</span><span class="st">"bradleyboehmke/harrypotter"</span><span class="kw">)</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
@@ -142,10 +142,18 @@ window.Quarto = {
 <div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidyverse)</span>
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidytext)</span>
 <span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(harrypotter)</span>
-<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(dplyr) <span class="co"># this package is part of the tidyverse</span></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(dplyr)</span>
 <span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tibble)</span>
-<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a><span class="fu">theme_set</span>(<span class="fu">theme_minimal</span>())</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(readr)</span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(stringr)</span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(purrr)</span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(stringr)</span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tokenizers)</span>
+<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(nsyllable)</span>
+<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(GGally)</span>
+<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(corrr)</span>
+<span id="cb3-14"><a href="#cb3-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-15"><a href="#cb3-15" aria-hidden="true" tabindex="-1"></a><span class="fu">theme_set</span>(<span class="fu">theme_minimal</span>())</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <ul>
 <li>Get full text of one book</li>
@@ -177,7 +185,7 @@ window.Quarto = {
 <div class="sourceCode cell-code" id="cb8"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>hp_books <span class="ot">&lt;-</span> <span class="fu">c</span>( </span>
 <span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>  <span class="st">"philosophers_stone"</span>, </span>
 <span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>  <span class="st">"chamber_of_secrets"</span>, </span>
-<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>  <span class="st">"prisoners_of_azkaban"</span>, </span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>  <span class="st">"prisoner_of_azkaban"</span>, </span>
 <span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a>  <span class="st">"goblet_of_fire"</span>, </span>
 <span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a>  <span class="st">"order_of_the_phoenix"</span>, </span>
 <span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a>  <span class="st">"half_blood_prince"</span>, </span>
@@ -185,7 +193,7 @@ window.Quarto = {
 <span id="cb8-9"><a href="#cb8-9" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb8-10"><a href="#cb8-10" aria-hidden="true" tabindex="-1"></a>hp_books</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>[1] "philosophers_stone"   "chamber_of_secrets"   "prisoners_of_azkaban"
+<pre><code>[1] "philosophers_stone"   "chamber_of_secrets"   "prisoner_of_azkaban" 
 [4] "goblet_of_fire"       "order_of_the_phoenix" "half_blood_prince"   
 [7] "deathly_hallows"     </code></pre>
 </div>
@@ -335,7 +343,7 @@ L_d = (N_{lex}/N) \times 100
   &lt;fct&gt;                      &lt;dbl&gt;        &lt;dbl&gt;         &lt;dbl&gt;
 1 philosophers_stone         28585         5421          19.0
 2 chamber_of_secrets         33621         6687          19.9
-3 prisoners_of_azkaban       41188         7087          17.2
+3 prisoner_of_azkaban        41188         7087          17.2
 4 goblet_of_fire             72663         9919          13.6
 5 order_of_the_phoenix       96777        12187          12.6
 6 half_blood_prince          63098        10823          17.2
@@ -374,7 +382,7 @@ L_d = (N_{lex}/N) \times 100
 <span id="cb19-6"><a href="#cb19-6" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb19-7"><a href="#cb19-7" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(lexical_density, <span class="fu">aes</span>(<span class="at">x =</span> total_words, <span class="at">y =</span> vocab_density)) <span class="sc">+</span></span>
 <span id="cb19-8"><a href="#cb19-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>(<span class="at">size =</span> <span class="dv">2</span>, <span class="at">shape =</span> <span class="dv">23</span>) <span class="sc">+</span></span>
-<span id="cb19-9"><a href="#cb19-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_smooth</span>(<span class="at">method =</span> lm, <span class="at">se =</span> <span class="cn">FALSE</span>, <span class="at">color =</span> <span class="st">"steelblue"</span>) <span class="sc">+</span></span>
+<span id="cb19-9"><a href="#cb19-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_smooth</span>(<span class="at">method =</span> lm, <span class="at">se =</span> <span class="cn">FALSE</span>, <span class="at">color =</span> <span class="st">"steelblue"</span>, <span class="at">formula =</span> <span class="st">'y ~ x'</span>) <span class="sc">+</span></span>
 <span id="cb19-10"><a href="#cb19-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_text</span>(<span class="fu">aes</span>(<span class="at">label =</span> book), <span class="at">vjust =</span> <span class="fl">1.5</span>) <span class="sc">+</span></span>
 <span id="cb19-11"><a href="#cb19-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">annotate</span>(<span class="st">"text"</span>, <span class="at">x =</span> <span class="dv">3000</span>, <span class="at">y =</span> <span class="dv">19</span>, <span class="at">hjust =</span> <span class="dv">0</span>,</span>
 <span id="cb19-12"><a href="#cb19-12" aria-hidden="true" tabindex="-1"></a>           <span class="at">label =</span> <span class="fu">paste0</span>(<span class="st">"y = "</span>, <span class="fu">round</span>(slope, <span class="dv">4</span>), <span class="st">"x + "</span>, <span class="fu">round</span>(intercept, <span class="dv">2</span>),</span>
@@ -385,9 +393,6 @@ L_d = (N_{lex}/N) \times 100
 <span id="cb19-17"><a href="#cb19-17" aria-hidden="true" tabindex="-1"></a>    <span class="at">y =</span> <span class="st">"Lexical Density"</span></span>
 <span id="cb19-18"><a href="#cb19-18" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">+</span></span>
 <span id="cb19-19"><a href="#cb19-19" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_minimal</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-stderr">
-<pre><code>`geom_smooth()` using formula = 'y ~ x'</code></pre>
-</div>
 <div class="cell-output-display">
 <div>
 <figure class="figure">
@@ -401,29 +406,39 @@ L_d = (N_{lex}/N) \times 100
 <p>That’s a very strong correlation for such a small sample size (n = 7 books), suggesting a clear and consistent downward trend.</p>
 <section id="would-lexical-complexity-from-harry-potter-is-lower-that-in-classical-literature" class="level4">
 <h4 class="anchored" data-anchor-id="would-lexical-complexity-from-harry-potter-is-lower-that-in-classical-literature">Would lexical complexity from harry potter is lower that in classical literature?</h4>
-<p>Jane Austen, Pride and Prejudice (1813): https://www.gutenberg.org/ebooks/1342.txt.utf-8 Charles Dickens, A Tale of Two Cities (1859): https://www.gutenberg.org/ebooks/98.txt.utf-8 F. Scott Fitzgerald, The Great Gatsby (1925): https://www.gutenberg.org/ebooks/64317.txt.utf-8 Mary Wollstonecraft Shelley, Frankenstein; Or, The Modern Prometheus (1818): https://www.gutenberg.org/ebooks/84.txt.utf-8 Herman Melville, Moby Dick (1851): https://www.gutenberg.org/ebooks/2701.txt.utf-8 Louisa May Alcott, Little Women (1868): https://www.gutenberg.org/ebooks/37106.txt.utf-8 Mark Twain, The Adventures of Tom Sawyer (1876): https://www.gutenberg.org/ebooks/74.txt.utf-8 Jonathan Swift, Gulliver’s Travels (1726): https://www.gutenberg.org/ebooks/17157.txt.utf-8 E. M. Forster, A Room with a View (1908): https://www.gutenberg.org/ebooks/2641.txt.utf-8 Elizabeth Von Arnim, The Enchanted April (1922): https://www.gutenberg.org/ebooks/16389.txt.utf-8 Lewis Carroll, Alice’s Adventures in Wonderland (1865) : https://www.gutenberg.org/ebooks/11.txt.utf-8 George Eliot, Middlemarch (1871): https://www.gutenberg.org/ebooks/145.txt.utf-8 Elizabeth Cleghorn Gaskell, Cranford (1853): https://www.gutenberg.org/ebooks/394.txt.utf-8 Robert Louis Stevenson,The Strange Case of Dr.&nbsp;Jekyll and Mr.&nbsp;Hyde (1886): https://www.gutenberg.org/ebooks/43.txt.utf-8</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb21"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a>books_meta <span class="ot">&lt;-</span> <span class="fu">tribble</span>(</span>
-<span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a>  <span class="sc">~</span>author, <span class="sc">~</span>title, <span class="sc">~</span>year, <span class="sc">~</span>url,</span>
-<span id="cb21-3"><a href="#cb21-3" aria-hidden="true" tabindex="-1"></a>  <span class="st">"Jane Austen"</span>, <span class="st">"Pride and Prejudice"</span>, <span class="dv">1813</span>, <span class="st">"https://www.gutenberg.org/ebooks/1342.txt.utf-8"</span>,</span>
-<span id="cb21-4"><a href="#cb21-4" aria-hidden="true" tabindex="-1"></a>  <span class="st">"Charles Dickens"</span>, <span class="st">"A Tale of Two Cities"</span>, <span class="dv">1859</span>, <span class="st">"https://www.gutenberg.org/ebooks/98.txt.utf-8"</span>,</span>
-<span id="cb21-5"><a href="#cb21-5" aria-hidden="true" tabindex="-1"></a>  <span class="st">"F. Scott Fitzgerald"</span>, <span class="st">"The Great Gatsby"</span>, <span class="dv">1925</span>, <span class="st">"https://www.gutenberg.org/ebooks/64317.txt.utf-8"</span>,</span>
-<span id="cb21-6"><a href="#cb21-6" aria-hidden="true" tabindex="-1"></a>  <span class="st">"Mary Wollstonecraft Shelley"</span>, <span class="st">"Frankenstein; Or, The Modern Prometheus"</span>, <span class="dv">1818</span>, <span class="st">"https://www.gutenberg.org/ebooks/84.txt.utf-8"</span>,</span>
-<span id="cb21-7"><a href="#cb21-7" aria-hidden="true" tabindex="-1"></a>  <span class="st">"Herman Melville"</span>, <span class="st">"Moby Dick"</span>, <span class="dv">1851</span>, <span class="st">"https://www.gutenberg.org/ebooks/2701.txt.utf-8"</span>,</span>
-<span id="cb21-8"><a href="#cb21-8" aria-hidden="true" tabindex="-1"></a>  <span class="st">"Louisa May Alcott"</span>, <span class="st">"Little Women"</span>, <span class="dv">1868</span>, <span class="st">"https://www.gutenberg.org/ebooks/37106.txt.utf-8"</span>,</span>
-<span id="cb21-9"><a href="#cb21-9" aria-hidden="true" tabindex="-1"></a>  <span class="st">"Mark Twain"</span>, <span class="st">"Tom Sawyer"</span>, <span class="dv">1876</span>, <span class="st">"https://www.gutenberg.org/ebooks/74.txt.utf-8"</span>,</span>
-<span id="cb21-10"><a href="#cb21-10" aria-hidden="true" tabindex="-1"></a>  <span class="st">"Jonathan Swift"</span>, <span class="st">"Gulliver's Travels"</span>, <span class="dv">1726</span>, <span class="st">"https://www.gutenberg.org/ebooks/17157.txt.utf-8"</span>,</span>
-<span id="cb21-11"><a href="#cb21-11" aria-hidden="true" tabindex="-1"></a>  <span class="st">"E. M. Forster"</span>, <span class="st">"A Room with a View"</span>, <span class="dv">1908</span>, <span class="st">"https://www.gutenberg.org/ebooks/2641.txt.utf-8"</span>,</span>
-<span id="cb21-12"><a href="#cb21-12" aria-hidden="true" tabindex="-1"></a>  <span class="st">"Elizabeth Von Arnim"</span>, <span class="st">"The Enchanted April"</span>, <span class="dv">1922</span>, <span class="st">"https://www.gutenberg.org/ebooks/16389.txt.utf-8"</span>,</span>
-<span id="cb21-13"><a href="#cb21-13" aria-hidden="true" tabindex="-1"></a>  <span class="st">"Lewis Carroll"</span>, <span class="st">"Alice's Adventures in Wonderland"</span>, <span class="dv">1865</span>, <span class="st">"https://www.gutenberg.org/ebooks/11.txt.utf-8"</span>,</span>
-<span id="cb21-14"><a href="#cb21-14" aria-hidden="true" tabindex="-1"></a>  <span class="st">"George Eliot"</span>, <span class="st">"Middlemarch"</span>, <span class="dv">1871</span>, <span class="st">"https://www.gutenberg.org/ebooks/145.txt.utf-8"</span>,</span>
-<span id="cb21-15"><a href="#cb21-15" aria-hidden="true" tabindex="-1"></a>  <span class="st">"Elizabeth Gaskell"</span>, <span class="st">"Cranford"</span>, <span class="dv">1853</span>, <span class="st">"https://www.gutenberg.org/ebooks/394.txt.utf-8"</span>,</span>
-<span id="cb21-16"><a href="#cb21-16" aria-hidden="true" tabindex="-1"></a>  <span class="st">"R. L. Stevenson"</span>, <span class="st">"Dr. Jekyll and Mr. Hyde"</span>, <span class="dv">1886</span>, <span class="st">"https://www.gutenberg.org/ebooks/43.txt.utf-8"</span></span>
-<span id="cb21-17"><a href="#cb21-17" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb21-18"><a href="#cb21-18" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb21-19"><a href="#cb21-19" aria-hidden="true" tabindex="-1"></a>books_meta</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb20"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a>books_meta <span class="ot">&lt;-</span> <span class="fu">tribble</span>(</span>
+<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a>  <span class="sc">~</span>author, <span class="sc">~</span>title, <span class="sc">~</span>year, <span class="sc">~</span>url,</span>
+<span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a>  <span class="st">"Jane Austen"</span>, <span class="st">"Pride and Prejudice"</span>, <span class="dv">1813</span>, <span class="st">"https://www.gutenberg.org/ebooks/1342.txt.utf-8"</span>,</span>
+<span id="cb20-4"><a href="#cb20-4" aria-hidden="true" tabindex="-1"></a>  <span class="st">"Charles Dickens"</span>, <span class="st">"A Tale of Two Cities"</span>, <span class="dv">1859</span>, <span class="st">"https://www.gutenberg.org/ebooks/98.txt.utf-8"</span>,</span>
+<span id="cb20-5"><a href="#cb20-5" aria-hidden="true" tabindex="-1"></a>  <span class="st">"F. Scott Fitzgerald"</span>, <span class="st">"The Great Gatsby"</span>, <span class="dv">1925</span>, <span class="st">"https://www.gutenberg.org/ebooks/64317.txt.utf-8"</span>,</span>
+<span id="cb20-6"><a href="#cb20-6" aria-hidden="true" tabindex="-1"></a>  <span class="st">"Mary Wollstonecraft Shelley"</span>, <span class="st">"Frankenstein; Or, The Modern Prometheus"</span>, <span class="dv">1818</span>, <span class="st">"https://www.gutenberg.org/ebooks/84.txt.utf-8"</span>,</span>
+<span id="cb20-7"><a href="#cb20-7" aria-hidden="true" tabindex="-1"></a>  <span class="st">"Herman Melville"</span>, <span class="st">"Moby Dick"</span>, <span class="dv">1851</span>, <span class="st">"https://www.gutenberg.org/ebooks/2701.txt.utf-8"</span>,</span>
+<span id="cb20-8"><a href="#cb20-8" aria-hidden="true" tabindex="-1"></a>  <span class="st">"Louisa May Alcott"</span>, <span class="st">"Little Women"</span>, <span class="dv">1868</span>, <span class="st">"https://www.gutenberg.org/ebooks/37106.txt.utf-8"</span>,</span>
+<span id="cb20-9"><a href="#cb20-9" aria-hidden="true" tabindex="-1"></a>  <span class="st">"Mark Twain"</span>, <span class="st">"Tom Sawyer"</span>, <span class="dv">1876</span>, <span class="st">"https://www.gutenberg.org/ebooks/74.txt.utf-8"</span>,</span>
+<span id="cb20-10"><a href="#cb20-10" aria-hidden="true" tabindex="-1"></a>  <span class="st">"Jonathan Swift"</span>, <span class="st">"Gulliver's Travels - Thomas M. Balliet ed."</span>, <span class="dv">1726</span>, <span class="st">"https://www.gutenberg.org/ebooks/17157.txt.utf-8"</span>,</span>
+<span id="cb20-11"><a href="#cb20-11" aria-hidden="true" tabindex="-1"></a>  <span class="st">"E. M. Forster"</span>, <span class="st">"A Room with a View"</span>, <span class="dv">1908</span>, <span class="st">"https://www.gutenberg.org/ebooks/2641.txt.utf-8"</span>,</span>
+<span id="cb20-12"><a href="#cb20-12" aria-hidden="true" tabindex="-1"></a>  <span class="st">"Elizabeth Von Arnim"</span>, <span class="st">"The Enchanted April"</span>, <span class="dv">1922</span>, <span class="st">"https://www.gutenberg.org/ebooks/16389.txt.utf-8"</span>,</span>
+<span id="cb20-13"><a href="#cb20-13" aria-hidden="true" tabindex="-1"></a>  <span class="st">"Lewis Carroll"</span>, <span class="st">"Alice's Adventures in Wonderland"</span>, <span class="dv">1865</span>, <span class="st">"https://www.gutenberg.org/ebooks/11.txt.utf-8"</span>,</span>
+<span id="cb20-14"><a href="#cb20-14" aria-hidden="true" tabindex="-1"></a>  <span class="st">"George Eliot"</span>, <span class="st">"Middlemarch"</span>, <span class="dv">1871</span>, <span class="st">"https://www.gutenberg.org/ebooks/145.txt.utf-8"</span>,</span>
+<span id="cb20-15"><a href="#cb20-15" aria-hidden="true" tabindex="-1"></a>  <span class="st">"Elizabeth Gaskell"</span>, <span class="st">"Cranford"</span>, <span class="dv">1853</span>, <span class="st">"https://www.gutenberg.org/ebooks/394.txt.utf-8"</span>,</span>
+<span id="cb20-16"><a href="#cb20-16" aria-hidden="true" tabindex="-1"></a>  <span class="st">"R. L. Stevenson"</span>, <span class="st">"Dr. Jekyll and Mr. Hyde"</span>, <span class="dv">1886</span>, <span class="st">"https://www.gutenberg.org/ebooks/43.txt.utf-8"</span>,</span>
+<span id="cb20-17"><a href="#cb20-17" aria-hidden="true" tabindex="-1"></a>  <span class="st">"Charles Dickens"</span>, <span class="st">"The Pickwick Papers"</span>, <span class="dv">1836</span>, <span class="st">"https://www.gutenberg.org/ebooks/580.txt.utf-8"</span>,</span>
+<span id="cb20-18"><a href="#cb20-18" aria-hidden="true" tabindex="-1"></a>  <span class="st">"Daniel Defoe"</span>, <span class="st">"The Life and Adventures of Robinson Crusoe"</span>, <span class="dv">1719</span>, <span class="st">"https://www.gutenberg.org/ebooks/521.txt.utf-8"</span>,</span>
+<span id="cb20-19"><a href="#cb20-19" aria-hidden="true" tabindex="-1"></a>  <span class="st">"J. M. Barrie"</span>, <span class="st">"Peter Pan"</span>, <span class="dv">1911</span>, <span class="st">"https://www.gutenberg.org/ebooks/16.txt.utf-8"</span>,</span>
+<span id="cb20-20"><a href="#cb20-20" aria-hidden="true" tabindex="-1"></a>  <span class="st">"Charles Dickens"</span>, <span class="st">"Great Expectations"</span>, <span class="dv">1861</span>, <span class="st">"https://www.gutenberg.org/ebooks/1400.txt.utf-8"</span>,</span>
+<span id="cb20-21"><a href="#cb20-21" aria-hidden="true" tabindex="-1"></a>  <span class="st">"Harriet Beecher Stowe"</span>, <span class="st">"Uncle Tom's Cabin"</span>, <span class="dv">1852</span>, <span class="st">"https://www.gutenberg.org/ebooks/203.txt.utf-8"</span>,</span>
+<span id="cb20-22"><a href="#cb20-22" aria-hidden="true" tabindex="-1"></a>  <span class="st">"Robert Louis Stevenson"</span>, <span class="st">"Treasure Island"</span>, <span class="dv">1881</span>, <span class="st">"https://www.gutenberg.org/ebooks/120.txt.utf-8"</span>,</span>
+<span id="cb20-23"><a href="#cb20-23" aria-hidden="true" tabindex="-1"></a>  <span class="st">"Kenneth Grahame"</span>, <span class="st">"The Wind in the Willows"</span>, <span class="dv">1908</span>, <span class="st">"https://www.gutenberg.org/ebooks/27805.txt.utf-8"</span>,</span>
+<span id="cb20-24"><a href="#cb20-24" aria-hidden="true" tabindex="-1"></a>  <span class="st">"Jonathan Swift"</span>, <span class="st">"Gulliver's Travels - Richard Simpson ed"</span>, <span class="dv">1726</span>, <span class="st">"https://www.gutenberg.org/ebooks/829.txt.utf-8"</span>,</span>
+<span id="cb20-25"><a href="#cb20-25" aria-hidden="true" tabindex="-1"></a>  <span class="st">"Jules Verne"</span>, <span class="st">"Twenty Thousand Leagues Under the Seas"</span>, <span class="dv">1871</span>, <span class="st">"https://www.gutenberg.org/ebooks/2488.txt.utf-8"</span>,</span>
+<span id="cb20-26"><a href="#cb20-26" aria-hidden="true" tabindex="-1"></a>  <span class="st">"Jules Verne"</span>, <span class="st">"A Journey to the Centre of the Earth"</span>, <span class="dv">1864</span>, <span class="st">"https://www.gutenberg.org/ebooks/18857.txt.utf-8"</span>,</span>
+<span id="cb20-27"><a href="#cb20-27" aria-hidden="true" tabindex="-1"></a>  <span class="st">"Jules Verne"</span>, <span class="st">"Around the World in Eighty Days"</span>, <span class="dv">1872</span>, <span class="st">"https://www.gutenberg.org/ebooks/103.txt.utf-8"</span></span>
+<span id="cb20-28"><a href="#cb20-28" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb20-29"><a href="#cb20-29" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-30"><a href="#cb20-30" aria-hidden="true" tabindex="-1"></a>books_meta</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
-<pre><code># A tibble: 14 × 4
+<pre><code># A tibble: 25 × 4
    author                      title                                  year url  
    &lt;chr&gt;                       &lt;chr&gt;                                 &lt;dbl&gt; &lt;chr&gt;
  1 Jane Austen                 Pride and Prejudice                    1813 http…
@@ -433,50 +448,576 @@ L_d = (N_{lex}/N) \times 100
  5 Herman Melville             Moby Dick                              1851 http…
  6 Louisa May Alcott           Little Women                           1868 http…
  7 Mark Twain                  Tom Sawyer                             1876 http…
- 8 Jonathan Swift              Gulliver's Travels                     1726 http…
+ 8 Jonathan Swift              Gulliver's Travels - Thomas M. Balli…  1726 http…
  9 E. M. Forster               A Room with a View                     1908 http…
 10 Elizabeth Von Arnim         The Enchanted April                    1922 http…
-11 Lewis Carroll               Alice's Adventures in Wonderland       1865 http…
-12 George Eliot                Middlemarch                            1871 http…
-13 Elizabeth Gaskell           Cranford                               1853 http…
-14 R. L. Stevenson             Dr. Jekyll and Mr. Hyde                1886 http…</code></pre>
+# ℹ 15 more rows</code></pre>
 </div>
 </div>
+<ul>
+<li><strong>Processing Function</strong></li>
+</ul>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb22"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a>safe_read_lines <span class="ot">&lt;-</span> <span class="cf">function</span>(url) {</span>
+<span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a>  lines <span class="ot">&lt;-</span> <span class="fu">tryCatch</span>(<span class="fu">read_lines</span>(url,<span class="at">locale =</span> <span class="fu">locale</span>(<span class="at">encoding =</span> <span class="st">"UTF-8"</span>)), <span class="at">error =</span> <span class="cf">function</span>(e) <span class="fu">return</span>(<span class="cn">NA</span>))</span>
+<span id="cb22-3"><a href="#cb22-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">return</span>(lines)</span>
+<span id="cb22-4"><a href="#cb22-4" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb22-5"><a href="#cb22-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb22-6"><a href="#cb22-6" aria-hidden="true" tabindex="-1"></a>clean_guthenbergs <span class="ot">&lt;-</span> <span class="cf">function</span>(lines) {</span>
+<span id="cb22-7"><a href="#cb22-7" aria-hidden="true" tabindex="-1"></a>  start <span class="ot">&lt;-</span> <span class="fu">grep</span>(<span class="st">"</span><span class="sc">\\</span><span class="st">*</span><span class="sc">\\</span><span class="st">*</span><span class="sc">\\</span><span class="st">* START OF (THE|THIS)"</span>, lines)</span>
+<span id="cb22-8"><a href="#cb22-8" aria-hidden="true" tabindex="-1"></a>  end <span class="ot">&lt;-</span> <span class="fu">grep</span>(<span class="st">"</span><span class="sc">\\</span><span class="st">*</span><span class="sc">\\</span><span class="st">*</span><span class="sc">\\</span><span class="st">* END OF (THE|THIS)"</span>, lines)</span>
+<span id="cb22-9"><a href="#cb22-9" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb22-10"><a href="#cb22-10" aria-hidden="true" tabindex="-1"></a>  text <span class="ot">&lt;-</span> <span class="fu">tryCatch</span>(lines[(start <span class="sc">+</span> <span class="dv">1</span>)<span class="sc">:</span>(end <span class="sc">-</span> <span class="dv">1</span>)], <span class="at">error =</span> <span class="cf">function</span>(e) <span class="fu">return</span>(lines))</span>
+<span id="cb22-11"><a href="#cb22-11" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb22-12"><a href="#cb22-12" aria-hidden="true" tabindex="-1"></a>  text <span class="ot">&lt;-</span> <span class="fu">str_remove_all</span>(<span class="fu">paste</span>(text, <span class="at">collapse =</span> <span class="st">"</span><span class="sc">\n</span><span class="st">"</span>), <span class="st">"(?s)</span><span class="sc">\\</span><span class="st">[.*?</span><span class="sc">\\</span><span class="st">]"</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb22-13"><a href="#cb22-13" aria-hidden="true" tabindex="-1"></a>    <span class="fu">str_split</span>(<span class="st">"</span><span class="sc">\n</span><span class="st">"</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb22-14"><a href="#cb22-14" aria-hidden="true" tabindex="-1"></a>    .[[<span class="dv">1</span>]] <span class="sc">%&gt;%</span></span>
+<span id="cb22-15"><a href="#cb22-15" aria-hidden="true" tabindex="-1"></a>    <span class="fu">str_trim</span>() <span class="sc">%&gt;%</span></span>
+<span id="cb22-16"><a href="#cb22-16" aria-hidden="true" tabindex="-1"></a>    <span class="fu">discard</span>(<span class="sc">~</span> .x <span class="sc">==</span> <span class="st">""</span>)</span>
+<span id="cb22-17"><a href="#cb22-17" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb22-18"><a href="#cb22-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb22-19"><a href="#cb22-19" aria-hidden="true" tabindex="-1"></a>process_books <span class="ot">&lt;-</span> <span class="cf">function</span>(url) {</span>
+<span id="cb22-20"><a href="#cb22-20" aria-hidden="true" tabindex="-1"></a>  <span class="co"># check if the book was downloaded, if not, save text in data folder</span></span>
+<span id="cb22-21"><a href="#cb22-21" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="sc">!</span><span class="fu">dir.exists</span>(<span class="st">"data"</span>)) <span class="fu">dir.create</span>(<span class="st">"data"</span>)</span>
+<span id="cb22-22"><a href="#cb22-22" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb22-23"><a href="#cb22-23" aria-hidden="true" tabindex="-1"></a>  file_name <span class="ot">&lt;-</span> <span class="fu">basename</span>(url) <span class="sc">%&gt;%</span> <span class="fu">str_remove</span>(<span class="st">".utf-8"</span>)</span>
+<span id="cb22-24"><a href="#cb22-24" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb22-25"><a href="#cb22-25" aria-hidden="true" tabindex="-1"></a>  local_file_path <span class="ot">&lt;-</span> <span class="fu">file.path</span>(<span class="st">"data"</span>, file_name)</span>
+<span id="cb22-26"><a href="#cb22-26" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb22-27"><a href="#cb22-27" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="sc">!</span><span class="fu">file.exists</span>(local_file_path)) {</span>
+<span id="cb22-28"><a href="#cb22-28" aria-hidden="true" tabindex="-1"></a>    lines <span class="ot">&lt;-</span> <span class="fu">safe_read_lines</span>(url)</span>
+<span id="cb22-29"><a href="#cb22-29" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> (<span class="sc">!</span>(<span class="fu">length</span>(lines) <span class="sc">==</span> <span class="dv">1</span> <span class="sc">&amp;&amp;</span> <span class="fu">is.na</span>(lines))) {</span>
+<span id="cb22-30"><a href="#cb22-30" aria-hidden="true" tabindex="-1"></a>      <span class="fu">writeLines</span>(lines, local_file_path)</span>
+<span id="cb22-31"><a href="#cb22-31" aria-hidden="true" tabindex="-1"></a>    }</span>
+<span id="cb22-32"><a href="#cb22-32" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb22-33"><a href="#cb22-33" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb22-34"><a href="#cb22-34" aria-hidden="true" tabindex="-1"></a>  lines <span class="ot">&lt;-</span> <span class="fu">safe_read_lines</span>(local_file_path)</span>
+<span id="cb22-35"><a href="#cb22-35" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb22-36"><a href="#cb22-36" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb22-37"><a href="#cb22-37" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb22-38"><a href="#cb22-38" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb22-39"><a href="#cb22-39" aria-hidden="true" tabindex="-1"></a>tf_idf_books <span class="ot">&lt;-</span> <span class="cf">function</span>(url) {</span>
+<span id="cb22-40"><a href="#cb22-40" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb22-41"><a href="#cb22-41" aria-hidden="true" tabindex="-1"></a>  book_processed <span class="ot">&lt;-</span> <span class="fu">process_books</span>(url)</span>
+<span id="cb22-42"><a href="#cb22-42" aria-hidden="true" tabindex="-1"></a>  text <span class="ot">&lt;-</span> <span class="fu">clean_guthenbergs</span>(book_processed)</span>
+<span id="cb22-43"><a href="#cb22-43" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb22-44"><a href="#cb22-44" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="fu">length</span>(text) <span class="sc">==</span> <span class="dv">1</span> <span class="sc">&amp;&amp;</span> <span class="fu">is.na</span>(text)) {</span>
+<span id="cb22-45"><a href="#cb22-45" aria-hidden="true" tabindex="-1"></a>    <span class="fu">return</span>(<span class="fu">tibble</span>(<span class="at">total_words =</span> <span class="cn">NA</span>, <span class="at">unique_words =</span> <span class="cn">NA</span>, <span class="at">lexical_density =</span> <span class="cn">NA</span>))</span>
+<span id="cb22-46"><a href="#cb22-46" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb22-47"><a href="#cb22-47" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb22-48"><a href="#cb22-48" aria-hidden="true" tabindex="-1"></a>  <span class="co"># create the df/tibble</span></span>
+<span id="cb22-49"><a href="#cb22-49" aria-hidden="true" tabindex="-1"></a>  text_df <span class="ot">&lt;-</span> <span class="fu">tibble</span>(<span class="at">text =</span> text) <span class="sc">%&gt;%</span></span>
+<span id="cb22-50"><a href="#cb22-50" aria-hidden="true" tabindex="-1"></a>    <span class="fu">unnest_tokens</span>(word, text) <span class="sc">%&gt;%</span></span>
+<span id="cb22-51"><a href="#cb22-51" aria-hidden="true" tabindex="-1"></a>    <span class="fu">anti_join</span>(stop_words, <span class="at">by =</span> <span class="st">"word"</span>)</span>
+<span id="cb22-52"><a href="#cb22-52" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb22-53"><a href="#cb22-53" aria-hidden="true" tabindex="-1"></a>  <span class="co"># tf/idf of the book</span></span>
+<span id="cb22-54"><a href="#cb22-54" aria-hidden="true" tabindex="-1"></a>  total_words <span class="ot">&lt;-</span> <span class="fu">nrow</span>(text_df)</span>
+<span id="cb22-55"><a href="#cb22-55" aria-hidden="true" tabindex="-1"></a>  unique_words <span class="ot">&lt;-</span> <span class="fu">n_distinct</span>(text_df<span class="sc">$</span>word)</span>
+<span id="cb22-56"><a href="#cb22-56" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb22-57"><a href="#cb22-57" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tibble</span>(</span>
+<span id="cb22-58"><a href="#cb22-58" aria-hidden="true" tabindex="-1"></a>    <span class="at">total_words =</span> total_words,</span>
+<span id="cb22-59"><a href="#cb22-59" aria-hidden="true" tabindex="-1"></a>    <span class="at">unique_words =</span> unique_words,</span>
+<span id="cb22-60"><a href="#cb22-60" aria-hidden="true" tabindex="-1"></a>    <span class="at">lexical_density =</span> <span class="fu">round</span>((unique_words <span class="sc">/</span> total_words) <span class="sc">*</span> <span class="dv">100</span>, <span class="dv">2</span>)</span>
+<span id="cb22-61"><a href="#cb22-61" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb22-62"><a href="#cb22-62" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb22-63"><a href="#cb22-63" aria-hidden="true" tabindex="-1"></a>  }</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb23"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a><span class="co"># apply the tf_idf_books function to a single book</span></span>
+<span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a>sample_book <span class="ot">&lt;-</span> books_meta <span class="sc">%&gt;%</span></span>
+<span id="cb23-3"><a href="#cb23-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(title <span class="sc">==</span> <span class="st">"Pride and Prejudice"</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb23-4"><a href="#cb23-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">pull</span>(url) <span class="sc">%&gt;%</span></span>
+<span id="cb23-5"><a href="#cb23-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tf_idf_books</span>()</span>
+<span id="cb23-6"><a href="#cb23-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb23-7"><a href="#cb23-7" aria-hidden="true" tabindex="-1"></a>sample_book</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 1 × 3
+  total_words unique_words lexical_density
+        &lt;int&gt;        &lt;int&gt;           &lt;dbl&gt;
+1       39233         6560            16.7</code></pre>
+</div>
+</div>
+<p>And now that we know that our function works, we can apply it to all books in the <code>books_meta</code> data frame:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb25"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a>results <span class="ot">&lt;-</span> books_meta <span class="sc">%&gt;%</span></span>
+<span id="cb25-2"><a href="#cb25-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">metrics =</span> <span class="fu">map</span>(url, tf_idf_books)) <span class="sc">%&gt;%</span></span>
+<span id="cb25-3"><a href="#cb25-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">unnest</span>(metrics)</span>
+<span id="cb25-4"><a href="#cb25-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb25-5"><a href="#cb25-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb25-6"><a href="#cb25-6" aria-hidden="true" tabindex="-1"></a>results</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 25 × 7
+   author             title  year url   total_words unique_words lexical_density
+   &lt;chr&gt;              &lt;chr&gt; &lt;dbl&gt; &lt;chr&gt;       &lt;int&gt;        &lt;int&gt;           &lt;dbl&gt;
+ 1 Jane Austen        Prid…  1813 http…       39233         6560            16.7
+ 2 Charles Dickens    A Ta…  1859 http…       46636         9330            20.0
+ 3 F. Scott Fitzgera… The …  1925 http…       17699         5459            30.8
+ 4 Mary Wollstonecra… Fran…  1818 http…       27315         6589            24.1
+ 5 Herman Melville    Moby…  1851 http…       86195        17276            20.0
+ 6 Louisa May Alcott  Litt…  1868 http…       65870        10658            16.2
+ 7 Mark Twain         Tom …  1876 http…       26448         7058            26.7
+ 8 Jonathan Swift     Gull…  1726 http…       18045         5406            30.0
+ 9 E. M. Forster      A Ro…  1908 http…       23114         6378            27.6
+10 Elizabeth Von Arn… The …  1922 http…       24427         5711            23.4
+# ℹ 15 more rows</code></pre>
+</div>
+</div>
+<ul>
+<li>Add the Harry Potter Books</li>
+</ul>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb27"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a>hp_lexical <span class="ot">&lt;-</span> lexical_density <span class="sc">%&gt;%</span></span>
+<span id="cb27-2"><a href="#cb27-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rename</span>(</span>
+<span id="cb27-3"><a href="#cb27-3" aria-hidden="true" tabindex="-1"></a>    <span class="at">title =</span> book,</span>
+<span id="cb27-4"><a href="#cb27-4" aria-hidden="true" tabindex="-1"></a>    <span class="at">lexical_density =</span> vocab_density</span>
+<span id="cb27-5"><a href="#cb27-5" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
+<span id="cb27-6"><a href="#cb27-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb27-7"><a href="#cb27-7" aria-hidden="true" tabindex="-1"></a>    <span class="at">author =</span> <span class="st">"J.K. Rowling"</span>,</span>
+<span id="cb27-8"><a href="#cb27-8" aria-hidden="true" tabindex="-1"></a>    <span class="at">year =</span> <span class="fu">case_when</span>(</span>
+<span id="cb27-9"><a href="#cb27-9" aria-hidden="true" tabindex="-1"></a>      title <span class="sc">==</span> <span class="st">"philosophers_stone"</span> <span class="sc">~</span> <span class="dv">1997</span>,</span>
+<span id="cb27-10"><a href="#cb27-10" aria-hidden="true" tabindex="-1"></a>      title <span class="sc">==</span> <span class="st">"chamber_of_secrets"</span> <span class="sc">~</span> <span class="dv">1998</span>,</span>
+<span id="cb27-11"><a href="#cb27-11" aria-hidden="true" tabindex="-1"></a>      title <span class="sc">==</span> <span class="st">"prisoner_of_azkaban"</span> <span class="sc">~</span> <span class="dv">1999</span>,</span>
+<span id="cb27-12"><a href="#cb27-12" aria-hidden="true" tabindex="-1"></a>      title <span class="sc">==</span> <span class="st">"goblet_of_fire"</span> <span class="sc">~</span> <span class="dv">2000</span>,</span>
+<span id="cb27-13"><a href="#cb27-13" aria-hidden="true" tabindex="-1"></a>      title <span class="sc">==</span> <span class="st">"order_of_the_phoenix"</span> <span class="sc">~</span> <span class="dv">2003</span>,</span>
+<span id="cb27-14"><a href="#cb27-14" aria-hidden="true" tabindex="-1"></a>      title <span class="sc">==</span> <span class="st">"half_blood_prince"</span> <span class="sc">~</span> <span class="dv">2005</span>,</span>
+<span id="cb27-15"><a href="#cb27-15" aria-hidden="true" tabindex="-1"></a>      title <span class="sc">==</span> <span class="st">"deathly_hallows"</span> <span class="sc">~</span> <span class="dv">2007</span></span>
+<span id="cb27-16"><a href="#cb27-16" aria-hidden="true" tabindex="-1"></a>    ),</span>
+<span id="cb27-17"><a href="#cb27-17" aria-hidden="true" tabindex="-1"></a>    <span class="at">url =</span> <span class="cn">NA_character_</span>,</span>
+<span id="cb27-18"><a href="#cb27-18" aria-hidden="true" tabindex="-1"></a>    <span class="at">text =</span> <span class="fu">case_when</span>(</span>
+<span id="cb27-19"><a href="#cb27-19" aria-hidden="true" tabindex="-1"></a>      title <span class="sc">==</span> <span class="st">"philosophers_stone"</span> <span class="sc">~</span> <span class="fu">list</span>(philosophers_stone),</span>
+<span id="cb27-20"><a href="#cb27-20" aria-hidden="true" tabindex="-1"></a>      title <span class="sc">==</span> <span class="st">"chamber_of_secrets"</span> <span class="sc">~</span> <span class="fu">list</span>(chamber_of_secrets),</span>
+<span id="cb27-21"><a href="#cb27-21" aria-hidden="true" tabindex="-1"></a>      title <span class="sc">==</span> <span class="st">"prisoner_of_azkaban"</span> <span class="sc">~</span> <span class="fu">list</span>(prisoner_of_azkaban),</span>
+<span id="cb27-22"><a href="#cb27-22" aria-hidden="true" tabindex="-1"></a>      title <span class="sc">==</span> <span class="st">"goblet_of_fire"</span> <span class="sc">~</span> <span class="fu">list</span>(goblet_of_fire),</span>
+<span id="cb27-23"><a href="#cb27-23" aria-hidden="true" tabindex="-1"></a>      title <span class="sc">==</span> <span class="st">"order_of_the_phoenix"</span> <span class="sc">~</span> <span class="fu">list</span>(order_of_the_phoenix),</span>
+<span id="cb27-24"><a href="#cb27-24" aria-hidden="true" tabindex="-1"></a>      title <span class="sc">==</span> <span class="st">"half_blood_prince"</span> <span class="sc">~</span> <span class="fu">list</span>(half_blood_prince),</span>
+<span id="cb27-25"><a href="#cb27-25" aria-hidden="true" tabindex="-1"></a>      title <span class="sc">==</span> <span class="st">"deathly_hallows"</span> <span class="sc">~</span> <span class="fu">list</span>(deathly_hallows)</span>
+<span id="cb27-26"><a href="#cb27-26" aria-hidden="true" tabindex="-1"></a>     )</span>
+<span id="cb27-27"><a href="#cb27-27" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
+<span id="cb27-28"><a href="#cb27-28" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(author, title, year, url, text, total_words, unique_words, lexical_density)</span>
+<span id="cb27-29"><a href="#cb27-29" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb27-30"><a href="#cb27-30" aria-hidden="true" tabindex="-1"></a>hp_lexical</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 7 × 8
+  author       title   year url   text  total_words unique_words lexical_density
+  &lt;chr&gt;        &lt;fct&gt;  &lt;dbl&gt; &lt;chr&gt; &lt;lis&gt;       &lt;dbl&gt;        &lt;dbl&gt;           &lt;dbl&gt;
+1 J.K. Rowling philo…  1997 &lt;NA&gt;  &lt;chr&gt;       28585         5421            19.0
+2 J.K. Rowling chamb…  1998 &lt;NA&gt;  &lt;chr&gt;       33621         6687            19.9
+3 J.K. Rowling priso…  1999 &lt;NA&gt;  &lt;chr&gt;       41188         7087            17.2
+4 J.K. Rowling goble…  2000 &lt;NA&gt;  &lt;chr&gt;       72663         9919            13.6
+5 J.K. Rowling order…  2003 &lt;NA&gt;  &lt;chr&gt;       96777        12187            12.6
+6 J.K. Rowling half_…  2005 &lt;NA&gt;  &lt;chr&gt;       63098        10823            17.2
+7 J.K. Rowling death…  2007 &lt;NA&gt;  &lt;chr&gt;       73406        11527            15.7</code></pre>
+</div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb29"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a>all_books <span class="ot">&lt;-</span> <span class="fu">bind_rows</span>(results <span class="sc">%&gt;%</span> <span class="fu">mutate</span>(<span class="at">text =</span> <span class="cn">NA</span>), hp_lexical) <span class="sc">%&gt;%</span></span>
+<span id="cb29-2"><a href="#cb29-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">arrange</span>(<span class="fu">desc</span>(lexical_density))</span>
+<span id="cb29-3"><a href="#cb29-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb29-4"><a href="#cb29-4" aria-hidden="true" tabindex="-1"></a>all_books</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 32 × 8
+   author      title  year url   total_words unique_words lexical_density text  
+   &lt;chr&gt;       &lt;chr&gt; &lt;dbl&gt; &lt;chr&gt;       &lt;dbl&gt;        &lt;dbl&gt;           &lt;dbl&gt; &lt;list&gt;
+ 1 R. L. Stev… Dr. …  1886 http…        8471         3524            41.6 &lt;NULL&gt;
+ 2 F. Scott F… The …  1925 http…       17699         5459            30.8 &lt;NULL&gt;
+ 3 Jonathan S… Gull…  1726 http…       18045         5406            30.0 &lt;NULL&gt;
+ 4 Kenneth Gr… The …  1908 http…       20879         6172            29.6 &lt;NULL&gt;
+ 5 J. M. Barr… Pete…  1911 http…       15375         4423            28.8 &lt;NULL&gt;
+ 6 E. M. Fors… A Ro…  1908 http…       23114         6378            27.6 &lt;NULL&gt;
+ 7 Lewis Carr… Alic…  1865 http…        8394         2301            27.4 &lt;NULL&gt;
+ 8 Mark Twain  Tom …  1876 http…       26448         7058            26.7 &lt;NULL&gt;
+ 9 Elizabeth … Cran…  1853 http…       23559         6109            25.9 &lt;NULL&gt;
+10 Jules Verne Arou…  1872 http…       25216         6417            25.4 &lt;NULL&gt;
+# ℹ 22 more rows</code></pre>
+</div>
+</div>
+<ul>
+<li>Visualize lexical density over time</li>
+</ul>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb31"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a>model <span class="ot">&lt;-</span> <span class="fu">lm</span>(lexical_density <span class="sc">~</span> year, <span class="at">data =</span> all_books)</span>
+<span id="cb31-2"><a href="#cb31-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb31-3"><a href="#cb31-3" aria-hidden="true" tabindex="-1"></a>slope <span class="ot">&lt;-</span> <span class="fu">coef</span>(model)[<span class="dv">2</span>]</span>
+<span id="cb31-4"><a href="#cb31-4" aria-hidden="true" tabindex="-1"></a>intercept <span class="ot">&lt;-</span> <span class="fu">coef</span>(model)[<span class="dv">1</span>]</span>
+<span id="cb31-5"><a href="#cb31-5" aria-hidden="true" tabindex="-1"></a>r2 <span class="ot">&lt;-</span> <span class="fu">summary</span>(model)<span class="sc">$</span>r.squared</span>
+<span id="cb31-6"><a href="#cb31-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb31-7"><a href="#cb31-7" aria-hidden="true" tabindex="-1"></a><span class="fu">sprintf</span>(<span class="st">"y = % s, x + % s, R² = % s"</span>, <span class="fu">round</span>(slope, <span class="dv">4</span>), <span class="fu">round</span>(intercept, <span class="dv">2</span>), <span class="fu">round</span>(r2, <span class="dv">4</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "y = -0.0163, x + 52.57, R² = 0.0406"</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb33"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb33-1"><a href="#cb33-1" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(all_books, <span class="fu">aes</span>(<span class="at">x=</span>year, <span class="at">y=</span>lexical_density)) <span class="sc">+</span></span>
+<span id="cb33-2"><a href="#cb33-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>(<span class="at">color =</span> <span class="st">"steelblue"</span>, <span class="at">size =</span> <span class="dv">3</span>) <span class="sc">+</span> </span>
+<span id="cb33-3"><a href="#cb33-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_smooth</span>(<span class="at">method =</span> <span class="st">"lm"</span>, <span class="at">se =</span> <span class="cn">FALSE</span>, <span class="at">formula =</span> <span class="st">'y ~ x'</span>) <span class="sc">+</span></span>
+<span id="cb33-4"><a href="#cb33-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_text</span>(<span class="fu">aes</span>(<span class="at">label =</span> title), <span class="at">hjust =</span> <span class="dv">0</span>, <span class="at">vjust =</span> <span class="fl">1.3</span>, <span class="at">size =</span> <span class="dv">3</span>) <span class="sc">+</span></span>
+<span id="cb33-5"><a href="#cb33-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(</span>
+<span id="cb33-6"><a href="#cb33-6" aria-hidden="true" tabindex="-1"></a>    <span class="at">title =</span> <span class="st">"Lexical Density over Time"</span>,</span>
+<span id="cb33-7"><a href="#cb33-7" aria-hidden="true" tabindex="-1"></a>    <span class="at">x =</span> <span class="st">"publication year"</span>,</span>
+<span id="cb33-8"><a href="#cb33-8" aria-hidden="true" tabindex="-1"></a>    <span class="at">y =</span> <span class="st">"Lexical Density %"</span></span>
+<span id="cb33-9"><a href="#cb33-9" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">+</span> </span>
+<span id="cb33-10"><a href="#cb33-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_minimal</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="Notes_files/figure-html/unnamed-chunk-17-1.png" class="img-fluid figure-img" width="960"></p>
+</figure>
+</div>
+</div>
+</div>
+<p>The regression model shows a very weak negative correlation between publication year and lexical density (R² = 0.0406). While there is a slight downward trend toward simpler vocabulary in more recent fiction (approximately 0.0163 percentage points less lexical density per year, or about 1.63 per century) the variation between individual works suggests that this is not a strong or consistent pattern across literary history. This indicates that authorial style, genre, and intended audience likely play a more significant role in shaping vocabulary diversity than time alone.</p>
 </section>
 </section>
+</section>
+<section id="readability" class="level2">
+<h2 class="anchored" data-anchor-id="readability">Readability</h2>
+<p>Now that we have explored the lexical complexity of each book, let’s explore their readability using the Flesch Reading Ease Score. This formula assesses how easy or difficult it is to read a piece of text, like a book. The higher the score, the easier it is to read. The formula is as follows:</p>
+<p><span class="math display">\[
+FRE = 206.835 - 1.015 \left( \frac{\text{total words}}{\text{total sentences}} \right) - 84.6 \left( \frac{\text{total syllables}}{\text{total words}} \right)
+\]</span></p>
+<p>Now, we can write a function that help us to calculate this:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb34"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb34-1"><a href="#cb34-1" aria-hidden="true" tabindex="-1"></a>calculate_sentences <span class="ot">&lt;-</span> <span class="cf">function</span>(text) {</span>
+<span id="cb34-2"><a href="#cb34-2" aria-hidden="true" tabindex="-1"></a>  tokenized_text <span class="ot">&lt;-</span> <span class="fu">tokenize_sentences</span>(<span class="fu">paste</span>(text, <span class="at">collapse =</span> <span class="st">"</span><span class="sc">\n</span><span class="st">"</span>)) <span class="sc">%&gt;%</span></span>
+<span id="cb34-3"><a href="#cb34-3" aria-hidden="true" tabindex="-1"></a>    <span class="fu">unlist</span>()</span>
+<span id="cb34-4"><a href="#cb34-4" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb34-5"><a href="#cb34-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">return</span>(<span class="fu">length</span>(tokenized_text))</span>
+<span id="cb34-6"><a href="#cb34-6" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb34-7"><a href="#cb34-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb34-8"><a href="#cb34-8" aria-hidden="true" tabindex="-1"></a>calculate_words <span class="ot">&lt;-</span> <span class="cf">function</span>(text) {</span>
+<span id="cb34-9"><a href="#cb34-9" aria-hidden="true" tabindex="-1"></a>  tokenized_text <span class="ot">&lt;-</span> <span class="fu">tokenize_words</span>(<span class="fu">paste</span>(text, <span class="at">collapse =</span> <span class="st">"</span><span class="sc">\n</span><span class="st">"</span>)) <span class="sc">%&gt;%</span></span>
+<span id="cb34-10"><a href="#cb34-10" aria-hidden="true" tabindex="-1"></a>    <span class="fu">unlist</span>()</span>
+<span id="cb34-11"><a href="#cb34-11" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb34-12"><a href="#cb34-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">return</span>(<span class="fu">length</span>(tokenized_text))</span>
+<span id="cb34-13"><a href="#cb34-13" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb34-14"><a href="#cb34-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb34-15"><a href="#cb34-15" aria-hidden="true" tabindex="-1"></a>calculate_syllabes <span class="ot">&lt;-</span> <span class="cf">function</span>(text) {</span>
+<span id="cb34-16"><a href="#cb34-16" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Tokenize the text into words</span></span>
+<span id="cb34-17"><a href="#cb34-17" aria-hidden="true" tabindex="-1"></a>  words <span class="ot">&lt;-</span> <span class="fu">tokenize_words</span>(<span class="fu">paste</span>(text, <span class="at">collapse =</span> <span class="st">"</span><span class="sc">\n</span><span class="st">"</span>)) <span class="sc">%&gt;%</span></span>
+<span id="cb34-18"><a href="#cb34-18" aria-hidden="true" tabindex="-1"></a>    <span class="fu">unlist</span>()</span>
+<span id="cb34-19"><a href="#cb34-19" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb34-20"><a href="#cb34-20" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Count syllables in each word</span></span>
+<span id="cb34-21"><a href="#cb34-21" aria-hidden="true" tabindex="-1"></a>  syllable_counts <span class="ot">&lt;-</span> nsyllable<span class="sc">::</span><span class="fu">nsyllable</span>(words)</span>
+<span id="cb34-22"><a href="#cb34-22" aria-hidden="true" tabindex="-1"></a>  total_syllables <span class="ot">&lt;-</span> <span class="fu">sum</span>(syllable_counts, <span class="at">na.rm =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb34-23"><a href="#cb34-23" aria-hidden="true" tabindex="-1"></a>  <span class="fu">return</span>(total_syllables)</span>
+<span id="cb34-24"><a href="#cb34-24" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb34-25"><a href="#cb34-25" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb34-26"><a href="#cb34-26" aria-hidden="true" tabindex="-1"></a>flesch_reading_ease <span class="ot">&lt;-</span> <span class="cf">function</span>(url, <span class="at">text =</span> <span class="cn">NULL</span>) {</span>
+<span id="cb34-27"><a href="#cb34-27" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="fu">is.na</span>(url) <span class="sc">&amp;&amp;</span> <span class="sc">!</span><span class="fu">is.null</span>(text)) {</span>
+<span id="cb34-28"><a href="#cb34-28" aria-hidden="true" tabindex="-1"></a>    lines <span class="ot">&lt;-</span> text</span>
+<span id="cb34-29"><a href="#cb34-29" aria-hidden="true" tabindex="-1"></a>  } <span class="cf">else</span> <span class="cf">if</span> (<span class="sc">!</span><span class="fu">is.na</span>(url)) {</span>
+<span id="cb34-30"><a href="#cb34-30" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Check if the URL is valid</span></span>
+<span id="cb34-31"><a href="#cb34-31" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> (<span class="sc">!</span><span class="fu">grepl</span>(<span class="st">"^https?://"</span>, url)) {</span>
+<span id="cb34-32"><a href="#cb34-32" aria-hidden="true" tabindex="-1"></a>      <span class="fu">stop</span>(<span class="st">"Invalid URL provided."</span>)</span>
+<span id="cb34-33"><a href="#cb34-33" aria-hidden="true" tabindex="-1"></a>    }</span>
+<span id="cb34-34"><a href="#cb34-34" aria-hidden="true" tabindex="-1"></a>    book_processed <span class="ot">&lt;-</span> <span class="fu">process_books</span>(url)</span>
+<span id="cb34-35"><a href="#cb34-35" aria-hidden="true" tabindex="-1"></a>    lines <span class="ot">&lt;-</span> <span class="fu">clean_guthenbergs</span>(book_processed)</span>
+<span id="cb34-36"><a href="#cb34-36" aria-hidden="true" tabindex="-1"></a>  } <span class="cf">else</span> {</span>
+<span id="cb34-37"><a href="#cb34-37" aria-hidden="true" tabindex="-1"></a>    <span class="fu">return</span>(<span class="fu">tibble</span>(<span class="at">flesch_score =</span> <span class="cn">NA</span>))</span>
+<span id="cb34-38"><a href="#cb34-38" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb34-39"><a href="#cb34-39" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb34-40"><a href="#cb34-40" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="fu">length</span>(lines) <span class="sc">==</span> <span class="dv">1</span> <span class="sc">&amp;&amp;</span> <span class="fu">is.na</span>(lines)) {</span>
+<span id="cb34-41"><a href="#cb34-41" aria-hidden="true" tabindex="-1"></a>    <span class="fu">return</span>(<span class="fu">tibble</span>(<span class="at">flesch_score =</span> <span class="cn">NA</span>))</span>
+<span id="cb34-42"><a href="#cb34-42" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb34-43"><a href="#cb34-43" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb34-44"><a href="#cb34-44" aria-hidden="true" tabindex="-1"></a>  <span class="co"># calculate the number of sentences</span></span>
+<span id="cb34-45"><a href="#cb34-45" aria-hidden="true" tabindex="-1"></a>  total_sentences <span class="ot">&lt;-</span> <span class="fu">calculate_sentences</span>(lines)</span>
+<span id="cb34-46"><a href="#cb34-46" aria-hidden="true" tabindex="-1"></a>  total_words <span class="ot">&lt;-</span> <span class="fu">calculate_words</span>(lines)</span>
+<span id="cb34-47"><a href="#cb34-47" aria-hidden="true" tabindex="-1"></a>  total_syllables <span class="ot">&lt;-</span> <span class="fu">calculate_syllabes</span>(lines)</span>
+<span id="cb34-48"><a href="#cb34-48" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb34-49"><a href="#cb34-49" aria-hidden="true" tabindex="-1"></a>  ASL <span class="ot">&lt;-</span> total_words <span class="sc">/</span> total_sentences</span>
+<span id="cb34-50"><a href="#cb34-50" aria-hidden="true" tabindex="-1"></a>  ASW <span class="ot">&lt;-</span> total_syllables <span class="sc">/</span> total_words</span>
+<span id="cb34-51"><a href="#cb34-51" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb34-52"><a href="#cb34-52" aria-hidden="true" tabindex="-1"></a>  <span class="co"># calculate the Flesch Reading Ease score</span></span>
+<span id="cb34-53"><a href="#cb34-53" aria-hidden="true" tabindex="-1"></a>  flesch_score <span class="ot">&lt;-</span> <span class="fl">206.835</span> <span class="sc">-</span> (<span class="fl">1.015</span> <span class="sc">*</span> ASL) <span class="sc">-</span> (<span class="fl">84.6</span> <span class="sc">*</span> ASW)</span>
+<span id="cb34-54"><a href="#cb34-54" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb34-55"><a href="#cb34-55" aria-hidden="true" tabindex="-1"></a>  <span class="co"># create the tibble</span></span>
+<span id="cb34-56"><a href="#cb34-56" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tibble</span>(</span>
+<span id="cb34-57"><a href="#cb34-57" aria-hidden="true" tabindex="-1"></a>    <span class="at">total_sentences =</span> total_sentences,</span>
+<span id="cb34-58"><a href="#cb34-58" aria-hidden="true" tabindex="-1"></a>    <span class="at">total_syllables =</span> total_syllables,</span>
+<span id="cb34-59"><a href="#cb34-59" aria-hidden="true" tabindex="-1"></a>    <span class="at">average_sentence_length =</span> <span class="fu">round</span>(ASL, <span class="dv">2</span>),</span>
+<span id="cb34-60"><a href="#cb34-60" aria-hidden="true" tabindex="-1"></a>    <span class="at">average_syllables_per_word =</span> <span class="fu">round</span>(ASW, <span class="dv">2</span>),</span>
+<span id="cb34-61"><a href="#cb34-61" aria-hidden="true" tabindex="-1"></a>    <span class="at">flesch_score =</span> <span class="fu">round</span>(flesch_score, <span class="dv">2</span>)</span>
+<span id="cb34-62"><a href="#cb34-62" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb34-63"><a href="#cb34-63" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb34-64"><a href="#cb34-64" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb35"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb35-1"><a href="#cb35-1" aria-hidden="true" tabindex="-1"></a>sample_book <span class="ot">&lt;-</span> all_books <span class="sc">%&gt;%</span></span>
+<span id="cb35-2"><a href="#cb35-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(title <span class="sc">==</span> <span class="st">"Pride and Prejudice"</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb35-3"><a href="#cb35-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">pull</span>(url) <span class="sc">%&gt;%</span></span>
+<span id="cb35-4"><a href="#cb35-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">flesch_reading_ease</span>()</span>
+<span id="cb35-5"><a href="#cb35-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb35-6"><a href="#cb35-6" aria-hidden="true" tabindex="-1"></a>sample_book</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 1 × 5
+  total_sentences total_syllables average_sentence_length average_syllables_pe…¹
+            &lt;int&gt;           &lt;int&gt;                   &lt;dbl&gt;                  &lt;dbl&gt;
+1            7245          185620                    17.6                   1.46
+# ℹ abbreviated name: ¹​average_syllables_per_word
+# ℹ 1 more variable: flesch_score &lt;dbl&gt;</code></pre>
+</div>
+</div>
+<p>And, now that we have the function, we can apply it to all books:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb37"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb37-1"><a href="#cb37-1" aria-hidden="true" tabindex="-1"></a>all_books_readability <span class="ot">&lt;-</span> all_books <span class="sc">%&gt;%</span></span>
+<span id="cb37-2"><a href="#cb37-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">metrics =</span> <span class="fu">map2</span>(url, text, flesch_reading_ease)) <span class="sc">%&gt;%</span></span>
+<span id="cb37-3"><a href="#cb37-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">unnest</span>(metrics)</span>
+<span id="cb37-4"><a href="#cb37-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb37-5"><a href="#cb37-5" aria-hidden="true" tabindex="-1"></a>all_books_readability</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 32 × 13
+   author      title  year url   total_words unique_words lexical_density text  
+   &lt;chr&gt;       &lt;chr&gt; &lt;dbl&gt; &lt;chr&gt;       &lt;dbl&gt;        &lt;dbl&gt;           &lt;dbl&gt; &lt;list&gt;
+ 1 R. L. Stev… Dr. …  1886 http…        8471         3524            41.6 &lt;NULL&gt;
+ 2 F. Scott F… The …  1925 http…       17699         5459            30.8 &lt;NULL&gt;
+ 3 Jonathan S… Gull…  1726 http…       18045         5406            30.0 &lt;NULL&gt;
+ 4 Kenneth Gr… The …  1908 http…       20879         6172            29.6 &lt;NULL&gt;
+ 5 J. M. Barr… Pete…  1911 http…       15375         4423            28.8 &lt;NULL&gt;
+ 6 E. M. Fors… A Ro…  1908 http…       23114         6378            27.6 &lt;NULL&gt;
+ 7 Lewis Carr… Alic…  1865 http…        8394         2301            27.4 &lt;NULL&gt;
+ 8 Mark Twain  Tom …  1876 http…       26448         7058            26.7 &lt;NULL&gt;
+ 9 Elizabeth … Cran…  1853 http…       23559         6109            25.9 &lt;NULL&gt;
+10 Jules Verne Arou…  1872 http…       25216         6417            25.4 &lt;NULL&gt;
+# ℹ 22 more rows
+# ℹ 5 more variables: total_sentences &lt;int&gt;, total_syllables &lt;int&gt;,
+#   average_sentence_length &lt;dbl&gt;, average_syllables_per_word &lt;dbl&gt;,
+#   flesch_score &lt;dbl&gt;</code></pre>
+</div>
+</div>
+<p>So, we can expect that the Flesch Reading Ease Score is higher in books with lower lexical density, and vice versa. Let’s visualize this relationship:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb39"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb39-1"><a href="#cb39-1" aria-hidden="true" tabindex="-1"></a>model <span class="ot">&lt;-</span> <span class="fu">lm</span>(flesch_score <span class="sc">~</span> lexical_density, <span class="at">data =</span> all_books_readability)</span>
+<span id="cb39-2"><a href="#cb39-2" aria-hidden="true" tabindex="-1"></a>slope <span class="ot">&lt;-</span> <span class="fu">coef</span>(model)[<span class="dv">2</span>]</span>
+<span id="cb39-3"><a href="#cb39-3" aria-hidden="true" tabindex="-1"></a>intercept <span class="ot">&lt;-</span> <span class="fu">coef</span>(model)[<span class="dv">1</span>]</span>
+<span id="cb39-4"><a href="#cb39-4" aria-hidden="true" tabindex="-1"></a>r2 <span class="ot">&lt;-</span> <span class="fu">summary</span>(model)<span class="sc">$</span>r.squared</span>
+<span id="cb39-5"><a href="#cb39-5" aria-hidden="true" tabindex="-1"></a><span class="fu">sprintf</span>(<span class="st">"y = % s, x + % s, R² = % s"</span>, <span class="fu">round</span>(slope, <span class="dv">4</span>), <span class="fu">round</span>(intercept, <span class="dv">2</span>), <span class="fu">round</span>(r2, <span class="dv">4</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "y = 0.1178, x + 68.89, R² = 0.0075"</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb41"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb41-1"><a href="#cb41-1" aria-hidden="true" tabindex="-1"></a>fre_plot <span class="ot">&lt;-</span> <span class="fu">ggplot</span>(all_books_readability, <span class="fu">aes</span>(<span class="at">x =</span> lexical_density, <span class="at">y =</span> flesch_score, <span class="at">color =</span> <span class="fu">as.Date</span>(<span class="fu">as.character</span>(year), <span class="st">"%Y"</span>))) <span class="sc">+</span></span>
+<span id="cb41-2"><a href="#cb41-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>(<span class="at">size =</span> <span class="dv">3</span>) <span class="sc">+</span> </span>
+<span id="cb41-3"><a href="#cb41-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_colour_date</span>(</span>
+<span id="cb41-4"><a href="#cb41-4" aria-hidden="true" tabindex="-1"></a>    <span class="at">name =</span> <span class="st">"Publication Year"</span>,</span>
+<span id="cb41-5"><a href="#cb41-5" aria-hidden="true" tabindex="-1"></a>    <span class="at">date_labels =</span> <span class="st">"%Y"</span>,</span>
+<span id="cb41-6"><a href="#cb41-6" aria-hidden="true" tabindex="-1"></a>    <span class="at">date_breaks =</span> <span class="st">"50 years"</span></span>
+<span id="cb41-7"><a href="#cb41-7" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">+</span></span>
+<span id="cb41-8"><a href="#cb41-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_text</span>(<span class="fu">aes</span>(<span class="at">label =</span> title), <span class="at">hjust =</span> <span class="dv">0</span>, <span class="at">vjust =</span> <span class="fl">1.3</span>, <span class="at">size =</span> <span class="dv">3</span>) <span class="sc">+</span></span>
+<span id="cb41-9"><a href="#cb41-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(</span>
+<span id="cb41-10"><a href="#cb41-10" aria-hidden="true" tabindex="-1"></a>    <span class="at">title =</span> <span class="st">"Flesch Reading Ease Score vs Lexical Density"</span>,</span>
+<span id="cb41-11"><a href="#cb41-11" aria-hidden="true" tabindex="-1"></a>    <span class="at">x =</span> <span class="st">"Lexical Density (%)"</span>,</span>
+<span id="cb41-12"><a href="#cb41-12" aria-hidden="true" tabindex="-1"></a>    <span class="at">y =</span> <span class="st">"Flesch Reading Ease Score"</span></span>
+<span id="cb41-13"><a href="#cb41-13" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">+</span> </span>
+<span id="cb41-14"><a href="#cb41-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_minimal</span>()</span>
+<span id="cb41-15"><a href="#cb41-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb41-16"><a href="#cb41-16" aria-hidden="true" tabindex="-1"></a>fre_plot <span class="sc">+</span></span>
+<span id="cb41-17"><a href="#cb41-17" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_smooth</span>(</span>
+<span id="cb41-18"><a href="#cb41-18" aria-hidden="true" tabindex="-1"></a>    <span class="at">data =</span> all_books_readability,</span>
+<span id="cb41-19"><a href="#cb41-19" aria-hidden="true" tabindex="-1"></a>    <span class="at">mapping =</span> <span class="fu">aes</span>(<span class="at">x =</span> lexical_density, <span class="at">y =</span> flesch_score),</span>
+<span id="cb41-20"><a href="#cb41-20" aria-hidden="true" tabindex="-1"></a>    <span class="at">method =</span> <span class="st">"lm"</span>,</span>
+<span id="cb41-21"><a href="#cb41-21" aria-hidden="true" tabindex="-1"></a>    <span class="at">se =</span> <span class="cn">FALSE</span>,</span>
+<span id="cb41-22"><a href="#cb41-22" aria-hidden="true" tabindex="-1"></a>    <span class="at">inherit.aes =</span> <span class="cn">FALSE</span>,</span>
+<span id="cb41-23"><a href="#cb41-23" aria-hidden="true" tabindex="-1"></a>    <span class="at">formula =</span> <span class="st">'y ~ x'</span></span>
+<span id="cb41-24"><a href="#cb41-24" aria-hidden="true" tabindex="-1"></a>  )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="Notes_files/figure-html/unnamed-chunk-21-1.png" class="img-fluid figure-img" width="960"></p>
+</figure>
+</div>
+</div>
+</div>
+<p>The regression analysis of Flesch Reading Ease score as a function of lexical density reveals a negligible positive correlation (R² = 0.0075). Although the model suggests that texts with higher lexical density may be slightly easier to read, this relationship is extremely weak and likely not meaningful. This result suggests that lexical variety alone is a poor predictor of readability when considered independently of sentence length and syllabic complexity.</p>
+</section>
+<section id="understandability" class="level2">
+<h2 class="anchored" data-anchor-id="understandability">Understandability</h2>
+<p>Similarly to the readability, the Automated Readability Index (ARI) is a formula that estimates what school grade level is required to understand a piece of text. The formula is as follows:</p>
+<p><span class="math display">\[
+ARI = 4.71 \left( \frac{\text{total characters}}{\text{total words}} \right) + 0.5 \left( \frac{\text{total words}}{\text{total sentences}} \right) - 21.43
+\]</span> So, as we did with the Flesch Reading Ease Score, we can write a function to calculate the ARI:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb42"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb42-1"><a href="#cb42-1" aria-hidden="true" tabindex="-1"></a>calculate_characters <span class="ot">&lt;-</span> <span class="cf">function</span>(text) {</span>
+<span id="cb42-2"><a href="#cb42-2" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Count the number of characters in the text</span></span>
+<span id="cb42-3"><a href="#cb42-3" aria-hidden="true" tabindex="-1"></a>  total_characters <span class="ot">&lt;-</span> <span class="fu">nchar</span>(<span class="fu">paste</span>(text, <span class="at">collapse =</span> <span class="st">"</span><span class="sc">\n</span><span class="st">"</span>))</span>
+<span id="cb42-4"><a href="#cb42-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">return</span>(total_characters)</span>
+<span id="cb42-5"><a href="#cb42-5" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb42-6"><a href="#cb42-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb42-7"><a href="#cb42-7" aria-hidden="true" tabindex="-1"></a>automated_readability_index <span class="ot">&lt;-</span> <span class="cf">function</span>(url, <span class="at">text =</span> <span class="cn">NULL</span>) {</span>
+<span id="cb42-8"><a href="#cb42-8" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="fu">is.na</span>(url) <span class="sc">&amp;&amp;</span> <span class="sc">!</span><span class="fu">is.null</span>(text)) {</span>
+<span id="cb42-9"><a href="#cb42-9" aria-hidden="true" tabindex="-1"></a>    lines <span class="ot">&lt;-</span> text</span>
+<span id="cb42-10"><a href="#cb42-10" aria-hidden="true" tabindex="-1"></a>  } <span class="cf">else</span> <span class="cf">if</span> (<span class="sc">!</span><span class="fu">is.na</span>(url)) {</span>
+<span id="cb42-11"><a href="#cb42-11" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Check if the URL is valid</span></span>
+<span id="cb42-12"><a href="#cb42-12" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> (<span class="sc">!</span><span class="fu">grepl</span>(<span class="st">"^https?://"</span>, url)) {</span>
+<span id="cb42-13"><a href="#cb42-13" aria-hidden="true" tabindex="-1"></a>      <span class="fu">stop</span>(<span class="st">"Invalid URL provided."</span>)</span>
+<span id="cb42-14"><a href="#cb42-14" aria-hidden="true" tabindex="-1"></a>    }</span>
+<span id="cb42-15"><a href="#cb42-15" aria-hidden="true" tabindex="-1"></a>    book_processed <span class="ot">&lt;-</span> <span class="fu">process_books</span>(url)</span>
+<span id="cb42-16"><a href="#cb42-16" aria-hidden="true" tabindex="-1"></a>    lines <span class="ot">&lt;-</span> <span class="fu">clean_guthenbergs</span>(book_processed)</span>
+<span id="cb42-17"><a href="#cb42-17" aria-hidden="true" tabindex="-1"></a>  } <span class="cf">else</span> {</span>
+<span id="cb42-18"><a href="#cb42-18" aria-hidden="true" tabindex="-1"></a>    <span class="fu">return</span>(<span class="fu">tibble</span>(<span class="at">ari_score =</span> <span class="cn">NA</span>))</span>
+<span id="cb42-19"><a href="#cb42-19" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb42-20"><a href="#cb42-20" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb42-21"><a href="#cb42-21" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="fu">length</span>(lines) <span class="sc">==</span> <span class="dv">1</span> <span class="sc">&amp;&amp;</span> <span class="fu">is.na</span>(lines)) {</span>
+<span id="cb42-22"><a href="#cb42-22" aria-hidden="true" tabindex="-1"></a>    <span class="fu">return</span>(<span class="fu">tibble</span>(<span class="at">ari_score =</span> <span class="cn">NA</span>))</span>
+<span id="cb42-23"><a href="#cb42-23" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb42-24"><a href="#cb42-24" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb42-25"><a href="#cb42-25" aria-hidden="true" tabindex="-1"></a>  <span class="co"># calculate the number of sentences</span></span>
+<span id="cb42-26"><a href="#cb42-26" aria-hidden="true" tabindex="-1"></a>  total_sentences <span class="ot">&lt;-</span> <span class="fu">calculate_sentences</span>(lines)</span>
+<span id="cb42-27"><a href="#cb42-27" aria-hidden="true" tabindex="-1"></a>  total_words <span class="ot">&lt;-</span> <span class="fu">calculate_words</span>(lines)</span>
+<span id="cb42-28"><a href="#cb42-28" aria-hidden="true" tabindex="-1"></a>  total_characters <span class="ot">&lt;-</span> <span class="fu">calculate_characters</span>(lines)</span>
+<span id="cb42-29"><a href="#cb42-29" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb42-30"><a href="#cb42-30" aria-hidden="true" tabindex="-1"></a>  <span class="co"># calculate the ARI score</span></span>
+<span id="cb42-31"><a href="#cb42-31" aria-hidden="true" tabindex="-1"></a>  ari_score <span class="ot">&lt;-</span> (<span class="fl">4.71</span> <span class="sc">*</span> (total_characters <span class="sc">/</span> total_words)) <span class="sc">+</span> (<span class="fl">0.5</span> <span class="sc">*</span> (total_words <span class="sc">/</span> total_sentences)) <span class="sc">-</span> <span class="fl">21.43</span></span>
+<span id="cb42-32"><a href="#cb42-32" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb42-33"><a href="#cb42-33" aria-hidden="true" tabindex="-1"></a>  <span class="co"># create the tibble</span></span>
+<span id="cb42-34"><a href="#cb42-34" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tibble</span>(</span>
+<span id="cb42-35"><a href="#cb42-35" aria-hidden="true" tabindex="-1"></a>    <span class="at">total_characters =</span> total_characters,</span>
+<span id="cb42-36"><a href="#cb42-36" aria-hidden="true" tabindex="-1"></a>    <span class="at">ari_score =</span> <span class="fu">round</span>(ari_score, <span class="dv">2</span>)</span>
+<span id="cb42-37"><a href="#cb42-37" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb42-38"><a href="#cb42-38" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>And, now we can apply it to the sample book, just to check if it works:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb43"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb43-1"><a href="#cb43-1" aria-hidden="true" tabindex="-1"></a>sample_book <span class="ot">&lt;-</span> all_books_readability <span class="sc">%&gt;%</span></span>
+<span id="cb43-2"><a href="#cb43-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(title <span class="sc">==</span> <span class="st">"Pride and Prejudice"</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb43-3"><a href="#cb43-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">pull</span>(url) <span class="sc">%&gt;%</span></span>
+<span id="cb43-4"><a href="#cb43-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">automated_readability_index</span>()</span>
+<span id="cb43-5"><a href="#cb43-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb43-6"><a href="#cb43-6" aria-hidden="true" tabindex="-1"></a>sample_book</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 1 × 2
+  total_characters ari_score
+             &lt;int&gt;     &lt;dbl&gt;
+1           716645      13.9</code></pre>
+</div>
+</div>
+<p>And now we can apply it to all books:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb45"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb45-1"><a href="#cb45-1" aria-hidden="true" tabindex="-1"></a>all_books_ari <span class="ot">&lt;-</span> all_books_readability <span class="sc">%&gt;%</span></span>
+<span id="cb45-2"><a href="#cb45-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">metrics =</span> <span class="fu">map2</span>(url, text, automated_readability_index)) <span class="sc">%&gt;%</span></span>
+<span id="cb45-3"><a href="#cb45-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">unnest</span>(metrics)</span>
+<span id="cb45-4"><a href="#cb45-4" aria-hidden="true" tabindex="-1"></a>all_books_ari[, <span class="fu">c</span>(<span class="st">"title"</span>, <span class="st">"year"</span>, <span class="st">"ari_score"</span>, <span class="st">"total_characters"</span>, <span class="st">"total_words"</span>, <span class="st">"total_sentences"</span>)]</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 32 × 6
+   title             year ari_score total_characters total_words total_sentences
+   &lt;chr&gt;            &lt;dbl&gt;     &lt;dbl&gt;            &lt;int&gt;       &lt;dbl&gt;           &lt;int&gt;
+ 1 Dr. Jekyll and …  1886      13.4           138404        8471            1349
+ 2 The Great Gatsby  1925      11.4           268365       17699            3521
+ 3 Gulliver's Trav…  1726      19.3           284137       18045            1734
+ 4 The Wind in the…  1908      13.4           326007       20879            3248
+ 5 Peter Pan         1911      10.8           253712       15375            3354
+ 6 A Room with a V…  1908       9.9           372827       23114            6345
+ 7 Alice's Adventu…  1865      12.0           142856        8394            1631
+ 8 Tom Sawyer        1876      11.3           389571       26448            4957
+ 9 Cranford          1853      16.9           386477       23559            2762
+10 Around the Worl…  1872      13.4           367307       25216            4108
+# ℹ 22 more rows</code></pre>
+</div>
+</div>
+<p>And now we can try to figure out if there is a relationship between the ARI and FLesch scores. What we’re expecting is that as the ARI increases, Flesch decreases:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb47"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb47-1"><a href="#cb47-1" aria-hidden="true" tabindex="-1"></a>model <span class="ot">&lt;-</span> <span class="fu">lm</span>(ari_score <span class="sc">~</span> flesch_score, <span class="at">data =</span> all_books_ari)</span>
+<span id="cb47-2"><a href="#cb47-2" aria-hidden="true" tabindex="-1"></a>slope <span class="ot">&lt;-</span> <span class="fu">coef</span>(model)[<span class="dv">2</span>]</span>
+<span id="cb47-3"><a href="#cb47-3" aria-hidden="true" tabindex="-1"></a>intercept <span class="ot">&lt;-</span> <span class="fu">coef</span>(model)[<span class="dv">1</span>]</span>
+<span id="cb47-4"><a href="#cb47-4" aria-hidden="true" tabindex="-1"></a>r2 <span class="ot">&lt;-</span> <span class="fu">summary</span>(model)<span class="sc">$</span>r.squared</span>
+<span id="cb47-5"><a href="#cb47-5" aria-hidden="true" tabindex="-1"></a><span class="fu">sprintf</span>(<span class="st">"y = % s, x + % s, R² = % s"</span>, <span class="fu">round</span>(slope, <span class="dv">4</span>), <span class="fu">round</span>(intercept, <span class="dv">2</span>), <span class="fu">round</span>(r2, <span class="dv">4</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "y = -0.3785, x + 40.8, R² = 0.8371"</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb49"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb49-1"><a href="#cb49-1" aria-hidden="true" tabindex="-1"></a>ari_plot <span class="ot">&lt;-</span> <span class="fu">ggplot</span>(all_books_ari, <span class="fu">aes</span>(<span class="at">x =</span> flesch_score, <span class="at">y =</span> ari_score, <span class="at">color =</span> <span class="fu">as.Date</span>(<span class="fu">as.character</span>(year), <span class="st">"%Y"</span>))) <span class="sc">+</span></span>
+<span id="cb49-2"><a href="#cb49-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>(<span class="at">size =</span> <span class="dv">3</span>) <span class="sc">+</span> </span>
+<span id="cb49-3"><a href="#cb49-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_colour_date</span>(</span>
+<span id="cb49-4"><a href="#cb49-4" aria-hidden="true" tabindex="-1"></a>    <span class="at">name =</span> <span class="st">"Publication Year"</span>,</span>
+<span id="cb49-5"><a href="#cb49-5" aria-hidden="true" tabindex="-1"></a>    <span class="at">date_labels =</span> <span class="st">"%Y"</span>,</span>
+<span id="cb49-6"><a href="#cb49-6" aria-hidden="true" tabindex="-1"></a>    <span class="at">date_breaks =</span> <span class="st">"50 years"</span></span>
+<span id="cb49-7"><a href="#cb49-7" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">+</span></span>
+<span id="cb49-8"><a href="#cb49-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_text</span>(<span class="fu">aes</span>(<span class="at">label =</span> title), <span class="at">hjust =</span> <span class="dv">0</span>, <span class="at">vjust =</span> <span class="fl">1.3</span>, <span class="at">size =</span> <span class="dv">3</span>) <span class="sc">+</span></span>
+<span id="cb49-9"><a href="#cb49-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(</span>
+<span id="cb49-10"><a href="#cb49-10" aria-hidden="true" tabindex="-1"></a>    <span class="at">title =</span> <span class="st">"Automated Readability Index vs Flesch Score"</span>,</span>
+<span id="cb49-11"><a href="#cb49-11" aria-hidden="true" tabindex="-1"></a>    <span class="at">x =</span> <span class="st">"Flesch Score"</span>,</span>
+<span id="cb49-12"><a href="#cb49-12" aria-hidden="true" tabindex="-1"></a>    <span class="at">y =</span> <span class="st">"Automated Readability Index"</span></span>
+<span id="cb49-13"><a href="#cb49-13" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">+</span> </span>
+<span id="cb49-14"><a href="#cb49-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_minimal</span>()</span>
+<span id="cb49-15"><a href="#cb49-15" aria-hidden="true" tabindex="-1"></a>ari_plot <span class="sc">+</span></span>
+<span id="cb49-16"><a href="#cb49-16" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_smooth</span>(</span>
+<span id="cb49-17"><a href="#cb49-17" aria-hidden="true" tabindex="-1"></a>    <span class="at">data =</span> all_books_ari,</span>
+<span id="cb49-18"><a href="#cb49-18" aria-hidden="true" tabindex="-1"></a>    <span class="at">mapping =</span> <span class="fu">aes</span>(<span class="at">x =</span> flesch_score, <span class="at">y =</span> ari_score),</span>
+<span id="cb49-19"><a href="#cb49-19" aria-hidden="true" tabindex="-1"></a>    <span class="at">method =</span> <span class="st">"lm"</span>,</span>
+<span id="cb49-20"><a href="#cb49-20" aria-hidden="true" tabindex="-1"></a>    <span class="at">se =</span> <span class="cn">FALSE</span>,</span>
+<span id="cb49-21"><a href="#cb49-21" aria-hidden="true" tabindex="-1"></a>    <span class="at">inherit.aes =</span> <span class="cn">FALSE</span>,</span>
+<span id="cb49-22"><a href="#cb49-22" aria-hidden="true" tabindex="-1"></a>    <span class="at">formula =</span> <span class="st">'y ~ x'</span></span>
+<span id="cb49-23"><a href="#cb49-23" aria-hidden="true" tabindex="-1"></a>  )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="Notes_files/figure-html/unnamed-chunk-25-1.png" class="img-fluid figure-img" width="960"></p>
+</figure>
+</div>
+</div>
+</div>
+<p>The regression model reveals a strong inverse relationship between ARI and Flesch Reading Ease Score (R² = 0.8371). This confirms that, despite relying on different formulas, both readability indices capture similar aspects of textual complexity. As the ARI increases — indicating higher required education level — the Flesch score decreases, reflecting reduced ease of reading. This alignment strengthens the validity of both measures as proxies for syntactic and lexical complexity.</p>
+</section>
+<section id="metrics-combined" class="level2">
+<h2 class="anchored" data-anchor-id="metrics-combined">Metrics Combined</h2>
+<p>With all these metrics, would be fun to visualize them together, just to explore any relationship between them that can help us to understand our corpus better. So, let’s create a correlation matrix to visualize the relationships between the metrics.</p>
+<ul>
+<li>Build the matrix</li>
+</ul>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb50"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb50-1"><a href="#cb50-1" aria-hidden="true" tabindex="-1"></a>all_books_metrics <span class="ot">&lt;-</span> all_books_ari <span class="sc">%&gt;%</span></span>
+<span id="cb50-2"><a href="#cb50-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(title, year, lexical_density, flesch_score, ari_score, total_words) <span class="sc">%&gt;%</span></span>
+<span id="cb50-3"><a href="#cb50-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">drop_na</span>()</span>
+<span id="cb50-4"><a href="#cb50-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb50-5"><a href="#cb50-5" aria-hidden="true" tabindex="-1"></a>correlation_matrix <span class="ot">&lt;-</span> all_books_metrics <span class="sc">%&gt;%</span></span>
+<span id="cb50-6"><a href="#cb50-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="sc">-</span>title) <span class="sc">%&gt;%</span></span>
+<span id="cb50-7"><a href="#cb50-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">correlate</span>() <span class="sc">%&gt;%</span></span>
+<span id="cb50-8"><a href="#cb50-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">shave</span>() <span class="sc">%&gt;%</span></span>
+<span id="cb50-9"><a href="#cb50-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">fashion</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Correlation computed with
+• Method: 'pearson'
+• Missing treated using: 'pairwise.complete.obs'</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb52"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb52-1"><a href="#cb52-1" aria-hidden="true" tabindex="-1"></a>correlation_matrix</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>             term year lexical_density flesch_score ari_score total_words
+1            year                                                        
+2 lexical_density -.20                                                   
+3    flesch_score  .73             .09                                   
+4       ari_score -.72            -.03         -.91                      
+5     total_words  .17            -.79         -.05      -.06            </code></pre>
+</div>
+</div>
 <section id="frequency-calculation" class="level3">
 <h3 class="anchored" data-anchor-id="frequency-calculation">Frequency calculation</h3>
 <ul>
 <li>Without removing stopwords</li>
 </ul>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb23"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a>hp_words <span class="sc">%&gt;%</span></span>
-<span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a>  <span class="co"># count per word per book</span></span>
-<span id="cb23-3"><a href="#cb23-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">count</span>(book, word, <span class="at">sort=</span><span class="cn">TRUE</span>) <span class="sc">%&gt;%</span></span>
-<span id="cb23-4"><a href="#cb23-4" aria-hidden="true" tabindex="-1"></a>  <span class="co"># top 15</span></span>
-<span id="cb23-5"><a href="#cb23-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(book) <span class="sc">%&gt;%</span></span>
-<span id="cb23-6"><a href="#cb23-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">slice_max</span>(<span class="at">order_by =</span> n, <span class="at">n =</span> <span class="dv">15</span>) <span class="sc">%&gt;%</span></span>
-<span id="cb23-7"><a href="#cb23-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">word =</span> <span class="fu">reorder_within</span>(word, n, book)) <span class="sc">%&gt;%</span></span>
-<span id="cb23-8"><a href="#cb23-8" aria-hidden="true" tabindex="-1"></a>  <span class="co"># create barplot</span></span>
-<span id="cb23-9"><a href="#cb23-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="at">x =</span> word, <span class="at">y =</span> n, <span class="at">fill =</span> book)) <span class="sc">+</span> </span>
-<span id="cb23-10"><a href="#cb23-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_col</span>(<span class="at">color =</span> <span class="st">"black"</span>) <span class="sc">+</span></span>
-<span id="cb23-11"><a href="#cb23-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_x_reordered</span>() <span class="sc">+</span></span>
-<span id="cb23-12"><a href="#cb23-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(</span>
-<span id="cb23-13"><a href="#cb23-13" aria-hidden="true" tabindex="-1"></a>    <span class="at">title =</span> <span class="st">"Most frequent words in Harry Potter (no stop words)"</span>,</span>
-<span id="cb23-14"><a href="#cb23-14" aria-hidden="true" tabindex="-1"></a>    <span class="at">x =</span> <span class="cn">NULL</span>,</span>
-<span id="cb23-15"><a href="#cb23-15" aria-hidden="true" tabindex="-1"></a>    <span class="at">y =</span> <span class="st">"Word Count"</span></span>
-<span id="cb23-16"><a href="#cb23-16" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">+</span></span>
-<span id="cb23-17"><a href="#cb23-17" aria-hidden="true" tabindex="-1"></a>  <span class="fu">facet_wrap</span>(<span class="at">facets =</span> <span class="fu">vars</span>(book), <span class="at">scales =</span> <span class="st">"free"</span>) <span class="sc">+</span></span>
-<span id="cb23-18"><a href="#cb23-18" aria-hidden="true" tabindex="-1"></a>  <span class="fu">coord_flip</span>() <span class="sc">+</span></span>
-<span id="cb23-19"><a href="#cb23-19" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme</span>(</span>
-<span id="cb23-20"><a href="#cb23-20" aria-hidden="true" tabindex="-1"></a>    <span class="at">legend.position =</span> <span class="st">"none"</span>,</span>
-<span id="cb23-21"><a href="#cb23-21" aria-hidden="true" tabindex="-1"></a>    <span class="at">strip.text =</span> <span class="fu">element_text</span>(<span class="at">face =</span> <span class="st">"bold"</span>, <span class="at">size =</span> <span class="dv">10</span>),</span>
-<span id="cb23-22"><a href="#cb23-22" aria-hidden="true" tabindex="-1"></a>    <span class="at">axis.text.y =</span> <span class="fu">element_text</span>(<span class="at">size =</span> <span class="dv">8</span>, <span class="at">margin =</span> <span class="fu">margin</span>(<span class="at">r =</span> <span class="dv">6</span>))</span>
-<span id="cb23-23"><a href="#cb23-23" aria-hidden="true" tabindex="-1"></a>  )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb54"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb54-1"><a href="#cb54-1" aria-hidden="true" tabindex="-1"></a>hp_words <span class="sc">%&gt;%</span></span>
+<span id="cb54-2"><a href="#cb54-2" aria-hidden="true" tabindex="-1"></a>  <span class="co"># count per word per book</span></span>
+<span id="cb54-3"><a href="#cb54-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">count</span>(book, word, <span class="at">sort=</span><span class="cn">TRUE</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb54-4"><a href="#cb54-4" aria-hidden="true" tabindex="-1"></a>  <span class="co"># top 15</span></span>
+<span id="cb54-5"><a href="#cb54-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(book) <span class="sc">%&gt;%</span></span>
+<span id="cb54-6"><a href="#cb54-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">slice_max</span>(<span class="at">order_by =</span> n, <span class="at">n =</span> <span class="dv">15</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb54-7"><a href="#cb54-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">word =</span> <span class="fu">reorder_within</span>(word, n, book)) <span class="sc">%&gt;%</span></span>
+<span id="cb54-8"><a href="#cb54-8" aria-hidden="true" tabindex="-1"></a>  <span class="co"># create barplot</span></span>
+<span id="cb54-9"><a href="#cb54-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="at">x =</span> word, <span class="at">y =</span> n, <span class="at">fill =</span> book)) <span class="sc">+</span> </span>
+<span id="cb54-10"><a href="#cb54-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_col</span>(<span class="at">color =</span> <span class="st">"black"</span>) <span class="sc">+</span></span>
+<span id="cb54-11"><a href="#cb54-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_x_reordered</span>() <span class="sc">+</span></span>
+<span id="cb54-12"><a href="#cb54-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(</span>
+<span id="cb54-13"><a href="#cb54-13" aria-hidden="true" tabindex="-1"></a>    <span class="at">title =</span> <span class="st">"Most frequent words in Harry Potter (no stop words)"</span>,</span>
+<span id="cb54-14"><a href="#cb54-14" aria-hidden="true" tabindex="-1"></a>    <span class="at">x =</span> <span class="cn">NULL</span>,</span>
+<span id="cb54-15"><a href="#cb54-15" aria-hidden="true" tabindex="-1"></a>    <span class="at">y =</span> <span class="st">"Word Count"</span></span>
+<span id="cb54-16"><a href="#cb54-16" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">+</span></span>
+<span id="cb54-17"><a href="#cb54-17" aria-hidden="true" tabindex="-1"></a>  <span class="fu">facet_wrap</span>(<span class="at">facets =</span> <span class="fu">vars</span>(book), <span class="at">scales =</span> <span class="st">"free"</span>) <span class="sc">+</span></span>
+<span id="cb54-18"><a href="#cb54-18" aria-hidden="true" tabindex="-1"></a>  <span class="fu">coord_flip</span>() <span class="sc">+</span></span>
+<span id="cb54-19"><a href="#cb54-19" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme</span>(</span>
+<span id="cb54-20"><a href="#cb54-20" aria-hidden="true" tabindex="-1"></a>    <span class="at">legend.position =</span> <span class="st">"none"</span>,</span>
+<span id="cb54-21"><a href="#cb54-21" aria-hidden="true" tabindex="-1"></a>    <span class="at">strip.text =</span> <span class="fu">element_text</span>(<span class="at">face =</span> <span class="st">"bold"</span>, <span class="at">size =</span> <span class="dv">10</span>),</span>
+<span id="cb54-22"><a href="#cb54-22" aria-hidden="true" tabindex="-1"></a>    <span class="at">axis.text.y =</span> <span class="fu">element_text</span>(<span class="at">size =</span> <span class="dv">8</span>, <span class="at">margin =</span> <span class="fu">margin</span>(<span class="at">r =</span> <span class="dv">6</span>))</span>
+<span id="cb54-23"><a href="#cb54-23" aria-hidden="true" tabindex="-1"></a>  )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="Notes_files/figure-html/unnamed-chunk-12-1.png" class="img-fluid figure-img" width="960"></p>
+<p><img src="Notes_files/figure-html/unnamed-chunk-27-1.png" class="img-fluid figure-img" width="960"></p>
 </figure>
 </div>
 </div>
@@ -485,36 +1026,36 @@ L_d = (N_{lex}/N) \times 100
 <li>Removing stopwords</li>
 </ul>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb24"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a>hp_words <span class="sc">%&gt;%</span></span>
-<span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1"></a>  <span class="co"># delete stopwords</span></span>
-<span id="cb24-3"><a href="#cb24-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">anti_join</span>(stop_words) <span class="sc">%&gt;%</span></span>
-<span id="cb24-4"><a href="#cb24-4" aria-hidden="true" tabindex="-1"></a>  <span class="co"># count per word per book</span></span>
-<span id="cb24-5"><a href="#cb24-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">count</span>(book, word, <span class="at">sort=</span><span class="cn">TRUE</span>) <span class="sc">%&gt;%</span></span>
-<span id="cb24-6"><a href="#cb24-6" aria-hidden="true" tabindex="-1"></a>  <span class="co"># top 15</span></span>
-<span id="cb24-7"><a href="#cb24-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(book) <span class="sc">%&gt;%</span></span>
-<span id="cb24-8"><a href="#cb24-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">slice_max</span>(<span class="at">order_by =</span> n, <span class="at">n =</span> <span class="dv">15</span>) <span class="sc">%&gt;%</span></span>
-<span id="cb24-9"><a href="#cb24-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">word =</span> <span class="fu">reorder_within</span>(word, n, book)) <span class="sc">%&gt;%</span></span>
-<span id="cb24-10"><a href="#cb24-10" aria-hidden="true" tabindex="-1"></a>  <span class="co"># create barplot</span></span>
-<span id="cb24-11"><a href="#cb24-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="at">x =</span> word, <span class="at">y =</span> n, <span class="at">fill =</span> book)) <span class="sc">+</span></span>
-<span id="cb24-12"><a href="#cb24-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_col</span>(<span class="at">color =</span> <span class="st">"black"</span>) <span class="sc">+</span></span>
-<span id="cb24-13"><a href="#cb24-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_x_reordered</span>() <span class="sc">+</span></span>
-<span id="cb24-14"><a href="#cb24-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(</span>
-<span id="cb24-15"><a href="#cb24-15" aria-hidden="true" tabindex="-1"></a>    <span class="at">title =</span> <span class="st">"Most frequent words in Harry Potter"</span>,</span>
-<span id="cb24-16"><a href="#cb24-16" aria-hidden="true" tabindex="-1"></a>    <span class="at">x =</span> <span class="cn">NULL</span>,</span>
-<span id="cb24-17"><a href="#cb24-17" aria-hidden="true" tabindex="-1"></a>    <span class="at">y =</span> <span class="st">"Word count"</span></span>
-<span id="cb24-18"><a href="#cb24-18" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">+</span></span>
-<span id="cb24-19"><a href="#cb24-19" aria-hidden="true" tabindex="-1"></a>  <span class="fu">facet_wrap</span>(<span class="at">facets =</span> <span class="fu">vars</span>(book), <span class="at">scales =</span> <span class="st">"free"</span>) <span class="sc">+</span></span>
-<span id="cb24-20"><a href="#cb24-20" aria-hidden="true" tabindex="-1"></a>  <span class="fu">coord_flip</span>() <span class="sc">+</span></span>
-<span id="cb24-21"><a href="#cb24-21" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme</span>(</span>
-<span id="cb24-22"><a href="#cb24-22" aria-hidden="true" tabindex="-1"></a>    <span class="at">legend.position =</span> <span class="st">"none"</span>,</span>
-<span id="cb24-23"><a href="#cb24-23" aria-hidden="true" tabindex="-1"></a>  )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb55"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb55-1"><a href="#cb55-1" aria-hidden="true" tabindex="-1"></a>hp_words <span class="sc">%&gt;%</span></span>
+<span id="cb55-2"><a href="#cb55-2" aria-hidden="true" tabindex="-1"></a>  <span class="co"># delete stopwords</span></span>
+<span id="cb55-3"><a href="#cb55-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">anti_join</span>(stop_words) <span class="sc">%&gt;%</span></span>
+<span id="cb55-4"><a href="#cb55-4" aria-hidden="true" tabindex="-1"></a>  <span class="co"># count per word per book</span></span>
+<span id="cb55-5"><a href="#cb55-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">count</span>(book, word, <span class="at">sort=</span><span class="cn">TRUE</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb55-6"><a href="#cb55-6" aria-hidden="true" tabindex="-1"></a>  <span class="co"># top 15</span></span>
+<span id="cb55-7"><a href="#cb55-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(book) <span class="sc">%&gt;%</span></span>
+<span id="cb55-8"><a href="#cb55-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">slice_max</span>(<span class="at">order_by =</span> n, <span class="at">n =</span> <span class="dv">15</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb55-9"><a href="#cb55-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">word =</span> <span class="fu">reorder_within</span>(word, n, book)) <span class="sc">%&gt;%</span></span>
+<span id="cb55-10"><a href="#cb55-10" aria-hidden="true" tabindex="-1"></a>  <span class="co"># create barplot</span></span>
+<span id="cb55-11"><a href="#cb55-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="at">x =</span> word, <span class="at">y =</span> n, <span class="at">fill =</span> book)) <span class="sc">+</span></span>
+<span id="cb55-12"><a href="#cb55-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_col</span>(<span class="at">color =</span> <span class="st">"black"</span>) <span class="sc">+</span></span>
+<span id="cb55-13"><a href="#cb55-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_x_reordered</span>() <span class="sc">+</span></span>
+<span id="cb55-14"><a href="#cb55-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(</span>
+<span id="cb55-15"><a href="#cb55-15" aria-hidden="true" tabindex="-1"></a>    <span class="at">title =</span> <span class="st">"Most frequent words in Harry Potter"</span>,</span>
+<span id="cb55-16"><a href="#cb55-16" aria-hidden="true" tabindex="-1"></a>    <span class="at">x =</span> <span class="cn">NULL</span>,</span>
+<span id="cb55-17"><a href="#cb55-17" aria-hidden="true" tabindex="-1"></a>    <span class="at">y =</span> <span class="st">"Word count"</span></span>
+<span id="cb55-18"><a href="#cb55-18" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">+</span></span>
+<span id="cb55-19"><a href="#cb55-19" aria-hidden="true" tabindex="-1"></a>  <span class="fu">facet_wrap</span>(<span class="at">facets =</span> <span class="fu">vars</span>(book), <span class="at">scales =</span> <span class="st">"free"</span>) <span class="sc">+</span></span>
+<span id="cb55-20"><a href="#cb55-20" aria-hidden="true" tabindex="-1"></a>  <span class="fu">coord_flip</span>() <span class="sc">+</span></span>
+<span id="cb55-21"><a href="#cb55-21" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme</span>(</span>
+<span id="cb55-22"><a href="#cb55-22" aria-hidden="true" tabindex="-1"></a>    <span class="at">legend.position =</span> <span class="st">"none"</span>,</span>
+<span id="cb55-23"><a href="#cb55-23" aria-hidden="true" tabindex="-1"></a>  )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stderr">
 <pre><code>Joining with `by = join_by(word)`</code></pre>
 </div>
 <div class="cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="Notes_files/figure-html/unnamed-chunk-13-1.png" class="img-fluid figure-img" width="960"></p>
+<p><img src="Notes_files/figure-html/unnamed-chunk-28-1.png" class="img-fluid figure-img" width="960"></p>
 </figure>
 </div>
 </div>
@@ -526,38 +1067,38 @@ L_d = (N_{lex}/N) \times 100
 <li>Find terms that are unique or characteristic per book:</li>
 </ul>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb26"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a>hp_words <span class="sc">%&gt;%</span></span>
-<span id="cb26-2"><a href="#cb26-2" aria-hidden="true" tabindex="-1"></a>  <span class="co"># delete stopwords</span></span>
-<span id="cb26-3"><a href="#cb26-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">anti_join</span>(stop_words) <span class="sc">%&gt;%</span></span>
-<span id="cb26-4"><a href="#cb26-4" aria-hidden="true" tabindex="-1"></a>  <span class="co"># count per word per book</span></span>
-<span id="cb26-5"><a href="#cb26-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">count</span>(book, word, <span class="at">sort=</span><span class="cn">TRUE</span>) <span class="sc">%&gt;%</span></span>
-<span id="cb26-6"><a href="#cb26-6" aria-hidden="true" tabindex="-1"></a>  <span class="co"># tf-idf</span></span>
-<span id="cb26-7"><a href="#cb26-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">bind_tf_idf</span>(word, book, n) <span class="sc">%&gt;%</span></span>
-<span id="cb26-8"><a href="#cb26-8" aria-hidden="true" tabindex="-1"></a>  <span class="co"># top 15</span></span>
-<span id="cb26-9"><a href="#cb26-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(book) <span class="sc">%&gt;%</span></span>
-<span id="cb26-10"><a href="#cb26-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">slice_max</span>(<span class="at">order_by =</span> tf_idf, <span class="at">n =</span> <span class="dv">15</span>) <span class="sc">%&gt;%</span></span>
-<span id="cb26-11"><a href="#cb26-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">word =</span> <span class="fu">reorder_within</span>(word, n, book)) <span class="sc">%&gt;%</span></span>
-<span id="cb26-12"><a href="#cb26-12" aria-hidden="true" tabindex="-1"></a>  <span class="co"># create barplot</span></span>
-<span id="cb26-13"><a href="#cb26-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="at">x =</span> word, <span class="at">y =</span> tf_idf, <span class="at">fill =</span> book)) <span class="sc">+</span></span>
-<span id="cb26-14"><a href="#cb26-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_col</span>(<span class="at">color =</span> <span class="st">"black"</span>) <span class="sc">+</span></span>
-<span id="cb26-15"><a href="#cb26-15" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_x_reordered</span>() <span class="sc">+</span></span>
-<span id="cb26-16"><a href="#cb26-16" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(</span>
-<span id="cb26-17"><a href="#cb26-17" aria-hidden="true" tabindex="-1"></a>    <span class="at">title =</span> <span class="st">"TF-IDF in Harry Potter"</span>,</span>
-<span id="cb26-18"><a href="#cb26-18" aria-hidden="true" tabindex="-1"></a>    <span class="at">x =</span> <span class="cn">NULL</span>,</span>
-<span id="cb26-19"><a href="#cb26-19" aria-hidden="true" tabindex="-1"></a>    <span class="at">y =</span> <span class="st">"TF-IDF"</span></span>
-<span id="cb26-20"><a href="#cb26-20" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">+</span></span>
-<span id="cb26-21"><a href="#cb26-21" aria-hidden="true" tabindex="-1"></a>  <span class="fu">facet_wrap</span>(<span class="at">facets =</span> <span class="fu">vars</span>(book), <span class="at">scales =</span> <span class="st">"free"</span>) <span class="sc">+</span></span>
-<span id="cb26-22"><a href="#cb26-22" aria-hidden="true" tabindex="-1"></a>  <span class="fu">coord_flip</span>() <span class="sc">+</span></span>
-<span id="cb26-23"><a href="#cb26-23" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme</span>(</span>
-<span id="cb26-24"><a href="#cb26-24" aria-hidden="true" tabindex="-1"></a>    <span class="at">legend.position =</span> <span class="st">"none"</span>,</span>
-<span id="cb26-25"><a href="#cb26-25" aria-hidden="true" tabindex="-1"></a>  )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb57"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb57-1"><a href="#cb57-1" aria-hidden="true" tabindex="-1"></a>hp_words <span class="sc">%&gt;%</span></span>
+<span id="cb57-2"><a href="#cb57-2" aria-hidden="true" tabindex="-1"></a>  <span class="co"># delete stopwords</span></span>
+<span id="cb57-3"><a href="#cb57-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">anti_join</span>(stop_words) <span class="sc">%&gt;%</span></span>
+<span id="cb57-4"><a href="#cb57-4" aria-hidden="true" tabindex="-1"></a>  <span class="co"># count per word per book</span></span>
+<span id="cb57-5"><a href="#cb57-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">count</span>(book, word, <span class="at">sort=</span><span class="cn">TRUE</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb57-6"><a href="#cb57-6" aria-hidden="true" tabindex="-1"></a>  <span class="co"># tf-idf</span></span>
+<span id="cb57-7"><a href="#cb57-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">bind_tf_idf</span>(word, book, n) <span class="sc">%&gt;%</span></span>
+<span id="cb57-8"><a href="#cb57-8" aria-hidden="true" tabindex="-1"></a>  <span class="co"># top 15</span></span>
+<span id="cb57-9"><a href="#cb57-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(book) <span class="sc">%&gt;%</span></span>
+<span id="cb57-10"><a href="#cb57-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">slice_max</span>(<span class="at">order_by =</span> tf_idf, <span class="at">n =</span> <span class="dv">15</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb57-11"><a href="#cb57-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">word =</span> <span class="fu">reorder_within</span>(word, n, book)) <span class="sc">%&gt;%</span></span>
+<span id="cb57-12"><a href="#cb57-12" aria-hidden="true" tabindex="-1"></a>  <span class="co"># create barplot</span></span>
+<span id="cb57-13"><a href="#cb57-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="at">x =</span> word, <span class="at">y =</span> tf_idf, <span class="at">fill =</span> book)) <span class="sc">+</span></span>
+<span id="cb57-14"><a href="#cb57-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_col</span>(<span class="at">color =</span> <span class="st">"black"</span>) <span class="sc">+</span></span>
+<span id="cb57-15"><a href="#cb57-15" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_x_reordered</span>() <span class="sc">+</span></span>
+<span id="cb57-16"><a href="#cb57-16" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(</span>
+<span id="cb57-17"><a href="#cb57-17" aria-hidden="true" tabindex="-1"></a>    <span class="at">title =</span> <span class="st">"TF-IDF in Harry Potter"</span>,</span>
+<span id="cb57-18"><a href="#cb57-18" aria-hidden="true" tabindex="-1"></a>    <span class="at">x =</span> <span class="cn">NULL</span>,</span>
+<span id="cb57-19"><a href="#cb57-19" aria-hidden="true" tabindex="-1"></a>    <span class="at">y =</span> <span class="st">"TF-IDF"</span></span>
+<span id="cb57-20"><a href="#cb57-20" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">+</span></span>
+<span id="cb57-21"><a href="#cb57-21" aria-hidden="true" tabindex="-1"></a>  <span class="fu">facet_wrap</span>(<span class="at">facets =</span> <span class="fu">vars</span>(book), <span class="at">scales =</span> <span class="st">"free"</span>) <span class="sc">+</span></span>
+<span id="cb57-22"><a href="#cb57-22" aria-hidden="true" tabindex="-1"></a>  <span class="fu">coord_flip</span>() <span class="sc">+</span></span>
+<span id="cb57-23"><a href="#cb57-23" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme</span>(</span>
+<span id="cb57-24"><a href="#cb57-24" aria-hidden="true" tabindex="-1"></a>    <span class="at">legend.position =</span> <span class="st">"none"</span>,</span>
+<span id="cb57-25"><a href="#cb57-25" aria-hidden="true" tabindex="-1"></a>  )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stderr">
 <pre><code>Joining with `by = join_by(word)`</code></pre>
 </div>
 <div class="cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="Notes_files/figure-html/unnamed-chunk-14-1.png" class="img-fluid figure-img" width="960"></p>
+<p><img src="Notes_files/figure-html/unnamed-chunk-29-1.png" class="img-fluid figure-img" width="960"></p>
 </figure>
 </div>
 </div>
