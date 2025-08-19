@@ -44,3 +44,66 @@ beforethelaw <- tryCatch(
 beforethelaw
 ```
 
+Now that we have our text stored as a character vector, we can transform it into a tibble. This process includes removing the title and filtering out empty lines.
+
+To remove the title, we can use the `str_remove_all()` function from the `stringr` package. Our approach in this case is very direct, as we are matching the exact title line.
+
+To remove the empty lines we can use the `filter()` function from `dplyr` to match non-empty strings. 
+
+Finally, because we're transforming the character vector into a tibble, it's important to add an ID column to preserve the original line order and uniquely identify each line.
+
+```{r}
+
+beforethelaw <- beforethelaw %>%
+    str_remove_all("^BEFORE THE LAW$") # Remove the exact title line (^ = start, $ = end)
+
+beforethelaw_tibble <- tibble(text = beforethelaw) %>%
+    filter(text != "") %>% # Remove empty lines
+    mutate(id = row_number()) # Add an ID column to preserve line order
+
+beforethelaw_tibble
+```
+
+The result is a two-column tibble: one for the text and another for the line ID.
+
+Now, we can proceed to perform some preprocessing steps to prepare our text for analysis. This includes converting the text to lowercase, removing punctuation, and tokenizing the text into individual words.
+
+## Preprocessing Steps
+
+Although a text can be analyzed in its raw form, preprocessing is essential for improving the quality of the analysis. Here are the key steps we'll perform:
+
+1. **Convert to Lowercase**: This helps to standardize the text and avoid treating the same words with different cases as distinct.
+2. **Remove Punctuation**: Punctuation marks can interfere with text analysis (e.g., "gatekeeper." would be considered different from "gatekeeper"), so we'll remove them.
+3. **Tokenization**: This is the process of splitting the text into individual words or tokens, which is crucial for most text analysis tasks.
+
+Let's implement these preprocessing steps using `dplyr`, `stringr`, and `tidytext`. This approach allows us to chain multiple operations together:
+
+```{r}
+library(tidytext) # We'll need this for tokenization
+
+beforethelaw_preprocessed <- beforethelaw_tibble %>%
+    mutate(text = str_to_lower(text)) %>%        # Convert to lowercase
+    mutate(text = str_remove_all(text, "[[:punct:]]")) %>%  # Remove punctuation
+    unnest_tokens(word, text)                    # Tokenization into individual words
+
+beforethelaw_preprocessed
+```
+
+We've transformed our single-row tibble into a long 640-row tibble, where each row represents a single word from the original text. The `unnest_tokens()` function from the `tidytext` package is particularly useful here, as it automatically handles tokenization and creates a new row for each word. 
+
+Note that this number of rows matches the word count from the previous episode. However, this alignment won't always occur. Depending on text complexity, basic word counting and tokenization can produce different results. For example, tokenization might split contractions ("don't" → "don" + "t") or treat hyphenated words ("twenty-one") as separate tokens, while a simple word count would treat them as single units.
+
+Depending on the purposes of your analysis, you may want to perform additional preprocessing steps, such as removing stop words (common words like "the," "and," "is" that may not carry significant meaning for analysis). Let's remove stop words for this example using the `tidytext` package:
+
+```{r}
+beforethelaw_reduced <- beforethelaw_preprocessed %>%
+    anti_join(stop_words, by = "word") # anti_join removes words that match the stop_words list
+
+beforethelaw_reduced
+```
+
+::: {.callout-note}
+ Stop word removal isn't always necessary. For tasks like authorship attribution or sentiment analysis, these "common" words can actually provide valuable information about writing style or tone.
+:::
+
+This new tibble has 164 rows, meaning we've reduced our original text by 75% by removing stop words. This is important to keep in mind, as preprocessing can improve analysis quality by reducing noise and focusing on relevant terms, but it can also result in a loss of context or meaning that may be important for certain types of analysis.
