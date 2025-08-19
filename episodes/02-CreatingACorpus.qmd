@@ -1,0 +1,46 @@
+---
+title: "Creating a Corpus"
+engine: knitr
+format:
+  html:
+    fig-width: 10
+    fig-height: 12
+    dpi: 300
+editor_options: 
+  chunk_output_type: inline
+---
+
+In this episode, we're going to create a corpus of texts and prepare it for analysis by performing some standard preprocessing. Because of the nature of R, we will be transforming plain text files into tibbles, which are a modern take on data frames that make data manipulation easier and more intuitive.
+
+::: {.callout-note title="Why not bags of words?" collapse="true"}
+If you're coming from Python, your instinct might be to create lists (like numpy arrays) for text analysis. But R's strength lies in structured data frames. By using tibbles instead of simple word lists, we can preserve text relationships and leverage the full tidyverse ecosystem.
+:::
+
+To better understand what happens when we process a series of books, let's start with an exercise using Kafka's short story "Before the Law."
+
+First, we need to install and load the `tidyverse` package, which includes `dplyr`, `ggplot2`, and other useful packages for data manipulation and visualization.
+
+In RStudio, create a new R script (File → New File → R Script) and write the following commands. You can execute each line by placing your cursor on it and pressing Ctrl+Enter:
+
+```{r}
+#| output: false
+install.packages("tidyverse")
+library(tidyverse)
+```
+
+Next, we'll create a text variable that stores our short story. We're using `tryCatch()` to handle any potential errors when reading the file, and the `read_lines()` function, which is part of the `readr` package, to read the text file line by line safely.
+
+```{r}
+beforethelaw_url <- "https://raw.githubusercontent.com/jairomelo/text-analysis-workshop/refs/heads/main/episodes/texts/Kafka-beforethelaw.txt"
+
+beforethelaw <- tryCatch(
+    read_lines(beforethelaw_url, locale = locale(encoding = "UTF-8")),
+    error = function(e) {
+        message("Error reading the text: ", e)
+        return(NULL)
+    }
+)
+
+beforethelaw
+```
+
