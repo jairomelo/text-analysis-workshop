@@ -212,3 +212,26 @@ If you're new to `map()`, think of it as "do this same operation to every item i
 :::
 
 In the end, we will have a `corpus_texts` tibble that contains the full text of each book in our corpus as a character vector stored in the `text` column.
+
+### Cleaning
+
+The texts provided by the Gutenberg Library are almost ready for analysis. However, we still need to perform some basic cleaning steps to ensure consistency and remove any unwanted artifacts.
+
+```{r}
+# Cleaning the texts
+corpus_texts <- corpus_texts %>%
+   mutate(
+    text_clean = str_to_lower(text) %>% # Convert to lowercase
+       str_remove_all("[[:punct:]]") %>% # Remove punctuation
+       str_squish()                       # Remove extra whitespace
+   )
+
+corpus_texts
+```
+
+This code creates a new column `text_clean` in our `corpus_texts` tibble, which contains the cleaned text ready for analysis. The `str_squish()` function is particularly useful as it removes any leading, trailing, or extra spaces between words, ensuring that our text is tidy and consistent.
+
+These are basic cleaning steps that improve the quality of our text data and reduce noise that might interfere with our analysis. However, even after these steps, and even using a high-quality corpus like Project Gutenberg, we still face some challenges such as table of contents, chapter headers, editorial notes, and translator introductions.
+
+In real-world projects, text cleaning often involves both automated processes and manual review to ensure corpus consistency. For our workshop, we'll assume these texts are clean enough for analysis, but in practice, you may need to spend considerably more time refining your corpus.
+
