@@ -165,8 +165,14 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </nav>
 <div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
 <!-- margin-sidebar -->
-    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar zindex-bottom">
-        
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul>
+  <li><a href="#preprocessing-steps" id="toc-preprocessing-steps" class="nav-link active" data-scroll-target="#preprocessing-steps">Preprocessing Steps</a></li>
+  </ul>
+</nav>
     </div>
 <!-- main -->
 <main class="content" id="quarto-document-content">
@@ -207,21 +213,21 @@ Why not bags of words?
 </div>
 </div>
 </div>
-<p>Just to have a better idea of what’s going to be happening when we process a series of books, let’s do an exercise with Kafka’s short story.</p>
-<p>First, because we’ll be working with tibbles, we need to install and load the <code>tidyverse</code> package, which includes <code>dplyr</code>, <code>ggplot2</code>, and other useful packages for data manipulation and visualization.</p>
-<p>So, first, in your R Studio console, run the following commands:</p>
+<p>To better understand what happens when we process a series of books, let’s start with an exercise using Kafka’s short story “Before the Law.”</p>
+<p>First, we need to install and load the <code>tidyverse</code> package, which includes <code>dplyr</code>, <code>ggplot2</code>, and other useful packages for data manipulation and visualization.</p>
+<p>In RStudio, create a new R script (File → New File → R Script) and write the following commands. You can execute each line by placing your cursor on it and pressing Ctrl+Enter:</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">install.packages</span>(<span class="st">"tidyverse"</span>)</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidyverse)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-<p>The second step will be to create a text variable that stores our short story:</p>
+<p>Next, we’ll create a text variable that stores our short story. We’re using <code>tryCatch()</code> to handle any potential errors when reading the file, and the <code>read_lines()</code> function, which is part of the <code>readr</code> package, to read the text file line by line safely.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>beforethelaw_url <span class="ot">&lt;-</span> <span class="st">"https://raw.githubusercontent.com/jairomelo/text-analysis-workshop/refs/heads/main/episodes/texts/Kafka-beforethelaw.txt"</span></span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>beforethelaw <span class="ot">&lt;-</span> <span class="fu">tryCatch</span>(</span>
 <span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>    <span class="fu">read_lines</span>(beforethelaw_url, <span class="at">locale =</span> <span class="fu">locale</span>(<span class="at">encoding =</span> <span class="st">"UTF-8"</span>)),</span>
 <span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>    <span class="at">error =</span> <span class="cf">function</span>(e) {</span>
-<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>        <span class="fu">message</span>(<span class="st">"Error reading beforethelaw text: "</span>, e)</span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>        <span class="fu">message</span>(<span class="st">"Error reading the text: "</span>, e)</span>
 <span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>        <span class="fu">return</span>(<span class="cn">NULL</span>)</span>
 <span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>    }</span>
 <span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>)</span>
@@ -233,8 +239,105 @@ Why not bags of words?
 [3] "Before the law sits a gatekeeper. To this gatekeeper comes a man from the country who asks to gain entry into the law. But the gatekeeper says that he cannot grant him entry at the moment. The man thinks about it and then asks if he will be allowed to come in sometime later on. “It is possible,” says the gatekeeper, “but not now.” The gate to the law stands open, as always, and the gatekeeper walks to the side, so the man bends over in order to see through the gate into the inside. When the gatekeeper notices that, he laughs and says: “If it tempts you so much, try going inside in spite of my prohibition. But take note. I am powerful. And I am only the lowliest gatekeeper. But from room to room stand gatekeepers, each more powerful than the last. I cannot endure even one glimpse of the third.” The man from the country has not expected such difficulties: the law should always be accessible for everyone, he thinks, but as he now looks more closely at the gatekeeper in his fur coat, at his large pointed nose and his long, thin, black Tartar’s beard, he decides that it would be better to wait until he gets permission to go inside. The gatekeeper gives him a stool and allows him to sit down at the side in front of the gate. There he sits for days and years. He makes many attempts to be let in, and he wears the gatekeeper out with his requests. The gatekeeper often interrogates him briefly, questioning him about his homeland and many other things, but they are indifferent questions, the kind great men put, and at the end he always tells him once more that he cannot let him inside yet. The man, who has equipped himself with many things for his journey, spends everything, no matter how valuable, to win over the gatekeeper. The latter takes it all but, as he does so, says, “I am taking this only so that you do not think you have failed to do anything.” During the many years the man observes the gatekeeper almost continuously. He forgets the other gatekeepers, and this first one seems to him the only obstacle for entry into the law. He curses the unlucky circumstance, in the first years thoughtlessly and out loud; later, as he grows old, he only mumbles to himself. He becomes childish and, since in the long years studying the gatekeeper he has also come to know the fleas in his fur collar, he even asks the fleas to help him persuade the gatekeeper. Finally his eyesight grows weak, and he does not know whether things are really darker around him or whether his eyes are merely deceiving him. But he recognizes now in the darkness an illumination which breaks inextinguishably out of the gateway to the law. Now he no longer has much time to live. Before his death he gathers up in his head all his experiences of the entire time into one question which he has not yet put to the gatekeeper. He waves to him, since he can no longer lift up his stiffening body. The gatekeeper has to bend way down to him, for the difference between them has changed considerably to the disadvantage of the man. “What do you want to know now?” asks the gatekeeper. “You are insatiable.” “Everyone strives after the law,” says the man, “so how is it that in these many years no one except me has requested entry?” The gatekeeper sees that the man is already dying and, in order to reach his diminishing sense of hearing, he shouts at him, “Here no one else can gain entry, since this entrance was assigned only to you. I’m going now to close it.”"</code></pre>
 </div>
 </div>
+<p>Now that we have our text stored as a character vector, we can transform it into a tibble. This process includes removing the title and filtering out empty lines.</p>
+<p>To remove the title, we can use the <code>str_remove_all()</code> function from the <code>stringr</code> package. Our approach in this case is very direct, as we are matching the exact title line.</p>
+<p>To remove the empty lines we can use the <code>filter()</code> function from <code>dplyr</code> to match non-empty strings.</p>
+<p>Finally, because we’re transforming the character vector into a tibble, it’s important to add an ID column to preserve the original line order and uniquely identify each line.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>beforethelaw <span class="ot">&lt;-</span> beforethelaw <span class="sc">%&gt;%</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>    <span class="fu">str_remove_all</span>(<span class="st">"^BEFORE THE LAW$"</span>) <span class="co"># Remove the exact title line (^ = start, $ = end)</span></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>beforethelaw_tibble <span class="ot">&lt;-</span> <span class="fu">tibble</span>(<span class="at">text =</span> beforethelaw) <span class="sc">%&gt;%</span></span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>    <span class="fu">filter</span>(text <span class="sc">!=</span> <span class="st">""</span>) <span class="sc">%&gt;%</span> <span class="co"># Remove empty lines</span></span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>    <span class="fu">mutate</span>(<span class="at">id =</span> <span class="fu">row_number</span>()) <span class="co"># Add an ID column to preserve line order</span></span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>beforethelaw_tibble</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 1 × 2
+  text                                                                        id
+  &lt;chr&gt;                                                                    &lt;int&gt;
+1 Before the law sits a gatekeeper. To this gatekeeper comes a man from t…     1</code></pre>
+</div>
+</div>
+<p>The result is a two-column tibble: one for the text and another for the line ID.</p>
+<p>Now, we can proceed to perform some preprocessing steps to prepare our text for analysis. This includes converting the text to lowercase, removing punctuation, and tokenizing the text into individual words.</p>
+<section id="preprocessing-steps" class="level2">
+<h2 class="anchored" data-anchor-id="preprocessing-steps">Preprocessing Steps</h2>
+<p>Although a text can be analyzed in its raw form, preprocessing is essential for improving the quality of the analysis. Here are the key steps we’ll perform:</p>
+<ol type="1">
+<li><strong>Convert to Lowercase</strong>: This helps to standardize the text and avoid treating the same words with different cases as distinct.</li>
+<li><strong>Remove Punctuation</strong>: Punctuation marks can interfere with text analysis (e.g., “gatekeeper.” would be considered different from “gatekeeper”), so we’ll remove them.</li>
+<li><strong>Tokenization</strong>: This is the process of splitting the text into individual words or tokens, which is crucial for most text analysis tasks.</li>
+</ol>
+<p>Let’s implement these preprocessing steps using <code>dplyr</code>, <code>stringr</code>, and <code>tidytext</code>. This approach allows us to chain multiple operations together:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidytext) <span class="co"># We'll need this for tokenization</span></span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>beforethelaw_preprocessed <span class="ot">&lt;-</span> beforethelaw_tibble <span class="sc">%&gt;%</span></span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>    <span class="fu">mutate</span>(<span class="at">text =</span> <span class="fu">str_to_lower</span>(text)) <span class="sc">%&gt;%</span>        <span class="co"># Convert to lowercase</span></span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>    <span class="fu">mutate</span>(<span class="at">text =</span> <span class="fu">str_remove_all</span>(text, <span class="st">"[[:punct:]]"</span>)) <span class="sc">%&gt;%</span>  <span class="co"># Remove punctuation</span></span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a>    <span class="fu">unnest_tokens</span>(word, text)                    <span class="co"># Tokenization into individual words</span></span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a>beforethelaw_preprocessed</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 640 × 2
+      id word      
+   &lt;int&gt; &lt;chr&gt;     
+ 1     1 before    
+ 2     1 the       
+ 3     1 law       
+ 4     1 sits      
+ 5     1 a         
+ 6     1 gatekeeper
+ 7     1 to        
+ 8     1 this      
+ 9     1 gatekeeper
+10     1 comes     
+# ℹ 630 more rows</code></pre>
+</div>
+</div>
+<p>We’ve transformed our single-row tibble into a long 640-row tibble, where each row represents a single word from the original text. The <code>unnest_tokens()</code> function from the <code>tidytext</code> package is particularly useful here, as it automatically handles tokenization and creates a new row for each word.</p>
+<p>Note that this number of rows matches the word count from the previous episode. However, this alignment won’t always occur. Depending on text complexity, basic word counting and tokenization can produce different results. For example, tokenization might split contractions (“don’t” → “don” + “t”) or treat hyphenated words (“twenty-one”) as separate tokens, while a simple word count would treat them as single units.</p>
+<p>Depending on the purposes of your analysis, you may want to perform additional preprocessing steps, such as removing stop words (common words like “the,” “and,” “is” that may not carry significant meaning for analysis). Let’s remove stop words for this example using the <code>tidytext</code> package:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb8"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>beforethelaw_reduced <span class="ot">&lt;-</span> beforethelaw_preprocessed <span class="sc">%&gt;%</span></span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>    <span class="fu">anti_join</span>(stop_words, <span class="at">by =</span> <span class="st">"word"</span>) <span class="co"># anti_join removes words that match the stop_words list</span></span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>beforethelaw_reduced</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 164 × 2
+      id word      
+   &lt;int&gt; &lt;chr&gt;     
+ 1     1 law       
+ 2     1 sits      
+ 3     1 gatekeeper
+ 4     1 gatekeeper
+ 5     1 country   
+ 6     1 gain      
+ 7     1 entry     
+ 8     1 law       
+ 9     1 gatekeeper
+10     1 grant     
+# ℹ 154 more rows</code></pre>
+</div>
+</div>
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+Note
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>Stop word removal isn’t always necessary. For tasks like authorship attribution or sentiment analysis, these “common” words can actually provide valuable information about writing style or tone.</p>
+</div>
+</div>
+<p>This new tibble has 164 rows, meaning we’ve reduced our original text by 75% by removing stop words. This is important to keep in mind, as preprocessing can improve analysis quality by reducing noise and focusing on relevant terms, but it can also result in a loss of context or meaning that may be important for certain types of analysis.</p>
 
 
+</section>
 
 </main> <!-- /main -->
 <script id="quarto-html-after-body" type="application/javascript">
