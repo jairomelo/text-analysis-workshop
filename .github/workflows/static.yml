@@ -36,7 +36,7 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          # Upload prebuild Quarto website
+            # Upload pre-built Quarto website
           path: 'episodes/_site'
       - name: Deploy to GitHub Pages
         id: deployment
