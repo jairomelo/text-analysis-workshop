@@ -102,7 +102,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 }</script>
 
 
-<link rel="stylesheet" href="static/css/styles.css">
+<link rel="stylesheet" href="_static/css/styles.css">
 </head>
 
 <body class="nav-sidebar docked">
@@ -126,7 +126,14 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <!-- content -->
 <div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article">
 <!-- sidebar -->
-  <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal quarto-sidebar-collapse-item sidebar-navigation docked overflow-auto">
+  <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal quarto-sidebar-collapse-item sidebar-navigation docked overflow-auto"><div class="quarto-sidebar-header"><div class="sidebar-header-item">
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="_static/images/analytics.png" class="img-fluid figure-img"></p>
+<figcaption><a href="https://www.flaticon.com/free-icons/report" title="report icons" target="_blank" class="header-icon-attribution">Report icons created by Freepik - Flaticon</a></figcaption>
+</figure>
+</div>
+</div></div>
     <div class="pt-lg-2 mt-2 text-left sidebar-header">
     <div class="sidebar-title mb-0 py-0">
       <a href="./">Text Analysis with R</a> 
@@ -171,6 +178,10 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
    
   <ul>
   <li><a href="#preprocessing-steps" id="toc-preprocessing-steps" class="nav-link active" data-scroll-target="#preprocessing-steps">Preprocessing Steps</a></li>
+  <li><a href="#create-a-corpus" id="toc-create-a-corpus" class="nav-link" data-scroll-target="#create-a-corpus">Create a Corpus</a>
+  <ul class="collapse">
+  <li><a href="#fetch-the-texts" id="toc-fetch-the-texts" class="nav-link" data-scroll-target="#fetch-the-texts">Fetch the Texts</a></li>
+  </ul></li>
   </ul>
 </nav>
     </div>
@@ -321,6 +332,7 @@ Why not bags of words?
 # ℹ 154 more rows</code></pre>
 </div>
 </div>
+<p>This new tibble has 164 rows, meaning we’ve reduced our original text by 75% by removing stop words. This is important to keep in mind, as preprocessing can improve analysis quality by reducing noise and focusing on relevant terms, but it can also result in a loss of context or meaning that may be important for certain types of analysis.</p>
 <div class="callout callout-style-default callout-note callout-titled">
 <div class="callout-header d-flex align-content-center">
 <div class="callout-icon-container">
@@ -334,9 +346,196 @@ Note
 <p>Stop word removal isn’t always necessary. For tasks like authorship attribution or sentiment analysis, these “common” words can actually provide valuable information about writing style or tone.</p>
 </div>
 </div>
-<p>This new tibble has 164 rows, meaning we’ve reduced our original text by 75% by removing stop words. This is important to keep in mind, as preprocessing can improve analysis quality by reducing noise and focusing on relevant terms, but it can also result in a loss of context or meaning that may be important for certain types of analysis.</p>
+</section>
+<section id="create-a-corpus" class="level2">
+<h2 class="anchored" data-anchor-id="create-a-corpus">Create a Corpus</h2>
+<p>The term “corpus” is borrowed from Latin. The main meaning of that word is “body,” but in medieval Latin, a collection of writings about the same topic were also called “corpus” (e.g.&nbsp;the “Corpus Juris Civilis”). In text analysis, we use this term more broadly to refer to the entire body of text that we are analyzing, but usually it implies a previous curation of what texts are included so that they share a common theme, time period, or author. Corpora can range from a few documents to millions of texts, depending on the research question.</p>
+<p>We’ve curated a corpus of classic works in the public domain. These works share some common themes, styles, and historical contexts, making them suitable for comparative analysis.</p>
+<p>We have included 26 works by 20 authors, from a period spanning from 1726 to 1925, although, most works are from the 19th century. We aim to create a corpus useful for demonstration purposes while keeping some consistency in terms of length and genre to allow for meaningful comparisons.</p>
+<p>The <code>glID</code> column contains Project Gutenberg identification numbers, which can be used to construct URLs for downloading the full texts.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb10"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>corpus <span class="ot">&lt;-</span> <span class="fu">tribble</span>(</span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>  <span class="sc">~</span>author, <span class="sc">~</span>title, <span class="sc">~</span>year, <span class="sc">~</span>glID, <span class="sc">~</span>genre,</span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>  <span class="st">"Jane Austen"</span>, <span class="st">"Pride and Prejudice"</span>, <span class="dv">1813</span>, <span class="dv">1342</span>, <span class="st">"Social Fiction"</span>,</span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a>  <span class="st">"Charles Dickens"</span>, <span class="st">"A Tale of Two Cities"</span>, <span class="dv">1859</span>, <span class="dv">98</span>, <span class="st">"Social Fiction"</span>,</span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a>  <span class="st">"F. Scott Fitzgerald"</span>, <span class="st">"The Great Gatsby"</span>, <span class="dv">1925</span>, <span class="dv">64317</span>, <span class="st">"Social Fiction"</span>,</span>
+<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a>  <span class="st">"Mary Wollstonecraft Shelley"</span>, <span class="st">"Frankenstein; Or, The Modern Prometheus"</span>, <span class="dv">1818</span>, <span class="dv">84</span>, <span class="st">"Gothic"</span>,</span>
+<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a>  <span class="st">"Herman Melville"</span>, <span class="st">"Moby Dick"</span>, <span class="dv">1851</span>, <span class="dv">2701</span>, <span class="st">"Adventure"</span>,</span>
+<span id="cb10-8"><a href="#cb10-8" aria-hidden="true" tabindex="-1"></a>  <span class="st">"Louisa May Alcott"</span>, <span class="st">"Little Women"</span>, <span class="dv">1868</span>, <span class="dv">37106</span>, <span class="st">"Domestic Fiction"</span>,</span>
+<span id="cb10-9"><a href="#cb10-9" aria-hidden="true" tabindex="-1"></a>  <span class="st">"Mark Twain"</span>, <span class="st">"Tom Sawyer"</span>, <span class="dv">1876</span>, <span class="dv">74</span>, <span class="st">"Adventure"</span>,</span>
+<span id="cb10-10"><a href="#cb10-10" aria-hidden="true" tabindex="-1"></a>  <span class="st">"Jonathan Swift"</span>, <span class="st">"Gulliver's Travels"</span>, <span class="dv">1726</span>, <span class="dv">17157</span>, <span class="st">"Satirical Fiction"</span>,</span>
+<span id="cb10-11"><a href="#cb10-11" aria-hidden="true" tabindex="-1"></a>  <span class="st">"E. M. Forster"</span>, <span class="st">"A Room with a View"</span>, <span class="dv">1908</span>, <span class="dv">2641</span>, <span class="st">"Social Fiction"</span>,</span>
+<span id="cb10-12"><a href="#cb10-12" aria-hidden="true" tabindex="-1"></a>  <span class="st">"Elizabeth Von Arnim"</span>, <span class="st">"The Enchanted April"</span>, <span class="dv">1922</span>, <span class="dv">16389</span>, <span class="st">"Social Fiction"</span>,</span>
+<span id="cb10-13"><a href="#cb10-13" aria-hidden="true" tabindex="-1"></a>  <span class="st">"Lewis Carroll"</span>, <span class="st">"Alice's Adventures in Wonderland"</span>, <span class="dv">1865</span>, <span class="dv">11</span>, <span class="st">"Fantasy"</span>,</span>
+<span id="cb10-14"><a href="#cb10-14" aria-hidden="true" tabindex="-1"></a>  <span class="st">"Elizabeth Gaskell"</span>, <span class="st">"Cranford"</span>, <span class="dv">1853</span>, <span class="dv">394</span>, <span class="st">"Domestic Fiction"</span>,</span>
+<span id="cb10-15"><a href="#cb10-15" aria-hidden="true" tabindex="-1"></a>  <span class="st">"Charles Dickens"</span>, <span class="st">"The Pickwick Papers"</span>, <span class="dv">1836</span>, <span class="dv">580</span>, <span class="st">"Social Fiction"</span>,</span>
+<span id="cb10-16"><a href="#cb10-16" aria-hidden="true" tabindex="-1"></a>  <span class="st">"J. M. Barrie"</span>, <span class="st">"Peter Pan"</span>, <span class="dv">1911</span>, <span class="dv">16</span>, <span class="st">"Fantasy"</span>,</span>
+<span id="cb10-17"><a href="#cb10-17" aria-hidden="true" tabindex="-1"></a>  <span class="st">"Charles Dickens"</span>, <span class="st">"Great Expectations"</span>, <span class="dv">1861</span>, <span class="dv">1400</span>, <span class="st">"Social Fiction"</span>,</span>
+<span id="cb10-18"><a href="#cb10-18" aria-hidden="true" tabindex="-1"></a>  <span class="st">"Harriet Beecher Stowe"</span>, <span class="st">"Uncle Tom's Cabin"</span>, <span class="dv">1852</span>, <span class="dv">203</span>, <span class="st">"Social Fiction"</span>,</span>
+<span id="cb10-19"><a href="#cb10-19" aria-hidden="true" tabindex="-1"></a>  <span class="st">"Robert Louis Stevenson"</span>, <span class="st">"Treasure Island"</span>, <span class="dv">1883</span>, <span class="dv">120</span>, <span class="st">"Adventure"</span>,</span>
+<span id="cb10-20"><a href="#cb10-20" aria-hidden="true" tabindex="-1"></a>  <span class="st">"Kenneth Grahame"</span>, <span class="st">"The Wind in the Willows"</span>, <span class="dv">1908</span>, <span class="dv">27805</span>, <span class="st">"Fantasy"</span>,</span>
+<span id="cb10-21"><a href="#cb10-21" aria-hidden="true" tabindex="-1"></a>  <span class="st">"Jules Verne"</span>, <span class="st">"Twenty Thousand Leagues Under the Seas"</span>, <span class="dv">1870</span>, <span class="dv">2488</span>, <span class="st">"Science Fiction"</span>,</span>
+<span id="cb10-22"><a href="#cb10-22" aria-hidden="true" tabindex="-1"></a>  <span class="st">"Jules Verne"</span>, <span class="st">"A Journey to the Centre of the Earth"</span>, <span class="dv">1864</span>, <span class="dv">18857</span>, <span class="st">"Science Fiction"</span>,</span>
+<span id="cb10-23"><a href="#cb10-23" aria-hidden="true" tabindex="-1"></a>  <span class="st">"Jules Verne"</span>, <span class="st">"Around the World in Eighty Days"</span>, <span class="dv">1873</span>, <span class="dv">103</span>, <span class="st">"Adventure"</span>,</span>
+<span id="cb10-24"><a href="#cb10-24" aria-hidden="true" tabindex="-1"></a>  <span class="st">"Bram Stoker"</span>, <span class="st">"Dracula"</span>, <span class="dv">1897</span>, <span class="dv">345</span>, <span class="st">"Gothic"</span>,</span>
+<span id="cb10-25"><a href="#cb10-25" aria-hidden="true" tabindex="-1"></a>  <span class="st">"H. G. Wells"</span>, <span class="st">"The Time Machine"</span>, <span class="dv">1895</span>, <span class="dv">35</span>, <span class="st">"Science Fiction"</span>,</span>
+<span id="cb10-26"><a href="#cb10-26" aria-hidden="true" tabindex="-1"></a>  <span class="st">"Charlotte Brontë"</span>, <span class="st">"Jane Eyre"</span>, <span class="dv">1847</span>, <span class="dv">1260</span>, <span class="st">"Gothic"</span>,</span>
+<span id="cb10-27"><a href="#cb10-27" aria-hidden="true" tabindex="-1"></a>  <span class="st">"Jane Austen"</span>, <span class="st">"Northanger Abbey"</span>, <span class="dv">1817</span>, <span class="dv">121</span>, <span class="st">"Social Fiction"</span>,</span>
+<span id="cb10-28"><a href="#cb10-28" aria-hidden="true" tabindex="-1"></a>  <span class="st">"Elizabeth Gaskell"</span>, <span class="st">"North and South"</span>, <span class="dv">1855</span>, <span class="dv">4276</span>, <span class="st">"Social Fiction"</span></span>
+<span id="cb10-29"><a href="#cb10-29" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb10-30"><a href="#cb10-30" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-31"><a href="#cb10-31" aria-hidden="true" tabindex="-1"></a>corpus</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 26 × 5
+   author                      title                            year  glID genre
+   &lt;chr&gt;                       &lt;chr&gt;                           &lt;dbl&gt; &lt;dbl&gt; &lt;chr&gt;
+ 1 Jane Austen                 Pride and Prejudice              1813  1342 Soci…
+ 2 Charles Dickens             A Tale of Two Cities             1859    98 Soci…
+ 3 F. Scott Fitzgerald         The Great Gatsby                 1925 64317 Soci…
+ 4 Mary Wollstonecraft Shelley Frankenstein; Or, The Modern P…  1818    84 Goth…
+ 5 Herman Melville             Moby Dick                        1851  2701 Adve…
+ 6 Louisa May Alcott           Little Women                     1868 37106 Dome…
+ 7 Mark Twain                  Tom Sawyer                       1876    74 Adve…
+ 8 Jonathan Swift              Gulliver's Travels               1726 17157 Sati…
+ 9 E. M. Forster               A Room with a View               1908  2641 Soci…
+10 Elizabeth Von Arnim         The Enchanted April              1922 16389 Soci…
+# ℹ 16 more rows</code></pre>
+</div>
+</div>
+<p>We can have a glimpse of the corpus by examining how many authors and how many genres are represented.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb12"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Examine the corpus</span></span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>corpus <span class="sc">%&gt;%</span></span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">count</span>(author, <span class="at">sort =</span> <span class="cn">TRUE</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 20 × 2
+   author                          n
+   &lt;chr&gt;                       &lt;int&gt;
+ 1 Charles Dickens                 3
+ 2 Jules Verne                     3
+ 3 Elizabeth Gaskell               2
+ 4 Jane Austen                     2
+ 5 Bram Stoker                     1
+ 6 Charlotte Brontë                1
+ 7 E. M. Forster                   1
+ 8 Elizabeth Von Arnim             1
+ 9 F. Scott Fitzgerald             1
+10 H. G. Wells                     1
+11 Harriet Beecher Stowe           1
+12 Herman Melville                 1
+13 J. M. Barrie                    1
+14 Jonathan Swift                  1
+15 Kenneth Grahame                 1
+16 Lewis Carroll                   1
+17 Louisa May Alcott               1
+18 Mark Twain                      1
+19 Mary Wollstonecraft Shelley     1
+20 Robert Louis Stevenson          1</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb14"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>corpus <span class="sc">%&gt;%</span></span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">count</span>(genre, <span class="at">sort =</span> <span class="cn">TRUE</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 7 × 2
+  genre                 n
+  &lt;chr&gt;             &lt;int&gt;
+1 Social Fiction       10
+2 Adventure             4
+3 Fantasy               3
+4 Gothic                3
+5 Science Fiction       3
+6 Domestic Fiction      2
+7 Satirical Fiction     1</code></pre>
+</div>
+</div>
+<p>We can observe how our corpus contains works by mostly individual authors, although with some exceptions as Dickens, Verne, Gaskell and Austen. In terms of genres, we have a diverse range, with a strong representation of Social Fiction, Adventure, and Fantasy, alongside notable works in Gothic and Science Fiction.</p>
+<p>Another relevant point about this corpus is that it represents what became the “standard” English-language literary canon, even with the inclusion of Verne’s works, which were originally written in French but became deeply embedded in English-language reading culture through translation. This corpus is a good starting point for exploring the evolution of English literature and the themes that have persisted over time.</p>
+<section id="fetch-the-texts" class="level3">
+<h3 class="anchored" data-anchor-id="fetch-the-texts">Fetch the Texts</h3>
+<p>Our next step is to fetch the full text that constitutes our corpus. We will use the <code>glID</code> (Gutenberg Library ID) to retrieve the texts from the Project Gutenberg website. To facilitate this process, we can use the <code>gutenbergr</code> package in R, which handles the downloading and cleaning automatically.</p>
+<p>Step by step, what we are going to do is install and load the gutenbergr package, which handles the downloading and cleaning automatically (removing Project Gutenberg headers, footers, and formatting markers).</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb16"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="fu">install.packages</span>(<span class="st">"gutenbergr"</span>) <span class="co"># Install if needed (run once)</span></span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(gutenbergr)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>After that, we need to iterate over the <code>glIDs</code> in our corpus for the package to know what book to download. The function <code>gutenberg_download()</code> will take the <code>glID</code> as an argument and return the full text of the book as a tibble with two columns, like this one:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb17"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="fu">gutenberg_download</span>(<span class="dv">1342</span>) <span class="co"># 1342 is the ID for "Pride and Prejudice"</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Determining mirror for Project Gutenberg from
+https://www.gutenberg.org/robot/harvest.
+Using mirror http://aleph.gutenberg.org.</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 14,527 × 2
+   gutenberg_id text                                            
+          &lt;int&gt; &lt;chr&gt;                                           
+ 1         1342 "                             GEORGE ALLEN"     
+ 2         1342 "                               PUBLISHER"      
+ 3         1342 ""                                              
+ 4         1342 "                        156 CHARING CROSS ROAD"
+ 5         1342 "                                LONDON"        
+ 6         1342 ""                                              
+ 7         1342 "                             RUSKIN HOUSE"     
+ 8         1342 "                                   ]"          
+ 9         1342 ""                                              
+10         1342 "                            [Illustration:"    
+# ℹ 14,517 more rows</code></pre>
+</div>
+</div>
+<p>This tibble needs to be transformed into a single text string that fits in a column of our corpus tibble. We can use the <code>pull()</code> function to extract the text column and then use <code>paste(collapse = " ")</code> to concatenate all the lines into a single string.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb20"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Download all books at once</span></span>
+<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a>corpus_texts <span class="ot">&lt;-</span> corpus <span class="sc">%&gt;%</span></span>
+<span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a>   <span class="fu">mutate</span>(<span class="at">text =</span> <span class="fu">map</span>(glID, <span class="sc">~</span><span class="fu">gutenberg_download</span>(.x) <span class="sc">%&gt;%</span></span>
+<span id="cb20-4"><a href="#cb20-4" aria-hidden="true" tabindex="-1"></a>   <span class="fu">pull</span>(text) <span class="sc">%&gt;%</span></span>
+<span id="cb20-5"><a href="#cb20-5" aria-hidden="true" tabindex="-1"></a>   <span class="fu">paste</span>(<span class="at">collapse =</span> <span class="st">" "</span>)))</span>
+<span id="cb20-6"><a href="#cb20-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-7"><a href="#cb20-7" aria-hidden="true" tabindex="-1"></a>corpus_texts</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 26 × 6
+   author                      title                      year  glID genre text 
+   &lt;chr&gt;                       &lt;chr&gt;                     &lt;dbl&gt; &lt;dbl&gt; &lt;chr&gt; &lt;lis&gt;
+ 1 Jane Austen                 Pride and Prejudice        1813  1342 Soci… &lt;chr&gt;
+ 2 Charles Dickens             A Tale of Two Cities       1859    98 Soci… &lt;chr&gt;
+ 3 F. Scott Fitzgerald         The Great Gatsby           1925 64317 Soci… &lt;chr&gt;
+ 4 Mary Wollstonecraft Shelley Frankenstein; Or, The Mo…  1818    84 Goth… &lt;chr&gt;
+ 5 Herman Melville             Moby Dick                  1851  2701 Adve… &lt;chr&gt;
+ 6 Louisa May Alcott           Little Women               1868 37106 Dome… &lt;chr&gt;
+ 7 Mark Twain                  Tom Sawyer                 1876    74 Adve… &lt;chr&gt;
+ 8 Jonathan Swift              Gulliver's Travels         1726 17157 Sati… &lt;chr&gt;
+ 9 E. M. Forster               A Room with a View         1908  2641 Soci… &lt;chr&gt;
+10 Elizabeth Von Arnim         The Enchanted April        1922 16389 Soci… &lt;chr&gt;
+# ℹ 16 more rows</code></pre>
+</div>
+</div>
+<div class="callout callout-style-default callout-tip callout-titled" title="Understanding the `map()` function">
+<div class="callout-header d-flex align-content-center" data-bs-toggle="collapse" data-bs-target=".callout-3-contents" aria-controls="callout-3" aria-expanded="false" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+Understanding the <code>map()</code> function
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-3" class="callout-3-contents callout-collapse collapse">
+<div class="callout-body-container callout-body">
+<p>The <code>map()</code> function from the <code>purrr</code> package (part of tidyverse) applies a function to each element of a vector or list. In our case:</p>
+<ul>
+<li><code>map(glID, ~...)</code> takes each ID from the glID column</li>
+<li>The <code>~</code> creates an anonymous function (similar to a lambda function in Python)</li>
+<li><code>.x</code> represents each individual ID as <code>map()</code> processes them one by one</li>
+<li>So <code>~gutenberg_download(.x)</code> means “for each ID, download that book”</li>
+</ul>
+<p>This is equivalent to writing a for loop, but more concise and functional programming style. The result is that each book gets downloaded and processed, creating a new <code>text</code> column in our tibble.</p>
+<p>If you’re new to <code>map()</code>, think of it as “do this same operation to every item in this list.”</p>
+</div>
+</div>
+</div>
+<p>In the end, we will have a <code>corpus_texts</code> tibble that contains the full text of each book in our corpus as a character vector stored in the <code>text</code> column.</p>
 
 
+</section>
 </section>
 
 </main> <!-- /main -->
