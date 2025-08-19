@@ -153,3 +153,17 @@ corpus <- tribble(
 corpus
 ```
 
+We can have a glimpse of the corpus by examining how many authors and how many genres are represented.
+
+```{r}
+# Examine the corpus
+corpus %>%
+  count(author, sort = TRUE)
+
+corpus %>%
+  count(genre, sort = TRUE)
+```
+
+We can observe how our corpus contains works by mostly individual authors, although with some exceptions as Dickens, Verne, Gaskell and Austen. In terms of genres, we have a diverse range, with a strong representation of Social Fiction, Adventure, and Fantasy, alongside notable works in Gothic and Science Fiction.
+
+Another relevant point about this corpus is that it represents what became the "standard" English-language literary canon, even with the inclusion of Verne's works, which were originally written in French but became deeply embedded in English-language reading culture through translation. This corpus is a good starting point for exploring the evolution of English literature and the themes that have persisted over time.
