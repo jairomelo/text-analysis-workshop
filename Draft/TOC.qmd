@@ -1,0 +1,38 @@
+---
+title: "TOC"
+format: html
+---
+
+## What's Text Analysis?
+### Text Analysis
+### Why Text Analysis?
+### What we will be covering in this introduction to Text Analysis
+
+## Creating a Corpus
+### What is a Corpus?
+### Preparing a tibble with the textual sources
+### Retrieving the texts
+### Preprocessing the data
+
+## Basic Text Analysis
+### Word Frequencies
+### Lexical Density
+### Readability
+### Understandability
+
+## TF-IDF
+### What is TF-IDF?
+### Calculating TF-IDF
+### Visualizing TF-IDF
+
+## Finding Similarities between Texts
+### Cosine Distance
+### Euclidean Distance
+
+## Latent Semantic Analysis (Topic Modelling)
+### What is Topic Modelling?
+### Latent Semantic Analysis
+### Latent Dirichlet Allocation
+### Visualizing Topics
+
+
