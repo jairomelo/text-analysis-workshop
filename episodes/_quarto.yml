@@ -18,6 +18,8 @@ website:
   sidebar:
     style: "docked"
     search: true
+    header: |
+      ![<a href="https://www.flaticon.com/free-icons/report" title="report icons" target="_blank" class="header-icon-attribution">Report icons created by Freepik - Flaticon</a>](_static/images/analytics.png)
     tools:
       - icon: github
         href: https://github.com/jairomelo/text-analysis-workshop
@@ -34,4 +36,4 @@ format:
   html:
     toc: true
     theme: cosmo
-    css: static/css/styles.css
+    css: _static/css/styles.css
