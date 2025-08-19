@@ -38,10 +38,21 @@ jobs:
       with:
         version: 'release'
         
+    - name: Install system dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y libcurl4-openssl-dev libssl-dev libxml2-dev libfontconfig1-dev
+        
+    - name: Install core R packages
+      run: |
+        install.packages(c("renv", "rmarkdown", "knitr", "jsonlite"), repos = "https://cloud.r-project.org/")
+      shell: Rscript {0}
+        
     - name: Restore renv
-      uses: r-lib/actions/setup-renv@v2
-      with:
-        cache-version: 1
+      run: |
+        Rscript -e "renv::restore()"
+      env:
+        RENV_PATHS_LIBRARY: renv/library
         
     - name: Render Quarto Project
       run: |
