@@ -167,3 +167,48 @@ corpus %>%
 We can observe how our corpus contains works by mostly individual authors, although with some exceptions as Dickens, Verne, Gaskell and Austen. In terms of genres, we have a diverse range, with a strong representation of Social Fiction, Adventure, and Fantasy, alongside notable works in Gothic and Science Fiction.
 
 Another relevant point about this corpus is that it represents what became the "standard" English-language literary canon, even with the inclusion of Verne's works, which were originally written in French but became deeply embedded in English-language reading culture through translation. This corpus is a good starting point for exploring the evolution of English literature and the themes that have persisted over time.
+
+### Fetch the Texts
+
+Our next step is to fetch the full text that constitutes our corpus. We will use the `glID` (Gutenberg Library ID) to retrieve the texts from the Project Gutenberg website. To facilitate this process, we can use the `gutenbergr` package in R, which handles the downloading and cleaning automatically.
+
+Step by step, what we are going to do is install and load the gutenbergr package, which handles the downloading and cleaning automatically (removing Project Gutenberg headers, footers, and formatting markers). 
+
+```{r}
+#| output: false
+install.packages("gutenbergr") # Install if needed (run once)
+library(gutenbergr)
+```
+
+After that, we need to iterate over the `glIDs` in our corpus for the package to know what book to download. The function `gutenberg_download()` will take the `glID` as an argument and return the full text of the book as a tibble with two columns, like this one:
+
+```{r}
+gutenberg_download(1342) # 1342 is the ID for "Pride and Prejudice"
+```
+
+This tibble needs to be transformed into a single text string that fits in a column of our corpus tibble. We can use the `pull()` function to extract the text column and then use `paste(collapse = " ")` to concatenate all the lines into a single string. 
+
+```{r}
+# Download all books at once
+corpus_texts <- corpus %>%
+   mutate(text = map(glID, ~gutenberg_download(.x) %>%
+   pull(text) %>%
+   paste(collapse = " ")))
+
+corpus_texts
+```
+
+::: {.callout-tip collapse="true" title="Understanding the `map()` function"}
+The `map()` function from the `purrr` package (part of tidyverse) applies a function to each element of a vector or list. In our case:
+
+- `map(glID, ~...)` takes each ID from the glID column
+- The `~` creates an anonymous function (similar to a lambda function in Python)
+- `.x` represents each individual ID as `map()` processes them one by one
+- So `~gutenberg_download(.x)` means "for each ID, download that book"
+
+This is equivalent to writing a for loop, but more concise and functional programming style. The result is that each book gets downloaded and processed, creating a new `text` column in our tibble.
+
+If you're new to `map()`, think of it as "do this same operation to every item in this list."
+:::
+
+In the end, we will have a `corpus_texts` tibble that contains the full text of each book in our corpus as a character vector stored in the `text` column.
