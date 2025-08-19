@@ -102,8 +102,54 @@ beforethelaw_reduced <- beforethelaw_preprocessed %>%
 beforethelaw_reduced
 ```
 
+This new tibble has 164 rows, meaning we've reduced our original text by 75% by removing stop words. This is important to keep in mind, as preprocessing can improve analysis quality by reducing noise and focusing on relevant terms, but it can also result in a loss of context or meaning that may be important for certain types of analysis.
+
 ::: {.callout-note}
  Stop word removal isn't always necessary. For tasks like authorship attribution or sentiment analysis, these "common" words can actually provide valuable information about writing style or tone.
 :::
 
-This new tibble has 164 rows, meaning we've reduced our original text by 75% by removing stop words. This is important to keep in mind, as preprocessing can improve analysis quality by reducing noise and focusing on relevant terms, but it can also result in a loss of context or meaning that may be important for certain types of analysis.
+## Create a Corpus
+
+The term "corpus" is borrowed from Latin. The main meaning of that word is "body," but in medieval Latin, a collection of writings about the same topic were also called "corpus" (e.g. the "Corpus Juris Civilis"). In text analysis, we use this term more broadly to refer to the entire body of text that we are analyzing, but usually it implies a previous curation of what texts are included so that they share a common theme, time period, or author. Corpora can range from a few documents to millions of texts, depending on the research question.
+
+We've curated a corpus of classic works in the public domain. These works share some common themes, styles, and historical contexts, making them suitable for comparative analysis.
+
+We have included 26 works by 20 authors, from a period spanning from 1726 to 1925, although, most works are from the 19th century. We aim to create a corpus useful for demonstration purposes while keeping some consistency in terms of length and genre to allow for meaningful comparisons.
+
+The `glID` column contains Project Gutenberg identification numbers, which can be used to construct URLs for downloading the full texts.
+
+```{r}
+
+corpus <- tribble(
+  ~author, ~title, ~year, ~glID, ~genre,
+  "Jane Austen", "Pride and Prejudice", 1813, 1342, "Social Fiction",
+  "Charles Dickens", "A Tale of Two Cities", 1859, 98, "Social Fiction",
+  "F. Scott Fitzgerald", "The Great Gatsby", 1925, 64317, "Social Fiction",
+  "Mary Wollstonecraft Shelley", "Frankenstein; Or, The Modern Prometheus", 1818, 84, "Gothic",
+  "Herman Melville", "Moby Dick", 1851, 2701, "Adventure",
+  "Louisa May Alcott", "Little Women", 1868, 37106, "Domestic Fiction",
+  "Mark Twain", "Tom Sawyer", 1876, 74, "Adventure",
+  "Jonathan Swift", "Gulliver's Travels", 1726, 17157, "Satirical Fiction",
+  "E. M. Forster", "A Room with a View", 1908, 2641, "Social Fiction",
+  "Elizabeth Von Arnim", "The Enchanted April", 1922, 16389, "Social Fiction",
+  "Lewis Carroll", "Alice's Adventures in Wonderland", 1865, 11, "Fantasy",
+  "Elizabeth Gaskell", "Cranford", 1853, 394, "Domestic Fiction",
+  "Charles Dickens", "The Pickwick Papers", 1836, 580, "Social Fiction",
+  "J. M. Barrie", "Peter Pan", 1911, 16, "Fantasy",
+  "Charles Dickens", "Great Expectations", 1861, 1400, "Social Fiction",
+  "Harriet Beecher Stowe", "Uncle Tom's Cabin", 1852, 203, "Social Fiction",
+  "Robert Louis Stevenson", "Treasure Island", 1883, 120, "Adventure",
+  "Kenneth Grahame", "The Wind in the Willows", 1908, 27805, "Fantasy",
+  "Jules Verne", "Twenty Thousand Leagues Under the Seas", 1870, 2488, "Science Fiction",
+  "Jules Verne", "A Journey to the Centre of the Earth", 1864, 18857, "Science Fiction",
+  "Jules Verne", "Around the World in Eighty Days", 1873, 103, "Adventure",
+  "Bram Stoker", "Dracula", 1897, 345, "Gothic",
+  "H. G. Wells", "The Time Machine", 1895, 35, "Science Fiction",
+  "Charlotte Brontë", "Jane Eyre", 1847, 1260, "Gothic",
+  "Jane Austen", "Northanger Abbey", 1817, 121, "Social Fiction",
+  "Elizabeth Gaskell", "North and South", 1855, 4276, "Social Fiction"
+)
+
+corpus
+```
+
