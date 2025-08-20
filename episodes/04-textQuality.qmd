@@ -1,0 +1,69 @@
+---
+title: "Text Quality"
+engine: knitr
+format:
+  html:
+    fig-width: 10
+    fig-height: 12
+    dpi: 300
+editor_options: 
+  chunk_output_type: inline
+---
+
+In the previous chapter we performed some basic text analysis techniques which helped us to understand the general shape of our corpus. We found the most frequent words in our corpus, what words were more frequently used by each author, and we performed a lexical density analysis to calculate how rich the vocabulary is in each text, and we compared with basic readability metrics to explore how lexical complexity and readability can influence each other.
+
+In this episode, we're going to return to our starting example of Kafka's story, and we're going to explore how some of these measurements can actually help us to identify if a text is ready for analysis or if it requires further preprocessing. This approach can be particularly helpful when there's uncertainty about the quality of the textual data (e.g., it proceeds from poor OCR, transcription errors, or social media sources).
+
+We have prepared for this exercise three versions of the same text:
+
+- **Clean Text**: The same version we used in our initial exercise.
+- **Messy Text**: This version was taken from a direct OCR output with acceptable quality. It's readable, but it contains some identifiable errors.
+- **Dirty Text**: This version was also taken from an OCR output, but in this case the OCR was performed over a poor-quality digitization, which results in multiple errors that significantly impact readability.
+
+One important note here is that all examples have been taken from real sources, which is an indicator of what we can expect to find in real text analysis scenarios, particularly when working with historical digitizations or OCR outputs where quality can vary dramatically.
+
+## Lexical Density as Quality Indicator
+
+Let's start performing a lexical density analysis, as we did previously for our corpus, to see how these different versions compare in terms of their lexical richness.
+
+```{r}
+#| output: false
+library(tidyverse)
+library(tidytext)
+```
+```{r}
+# Load the text data
+kafka <- tribble(
+    ~version, ~url,
+    "clean", "texts/Kafka-beforethelaw.txt",
+    "messy", "texts/Kafka-btl-messy.txt",
+    "dirty", "texts/Kafka-btl-dirty.txt"
+)
+
+# Download the text data
+kafka_texts <- kafka %>%
+    mutate(text = map_chr(url, ~ readLines(.x, warn = FALSE) %>% paste(collapse = " ")))
+
+kafka_texts
+```
+
+After loading our text data, we can now proceed to analyze its lexical density.
+
+```{r}
+# Calculate lexical density
+kafka_lexical_density <- kafka_texts %>%
+    unnest_tokens(word, text) %>%
+    anti_join(stop_words) %>% # Remove stop words to match with previous analysis
+    count(version, word) %>%
+    group_by(version) %>%
+    summarise(
+        total_words = sum(n),
+        unique_words = n_distinct(word),
+        lexical_density = (n_distinct(word) / sum(n)) * 100) %>%
+    arrange(lexical_density)
+
+kafka_lexical_density
+```
+
+Our sample is small enough to be understandable without requiring any visualization. Even using the same text, it's possible to see how the lexical density varies across different versions. In some way, we can adventure the hypothesis that noise in text data is equivalent to a high lexical density. In our case, the clean text has a lexical density of 73.9% while the dirty text has a lexical density of 93.8%. 
+

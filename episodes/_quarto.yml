@@ -32,10 +32,12 @@ website:
         href: 02-CreatingACorpus.qmd
       - text: "3. Basic Text Analysis"
         href: 03-basicTextAnalysis.qmd
-      - text: "4. TF-IDF Analysis"
-        href: 04-TF-IDF.qmd
-      - text: "5. Finding Similarities"
-        href: 05-findingSimilarities.qmd
+      - text: "4. Text Quality"
+        href: 04-textQuality.qmd
+      - text: "5. TF-IDF Analysis"
+        href: 05-TF-IDF.qmd
+      - text: "6. Finding Similarities"
+        href: 06-findingSimilarities.qmd
 
 format:
   html:
