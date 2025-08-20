@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 
-<title>06-TopicModeling – Text Analysis with R</title>
+<title>Text Quality – Text Analysis with R</title>
 <style>
 code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
@@ -19,6 +19,40 @@ ul.task-list li input[type="checkbox"] {
   width: 0.8em;
   margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
   vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { display: inline-block; text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
 }
 </style>
 
@@ -80,9 +114,7 @@ ul.task-list li input[type="checkbox"] {
       <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
         <i class="bi bi-layout-text-sidebar-reverse"></i>
       </button>
-        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item">
-      Text Analysis with R
-      </li></ol></nav>
+        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="./04-textQuality.html">4. Text Quality</a></li></ol></nav>
         <a class="flex-grow-1" role="navigation" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
         </a>
       <button type="button" class="btn quarto-search-button" aria-label="Search" onclick="window.quartoOpenSearch();">
@@ -143,14 +175,20 @@ ul.task-list li input[type="checkbox"] {
 </li>
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="./04-TF-IDF.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text">4. TF-IDF Analysis</span></a>
+  <a href="./04-textQuality.html" class="sidebar-item-text sidebar-link active">
+ <span class="menu-text">4. Text Quality</span></a>
   </div>
 </li>
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="./05-findingSimilarities.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text">5. Finding Similarities</span></a>
+  <a href="./05-TF-IDF.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">5. TF-IDF Analysis</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./06-findingSimilarities.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">6. Finding Similarities</span></a>
   </div>
 </li>
     </ul>
@@ -158,15 +196,21 @@ ul.task-list li input[type="checkbox"] {
 </nav>
 <div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
 <!-- margin-sidebar -->
-    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar zindex-bottom">
-        
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul>
+  <li><a href="#lexical-density-as-quality-indicator" id="toc-lexical-density-as-quality-indicator" class="nav-link active" data-scroll-target="#lexical-density-as-quality-indicator">Lexical Density as Quality Indicator</a></li>
+  </ul>
+</nav>
     </div>
 <!-- main -->
 <main class="content" id="quarto-document-content">
 
 <header id="title-block-header" class="quarto-title-block default">
 <div class="quarto-title">
-<h1 class="title">06-TopicModeling</h1>
+<h1 class="title">Text Quality</h1>
 </div>
 
 
@@ -183,8 +227,75 @@ ul.task-list li input[type="checkbox"] {
 </header>
 
 
+<p>In the previous chapter we performed some basic text analysis techniques which helped us to understand the general shape of our corpus. We found the most frequent words in our corpus, what words were more frequently used by each author, and we performed a lexical density analysis to calculate how rich the vocabulary is in each text, and we compared with basic readability metrics to explore how lexical complexity and readability can influence each other.</p>
+<p>In this episode, we’re going to return to our starting example of Kafka’s story, and we’re going to explore how some of these measurements can actually help us to identify if a text is ready for analysis or if it requires further preprocessing. This approach can be particularly helpful when there’s uncertainty about the quality of the textual data (e.g., it proceeds from poor OCR, transcription errors, or social media sources).</p>
+<p>We have prepared for this exercise three versions of the same text:</p>
+<ul>
+<li><strong>Clean Text</strong>: The same version we used in our initial exercise.</li>
+<li><strong>Messy Text</strong>: This version was taken from a direct OCR output with acceptable quality. It’s readable, but it contains some identifiable errors.</li>
+<li><strong>Dirty Text</strong>: This version was also taken from an OCR output, but in this case the OCR was performed over a poor-quality digitization, which results in multiple errors that significantly impact readability.</li>
+</ul>
+<p>One important note here is that all examples have been taken from real sources, which is an indicator of what we can expect to find in real text analysis scenarios, particularly when working with historical digitizations or OCR outputs where quality can vary dramatically.</p>
+<section id="lexical-density-as-quality-indicator" class="level2">
+<h2 class="anchored" data-anchor-id="lexical-density-as-quality-indicator">Lexical Density as Quality Indicator</h2>
+<p>Let’s start performing a lexical density analysis, as we did previously for our corpus, to see how these different versions compare in terms of their lexical richness.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidyverse)</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidytext)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Load the text data</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>kafka <span class="ot">&lt;-</span> <span class="fu">tribble</span>(</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>    <span class="sc">~</span>version, <span class="sc">~</span>url,</span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>    <span class="st">"clean"</span>, <span class="st">"texts/Kafka-beforethelaw.txt"</span>,</span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>    <span class="st">"messy"</span>, <span class="st">"texts/Kafka-btl-messy.txt"</span>,</span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>    <span class="st">"dirty"</span>, <span class="st">"texts/Kafka-btl-dirty.txt"</span></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a><span class="co"># Download the text data</span></span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>kafka_texts <span class="ot">&lt;-</span> kafka <span class="sc">%&gt;%</span></span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a>    <span class="fu">mutate</span>(<span class="at">text =</span> <span class="fu">map_chr</span>(url, <span class="sc">~</span> <span class="fu">readLines</span>(.x, <span class="at">warn =</span> <span class="cn">FALSE</span>) <span class="sc">%&gt;%</span> <span class="fu">paste</span>(<span class="at">collapse =</span> <span class="st">" "</span>)))</span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a>kafka_texts</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 3 × 3
+  version url                          text                                     
+  &lt;chr&gt;   &lt;chr&gt;                        &lt;chr&gt;                                    
+1 clean   texts/Kafka-beforethelaw.txt "BEFORE THE LAW  Before the law sits a g…
+2 messy   texts/Kafka-btl-messy.txt    "Before the Law stands a doorkeeper. To …
+3 dirty   texts/Kafka-btl-dirty.txt    "Befotteh eL aws tandas doorkeepTero.t h…</code></pre>
+</div>
+</div>
+<p>After loading our text data, we can now proceed to analyze its lexical density.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Calculate lexical density</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>kafka_lexical_density <span class="ot">&lt;-</span> kafka_texts <span class="sc">%&gt;%</span></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>    <span class="fu">unnest_tokens</span>(word, text) <span class="sc">%&gt;%</span></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>    <span class="fu">anti_join</span>(stop_words) <span class="sc">%&gt;%</span> <span class="co"># Remove stop words to match with previous analysis</span></span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>    <span class="fu">count</span>(version, word) <span class="sc">%&gt;%</span></span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>    <span class="fu">group_by</span>(version) <span class="sc">%&gt;%</span></span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>    <span class="fu">summarise</span>(</span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>        <span class="at">total_words =</span> <span class="fu">sum</span>(n),</span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a>        <span class="at">unique_words =</span> <span class="fu">n_distinct</span>(word),</span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a>        <span class="at">lexical_density =</span> (<span class="fu">n_distinct</span>(word) <span class="sc">/</span> <span class="fu">sum</span>(n)) <span class="sc">*</span> <span class="dv">100</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a>    <span class="fu">arrange</span>(lexical_density)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Joining with `by = join_by(word)`</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>kafka_lexical_density</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 3 × 4
+  version total_words unique_words lexical_density
+  &lt;chr&gt;         &lt;int&gt;        &lt;int&gt;           &lt;dbl&gt;
+1 clean           165          122            73.9
+2 messy           189          154            81.5
+3 dirty           336          315            93.8</code></pre>
+</div>
+</div>
+<p>Our sample is small enough to be understandable without requiring any visualization. Even using the same text, it’s possible to see how the lexical density varies across different versions. In some way, we can adventure the hypothesis that noise in text data is equivalent to a high lexical density. In our case, the clean text has a lexical density of 73.9% while the dirty text has a lexical density of 93.8%.</p>
 
 
+</section>
 
 </main> <!-- /main -->
 <script id="quarto-html-after-body" type="application/javascript">
