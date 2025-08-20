@@ -137,7 +137,6 @@ corpus <- tribble(
   "Charles Dickens", "The Pickwick Papers", 1836, 580, "Social Fiction",
   "J. M. Barrie", "Peter Pan", 1911, 16, "Fantasy",
   "Charles Dickens", "Great Expectations", 1861, 1400, "Social Fiction",
-  "Harriet Beecher Stowe", "Uncle Tom's Cabin", 1852, 203, "Social Fiction",
   "Robert Louis Stevenson", "Treasure Island", 1883, 120, "Adventure",
   "Kenneth Grahame", "The Wind in the Willows", 1908, 27805, "Fantasy",
   "Jules Verne", "Twenty Thousand Leagues Under the Seas", 1870, 2488, "Science Fiction",
@@ -217,13 +216,53 @@ In the end, we will have a `corpus_texts` tibble that contains the full text of 
 
 The texts provided by the Gutenberg Library are almost ready for analysis. However, we still need to perform some basic cleaning steps to ensure consistency and remove any unwanted artifacts.
 
+#### Understanding Preprocessing Decisions
+
+Before applying cleaning steps mechanically, it's important to understand how our preprocessing choices affect the results. A common challenge is handling possessive forms properly.
+
+When we remove all punctuation indiscriminately, we transform possessive forms in ways that might not be intended:
+
 ```{r}
-# Cleaning the texts
+# Example text to demonstrate the issue
+example_text <- "Beth's book and Joe's pen were left at Mary's house."
+
+# Method 1: Remove all punctuation (problematic)
+simple_clean <- example_text %>%
+  str_to_lower() %>%
+  str_remove_all("[[:punct:]]")
+
+cat("Original:", example_text, "\n")
+cat("Simple cleaning:", simple_clean, "\n")
+```
+
+The simple approach transforms "Beth's" into "beths", "Joe's" into "joes", etc. We can handle this more elegantly during tokenization by removing the possessive suffix after we've split the text into words.
+
+::: {.callout-important title="Preprocessing Philosophy"}
+**Every preprocessing decision shapes your results.** Always consider:
+- What linguistic information do you want to preserve?
+- How will your choices affect downstream analysis?
+- Can you make your preprocessing decisions explicit and reversible?
+
+For possessives, we have several options:
+- **Remove 's suffix**: "Mary's" → "Mary" (treats possessive as just a reference to the person/thing)
+- **Expand to 'has'**: "Mary's book" → "Mary has book" (preserves relationship)  
+- **Keep as-is**: Preserve the grammatical information
+
+For most text analysis tasks, removing the suffix is the most practical approach.
+:::
+
+#### Applying Smart Cleaning
+
+Let's apply a straightforward approach: remove punctuation normally, then handle possessives during tokenization:
+
+```{r}
+# Cleaning the texts - simple approach
 corpus_texts <- corpus_texts %>%
    mutate(
-    text_clean = str_to_lower(text) %>% # Convert to lowercase
-       str_remove_all("[[:punct:]]") %>% # Remove punctuation
-       str_squish()                       # Remove extra whitespace
+    text_clean = str_to_lower(text) %>%               # Convert to lowercase
+       str_remove_all("'s\\b") %>%                    # Remove possessive 's from full text
+       str_remove_all("[[:punct:]]") %>%              # Remove remaining punctuation
+       str_squish()                                    # Remove extra whitespace
    )
 
 corpus_texts
@@ -235,3 +274,4 @@ These are basic cleaning steps that improve the quality of our text data and red
 
 In real-world projects, text cleaning often involves both automated processes and manual review to ensure corpus consistency. For our workshop, we'll assume these texts are clean enough for analysis, but in practice, you may need to spend considerably more time refining your corpus.
 
+Now that we have a clean, standardized corpus of 26 classic works, we're ready to begin our text analysis journey. In the next section, we'll start with fundamental techniques: examining word frequencies, calculating lexical density, and measuring readability scores. These basic analyses will give us our first insights into the linguistic patterns that distinguish different authors, genres, and time periods in our corpus.
