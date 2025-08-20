@@ -1,0 +1,495 @@
+---
+title: "TF-IDF: Finding Distinctive Words"
+engine: knitr
+format:
+  html:
+    fig-width: 10
+    fig-height: 12
+    dpi: 300
+editor_options: 
+  chunk_output_type: inline
+---
+
+In the previous chapter, we explored basic text analysis techniques like word frequencies and lexical density. While these methods help us understand general patterns in our texts, they don't tell us which words are truly distinctive or characteristic of specific authors, genres, or time periods.
+
+This is where **TF-IDF (Term Frequency-Inverse Document Frequency)** becomes invaluable. TF-IDF helps us identify words that are not only frequent in a particular document, but also relatively rare across the entire corpus. This makes it an excellent tool for discovering what makes each text unique.
+
+::: {.callout-note title="Why TF-IDF Matters"}
+While simple word frequency tells us what words appear most often, TF-IDF tells us what words are most *characteristic* of a document. A word like "the" might be very frequent, but it appears in all documents. However, a word like "Darcy" might be moderately frequent in Pride and Prejudice but appear nowhere else in our corpus, making it highly characteristic of that specific novel.
+:::
+
+## What is TF-IDF?
+
+TF-IDF combines two important concepts:
+
+- **Term Frequency (TF)**: How often a word appears in a specific document
+- **Inverse Document Frequency (IDF)**: How rare the word is across all documents in the corpus
+
+The mathematical formula is:
+
+$$
+\text{TF-IDF}(t,d) = \text{TF}(t,d) \times \text{IDF}(t)
+$$
+
+Where:
+- $\text{TF}(t,d)$ = frequency of term $t$ in document $d$
+- $\text{IDF}(t) = \log\left(\frac{\text{Total documents}}{\text{Documents containing } t}\right)$
+
+### Understanding the Components
+
+**Term Frequency (TF)** can be calculated in several ways:
+- Raw count: Simply how many times the word appears
+- Relative frequency: Raw count divided by total words in the document
+- Log normalization: $1 + \log(\text{raw count})$ (used to dampen the effect of very high frequencies)
+
+**Inverse Document Frequency (IDF)** gives higher weights to words that appear in fewer documents:
+- If a word appears in all documents, IDF approaches 0
+- If a word appears in only one document, IDF is at its maximum
+- The logarithm smooths this relationship
+
+Let's explore this with our corpus!
+
+## Setting Up Our Analysis
+
+```{r}
+#| echo: false
+#| output: false
+
+library(tidyverse)
+library(tidytext)
+library(gutenbergr)
+library(textstem)
+```
+
+Let's work with our full corpus from the previous chapter, treating each book as a separate document for TF-IDF analysis. We'll handle possessive forms by removing the 's suffix during tokenization:
+
+```{r}
+# Create our full corpus (25 classic works)
+corpus <- tribble(
+  ~author, ~title, ~year, ~glID, ~genre,
+  "Jane Austen", "Pride and Prejudice", 1813, 1342, "Social Fiction",
+  "Charles Dickens", "A Tale of Two Cities", 1859, 98, "Social Fiction",
+  "F. Scott Fitzgerald", "The Great Gatsby", 1925, 64317, "Social Fiction",
+  "Mary Wollstonecraft Shelley", "Frankenstein; Or, The Modern Prometheus", 1818, 84, "Gothic",
+  "Herman Melville", "Moby Dick", 1851, 2701, "Adventure",
+  "Louisa May Alcott", "Little Women", 1868, 37106, "Domestic Fiction",
+  "Mark Twain", "Tom Sawyer", 1876, 74, "Adventure",
+  "Jonathan Swift", "Gulliver's Travels", 1726, 17157, "Satirical Fiction",
+  "E. M. Forster", "A Room with a View", 1908, 2641, "Social Fiction",
+  "Elizabeth Von Arnim", "The Enchanted April", 1922, 16389, "Social Fiction",
+  "Lewis Carroll", "Alice's Adventures in Wonderland", 1865, 11, "Fantasy",
+  "Elizabeth Gaskell", "Cranford", 1853, 394, "Domestic Fiction",
+  "Charles Dickens", "The Pickwick Papers", 1836, 580, "Social Fiction",
+  "J. M. Barrie", "Peter Pan", 1911, 16, "Fantasy",
+  "Charles Dickens", "Great Expectations", 1861, 1400, "Social Fiction",
+  "Robert Louis Stevenson", "Treasure Island", 1883, 120, "Adventure",
+  "Kenneth Grahame", "The Wind in the Willows", 1908, 27805, "Fantasy",
+  "Jules Verne", "Twenty Thousand Leagues Under the Seas", 1870, 2488, "Science Fiction",
+  "Jules Verne", "A Journey to the Centre of the Earth", 1864, 18857, "Science Fiction",
+  "Jules Verne", "Around the World in Eighty Days", 1873, 103, "Adventure",
+  "Bram Stoker", "Dracula", 1897, 521, "Gothic",
+  "H. G. Wells", "The Time Machine", 1895, 43, "Science Fiction",
+  "Charlotte Brontë", "Jane Eyre", 1847, 145, "Gothic",
+  "Jane Austen", "Northanger Abbey", 1817, 829, "Social Fiction",
+  "Elizabeth Gaskell", "North and South", 1855, 203, "Social Fiction"
+)
+
+# Download and clean the texts
+corpus_texts <- corpus %>%
+   mutate(text = map(glID, ~gutenberg_download(.x) %>%
+   pull(text) %>%
+   paste(collapse = " "))) %>%
+   mutate(
+    text_clean = str_to_lower(text) %>%
+       str_remove_all("'s\\b") %>%                    # Remove possessive 's from full text
+       str_remove_all("[[:punct:]]") %>%              # Remove remaining punctuation
+       str_squish()                                    # Remove extra whitespace
+   ) %>%
+   select(author, title, year, genre, text_clean)  # Keep all metadata columns
+
+corpus_texts
+```
+
+## Calculating TF-IDF
+
+The `tidytext` package makes calculating TF-IDF straightforward with the `bind_tf_idf()` function. Let's start by tokenizing our corpus and preparing it for TF-IDF analysis.
+
+To improve our thematic analysis, we'll also apply **lemmatization** - a process that reduces words to their base forms (e.g., "whales" → "whale", "running" → "run"). This helps us treat related word forms as the same concept, providing cleaner thematic patterns:
+
+```{r}
+# Tokenize and prepare for TF-IDF with lemmatization
+corpus_words <- corpus_texts %>%
+  select(title, author, genre, text_clean) %>%
+  unnest_tokens(word, text_clean) %>%
+  # Apply lemmatization to reduce words to their base forms
+  mutate(word = lemmatize_words(word)) %>%
+  anti_join(stop_words, by = "word") %>%
+  count(title, word, sort = TRUE)
+
+# Display the structure
+corpus_words %>%
+  head(10)
+```
+
+Now let's calculate TF-IDF scores:
+
+```{r}
+# Calculate TF-IDF
+corpus_tfidf <- corpus_words %>%
+  bind_tf_idf(word, title, n)
+
+# Display the words with highest TF-IDF scores
+corpus_tfidf %>%
+  arrange(desc(tf_idf)) %>%
+  head(20)
+```
+
+Let's examine what these high TF-IDF words tell us about each book:
+
+```{r}
+# Top TF-IDF words for each book
+top_tfidf <- corpus_tfidf %>%
+  group_by(title) %>%
+  slice_max(tf_idf, n = 10) %>%
+  ungroup()
+
+top_tfidf
+```
+
+### Understanding the Results
+
+Let's examine what these distinctive words reveal:
+
+```{r}
+# Display top words by book in a more readable format
+top_tfidf %>%
+  select(title, word, tf_idf) %>%
+  mutate(tf_idf = round(tf_idf, 4)) %>%
+  group_by(title) %>%
+  summarise(
+    top_words = paste(word, collapse = ", "),
+    .groups = "drop"
+  )
+```
+
+Notice how the top TF-IDF words immediately reveal:
+- **Character names**: "alice" (Alice's Adventures in Wonderland), "fogg" and "passepartout" (Around the World in Eighty Days), "matty" (Cranford)
+- **Setting-specific terms**: "sneffels" (A Journey to the Centre of the Earth), "blefuscu" (Gulliver's Travels), "brazils" (Adventure novels)
+- **Genre-specific vocabulary**: Scientific and technical terms in Jules Verne works, fantastical locations in Swift's satire
+
+## Visualizing TF-IDF
+
+Rather than standard bar charts, let's create visualizations that reveal the literary nature of our corpus and help us understand how TF-IDF captures the essence of different works.
+
+### Authors' Distinctive Vocabularies
+
+Let's examine authors who have multiple works in our corpus to see their consistent vocabulary patterns:
+
+```{r}
+#| fig-height: 8
+# Focus on authors with multiple works
+multi_work_authors <- corpus %>%
+  count(author, sort = TRUE) %>%
+  filter(n > 1) %>%
+  pull(author)
+
+# Get top TF-IDF words for these authors' works
+author_vocabulary <- corpus_tfidf %>%
+  left_join(corpus %>% select(title, author), by = "title") %>%
+  filter(author %in% multi_work_authors) %>%
+  group_by(author, title) %>%
+  slice_max(tf_idf, n = 6) %>%
+  ungroup() %>%
+  # Create a combined identifier for better plotting
+  mutate(work_id = paste(str_wrap(author, 15), "-", str_trunc(title, 20)))
+
+author_vocabulary %>%
+  ggplot(aes(x = reorder_within(word, tf_idf, work_id), y = tf_idf, fill = author)) +
+  geom_col() +
+  scale_x_reordered() +
+  coord_flip() +
+  facet_wrap(~work_id, scales = "free", ncol = 2) +
+  labs(
+    title = "Authors' Distinctive Words Across Multiple Works",
+    subtitle = "Do authors maintain consistent vocabulary patterns?",
+    x = "Distinctive Words",
+    y = "TF-IDF Score"
+  ) +
+  theme_minimal() +
+  theme(
+    legend.position = "bottom",
+    strip.text = element_text(size = 9),
+    axis.text = element_text(size = 8)
+  ) +
+  guides(fill = guide_legend(title = "Author"))
+```
+
+### Top TF-IDF Terms by Book
+
+Before diving into systematic analysis, let's create a simple reference list of the top 10 TF-IDF terms for each book:
+
+```{r}
+# Create a clean reference list of top TF-IDF terms
+top_terms_by_book <- corpus_tfidf %>%
+  group_by(title) %>%
+  slice_max(tf_idf, n = 10) %>%
+  summarise(
+    top_10_terms = paste(word, collapse = ", "),
+    .groups = "drop"
+  ) %>%
+  arrange(title)
+
+# Display as a clean table
+top_terms_by_book %>%
+  mutate(
+    title = str_trunc(title, 35),
+    top_10_terms = str_wrap(top_10_terms, 60)
+  ) %>%
+  knitr::kable(
+    col.names = c("Book Title", "Top 10 TF-IDF Terms"),
+    caption = "Most distinctive words for each book in our corpus"
+  )
+```
+
+The table above clearly shows that **character names dominate TF-IDF results in literature**. Looking at the terms, we can manually identify character names to separate them from thematic words for deeper analysis.
+
+### Thematic Words
+
+Now let's focus on the distinctive words that aren't character names, to discover the thematic fingerprint of each work. We'll create a comprehensive list of character names to exclude from our analysis:
+
+```{r}
+# Create a comprehensive list of character names based on the table above
+# Note: With proper possessive handling, we no longer need possessive forms like "beths", "megs"
+character_names <- c("darcy", "bennet", "bingley", "elizabeth", "wickham", "lydia", "collins", "jane", "alice", "gryphon", "hatter", "turtle", "dormouse", "duchess", "caterpillar", "rabbit", "mouse", "francis", "huckleberry", "sawyer", "potter", "joe", "ben", "cranford", "martha", "jamieson", "matilda", "teddy", "beth", "meg", "demi", "laurie", "gatsby", "daisy", "tom", "jordan", "wilson", "wolfshiem", "hans", "lucy", "bartlett", "cecil", "honeychurch", "beebe", "freddy", "emerson", "vyse", "charlotte", "lorry", "defarge", "manette", "pross", "darnay", "lucie", "carton", "cruncher", "stryver", "fogg", "passepartout", "phileas", "aouda", "foggs", "matty", "jenkyns", "glenmire", "forrester", "mattys", "hoggins", "deborah", "jessie", "helsing", "mina", "jonathan", "harker", "van", "godalming", "seward", "quincey", "harkers", "clerval", "justine", "felix", "frankenstein", "safie", "agatha", "wemmick", "havisham", "estella", "biddy", "jaggers", "herbert", "pip", "pumblechook", "wopsle", "glumdalclitch", "rochester", "adèle", "eyre", "fairfax", "bessie", "ingram", "reed", "jo", "amy", "jos", "laurence", "brooke", "bhaer", "hannah", "ahab", "stubb", "queequeg", "starbuck", "ahabs", "margaret", "thornton", "hale", "dixon", "margarets", "edith", "higgins", "lennox", "catherine", "tilney", "morland", "thorpe", "isabella", "allen", "eleanor", "catherines", "tilneys", "thorpes", "wendy", "peter", "nana", "michael", "smee", "tootles", "nibs", "tink", "wendys", "starkey", "wilkins", "fisher", "arbuthnot", "caroline", "briggs", "lotty", "salvatore", "mellersh", "frederick", "scrap", "pickwick", "weller", "winkle", "sam", "wardle", "tupman", "pickwicks", "perker", "snodgrass", "pott", "weena", "psychologist", "filby", "toad", "mole", "badger", "rat", "ratty", "toads", "huck", "becky", "sid", "injun", "thatcher", "toms", "harper", "jim", "livesey", "hawkins", "trelawney", "conseil", "nemo", "ned", "aronnax", "eva", "clare", "legree", "ophelia", "haley", "cassy", "shelby", "topsy", "morgan", "diana", "helen", "mason", "saknussemm", "hardwigg", "emersons", "alans", "minnie", "lucys", "bertolini", "cecils", "jerry", "tellsons", "jacques", "marquis", "antoine", "havishams", "drummle", "handel", "orlick", "compeyson", "joes", "gargery", "milton", "helstone", "bessy", "thorntons", "hales", "shaw", "boucher", "northanger", "fullerton", "morlands", "allens", "henry", "woodston", "isabellas", "francesca", "meryton", "pemberley", "bingleys", "domenico", "wilkinss", "kate", "costanza", "gatsbys", "daisys", "buchanan", "michaelis", "mckee", "bardell", "sammy", "dodson", "bob", "arabella", "masr", "chloe", "marie", "eliza", "andy", "emmeline", "polly", "hucks", "alices", "jamiesons", "sallie", "marmee", "fred", "hook", "sewards", "morris", "arthur", "renfield", "victor", "rochesters", "georgiana", "gretchen", "alan", "cissie", "sydney", "fanny", "kitty", "lizzy", "james", "henrys", "myrtle", "baker", "cody", "trotter", "jingle", "augustine", "phineas", "estellas", "jaggerss", "wemmicks", "darcys", "lottys", "arbuthnots", "bartletts", "beebes", "leonards", "dixons", "lucas", "droitwiches", "bildad", "beckys", "redruth", "jem", "dinah", "westenra", "eshton", "sophie", "harry", "lorrys", "pumblechooks", "trabbs", "eleanors", "lydias", "bennets", "bourgh", "carraway", "sloane", "beppo", "lumley", "dowler", "peters", "peleg", "arley", "george", "defarges", "generals", "fitzwilliam", "hurst", "wickhams", "briggss", "gatz", "adolph", "poole", "morton", "abbot", "smollett", "gunn", "capn", "holbrook", "signor", "fitzadam", "mulliner", "brunoni", "barkers", "moffat", "dr", "andy", "barker", "jenkynss", "forresters"
+)
+
+# Filter out character names and get thematic words
+thematic_tfidf <- corpus_tfidf %>%
+  filter(!word %in% character_names) %>%
+  group_by(title) %>%
+  slice_max(tf_idf, n = 8) %>%
+  ungroup() %>%
+  # Add genre information
+  left_join(corpus %>% select(title, genre), by = "title")
+
+# Display thematic fingerprints by book
+thematic_tfidf %>%
+  select(title, word, tf_idf, genre) %>%
+  mutate(
+    title = str_trunc(title, 25),
+    tf_idf = round(tf_idf, 4)
+  ) %>%
+  group_by(title, genre) %>%
+  summarise(
+    thematic_words = paste(word, collapse = ", "),
+    avg_tfidf = round(mean(tf_idf), 4),
+    .groups = "drop"
+  ) %>%
+  arrange(genre, title) %>%
+  knitr::kable(
+    col.names = c("Book Title", "Genre", "Thematic Words", "Avg TF-IDF"),
+    caption = "Thematic fingerprints: distinctive non-character words by book"
+  )
+```
+
+Let's visualize these thematic patterns:
+
+```{r}
+#| fig-height: 12
+# Create thematic fingerprint visualization
+thematic_tfidf %>%
+  mutate(
+    title_short = case_when(
+      str_detect(title, "Pride and Prejudice") ~ "Pride & Prejudice",
+      str_detect(title, "Alice") ~ "Alice in Wonderland",
+      str_detect(title, "Great Gatsby") ~ "Great Gatsby",
+      str_detect(title, "Frankenstein") ~ "Frankenstein",
+      str_detect(title, "Journey.*Centre") ~ "Journey to Earth's Centre",
+      str_detect(title, "Twenty Thousand") ~ "20,000 Leagues",
+      str_detect(title, "Around.*World") ~ "Around World in 80 Days",
+      TRUE ~ str_trunc(title, 20)
+    )
+  ) %>%
+  ggplot(aes(x = reorder_within(word, tf_idf, title_short), y = tf_idf, fill = genre)) +
+  geom_col(alpha = 0.8) +
+  scale_x_reordered() +
+  coord_flip() +
+  facet_wrap(~title_short, scales = "free", ncol = 3) +
+  labs(
+    title = "Thematic Fingerprints: Distinctive Non-Character Words",
+    subtitle = "What themes and concepts define each literary work?",
+    x = "Thematic Words",
+    y = "TF-IDF Score",
+    fill = "Genre"
+  ) +
+  theme_minimal() +
+  theme(
+    legend.position = "bottom",
+    strip.text = element_text(size = 9),
+    axis.text = element_text(size = 7)
+  ) +
+  scale_fill_brewer(type = "qual", palette = "Set2")
+```
+
+### Genre Thematic Fingerprints
+
+Rather than focusing on individual book uniqueness, let's explore how TF-IDF can reveal the distinctive linguistic signatures of entire literary genres. By analyzing vocabulary patterns across books within each genre, we can identify the "thematic DNA" that characterizes different literary traditions:
+
+```{r}
+# Create genre-level thematic fingerprints
+genre_fingerprint <- corpus_tfidf %>%
+  # Remove character names from the analysis
+  filter(!word %in% character_names) %>%
+  # Add genre information
+  left_join(corpus %>% select(title, genre), by = "title") %>%
+  # Calculate average TF-IDF by genre and word
+  group_by(genre, word) %>%
+  summarise(
+    avg_tf_idf = mean(tf_idf),
+    books_with_word = n(),
+    .groups = "drop"
+  ) %>%
+  # Get top distinctive words per genre
+  group_by(genre) %>%
+  slice_max(avg_tf_idf, n = 10) %>%
+  summarise(
+    distinctive_words = paste(word, collapse = ", "),
+    avg_distinctiveness = round(mean(avg_tf_idf), 4),
+    .groups = "drop"
+  ) %>%
+  arrange(desc(avg_distinctiveness))
+
+# Display the results
+knitr::kable(genre_fingerprint, 
+             col.names = c("Genre", "Distinctive Vocabulary", "Avg TF-IDF"),
+             caption = "Genre thematic fingerprints: the linguistic DNA of literary traditions")
+```
+
+```{r}
+#| fig-height: 10
+# Visualize genre distinctiveness
+genre_word_analysis <- corpus_tfidf %>%
+  filter(!word %in% character_names) %>%
+  left_join(corpus %>% select(title, genre), by = "title") %>%
+  group_by(genre, word) %>%
+  summarise(avg_tf_idf = mean(tf_idf), .groups = "drop") %>%
+  group_by(genre) %>%
+  slice_max(avg_tf_idf, n = 8)
+
+ggplot(genre_word_analysis, aes(x = reorder_within(word, avg_tf_idf, genre), 
+                                y = avg_tf_idf, fill = genre)) +
+  geom_col(show.legend = FALSE) +
+  scale_x_reordered() +
+  facet_wrap(~genre, scales = "free") +
+  coord_flip() +
+  labs(title = "Most Distinctive Words by Literary Genre",
+       subtitle = "TF-IDF reveals the vocabulary that defines literary traditions",
+       x = "Words", y = "Average TF-IDF Score") +
+  theme_minimal() +
+  theme(strip.text = element_text(size = 10, face = "bold"))
+```
+
+::: {.callout-note title="Genre Vocabulary Patterns"}
+This analysis reveals fascinating patterns in how different literary genres employ distinctive vocabularies:
+
+- **Adventure Fiction**: Geographic terms, maritime vocabulary, and travel-related words
+- **Science Fiction**: Technological terminology, scientific concepts, and futuristic elements
+- **Gothic Literature**: Atmospheric terms, supernatural vocabulary, and dark settings
+- **Social Fiction**: Dialect markers, social terminology, and contemporary references
+- **Fantasy**: Magical terms, mythical vocabulary, and imaginative concepts
+:::
+
+### What Genre Analysis Reveals
+
+This genre-level TF-IDF analysis demonstrates several important insights:
+
+1. **Shared Literary Traditions**: Authors within genres draw from common vocabularies that create recognizable literary voices
+2. **Thematic Coherence**: Genre fingerprints reveal not just stylistic choices but fundamental thematic concerns
+3. **Reader Expectations**: These vocabulary patterns help explain how readers can often identify genres from brief excerpts
+4. **Cultural Evolution**: Genre vocabularies reflect the social, technological, and cultural contexts in which they were written
+
+## Interpreting TF-IDF Results
+
+Our analysis reveals fascinating patterns in how different books and genres use distinctive vocabulary. Let's examine the "thematic fingerprints" that TF-IDF has uncovered.
+
+### Individual Book Fingerprints
+
+Each book in our corpus has developed its own linguistic signature through distinctive vocabulary:
+
+**Science Fiction works** show the highest TF-IDF scores, with technical and fantastical terminology:
+- *Twenty Thousand Leagues Under the Sea*: `nautilus`, `meter`, `canadian`, `underwater` (avg 0.0077)
+- *The Time Machine*: `morlocks`, `laboratory`, `sphinx`, `eloi` (avg 0.0043)
+- *A Journey to the Centre of the Earth*: `uncle`, `sneffels`, `professor`, `iceland` (avg 0.0042)
+
+**Adventure novels** feature location-specific and maritime vocabulary:
+- *Moby Dick*: `whale`, `sperm`, `pequod`, `nantucket`, `whaling` (avg 0.0067)
+- *Around the World in Eighty Days*: `hong`, `kong`, `yokohama`, `bombay`, `steamer` (avg 0.0054)
+- *Treasure Island*: `hispaniola`, `squire`, `buccaneer`, `rum` (avg 0.0038)
+
+**Gothic literature** emphasizes atmospheric and supernatural elements:
+- *Dracula*: `diary`, `whitby`, `undead`, `carfax`, `varna` (avg 0.0024)
+- *Jane Eyre*: `thornfield`, `lowood`, `brocklehurst`, `gateshead` (avg 0.0021)
+- *Frankenstein*: `geneva`, `dæmon`, `ingolstadt`, `creator` (avg 0.0016)
+
+### Genre-Level Patterns
+
+When we aggregate by genre, clear linguistic DNA emerges:
+
+| Genre | Avg TF-IDF | Characteristic Vocabulary |
+|-------|-------------|---------------------------|
+| **Science Fiction** | 0.0089 | `nautilus`, `morlocks`, `meter`, `laboratory` |
+| **Adventure** | 0.0078 | `whale`, `hispaniola`, `sperm`, `pequod` |
+| **Social Fiction** | 0.0053 | `longbourn`, `monseigneur`, `netherfield`, `garage` |
+| **Fantasy** | 0.0052 | `tootle`, `redskin`, `pirate`, `neverland` |
+| **Satirical Fiction** | 0.0036 | `blefuscu`, `majesty`, `emperor`, `lilliput` |
+| **Gothic** | 0.0027 | `thornfield`, `whitby`, `geneva`, `dracula` |
+| **Domestic Fiction** | 0.0017 | `rector`, `drumble`, `aunt`, `parlor` |
+
+### What These Patterns Reveal
+
+1. **Genre Hierarchies**: Science Fiction and Adventure show the highest distinctiveness, suggesting these genres rely heavily on specialized vocabulary
+2. **Temporal Markers**: Words like `telephone`, `car`, `garage` in *The Great Gatsby* clearly mark 20th-century Social Fiction
+3. **Setting Specificity**: Geographic terms (`florence`, `yokohama`, `nantucket`) create strong textual fingerprints
+4. **Character Integration**: Names seamlessly blend with thematic vocabulary (e.g., `darling` in *Peter Pan*, `dracula` in Gothic fiction)
+
+### Practical Applications
+
+These thematic fingerprints enable:
+
+- **Authorship Attribution**: Distinctive vocabulary patterns help identify authors
+- **Genre Classification**: Clear linguistic markers distinguish literary traditions
+- **Content Analysis**: Specialized vocabularies reveal thematic preoccupations
+- **Cultural Analysis**: Word choices reflect historical and social contexts
+
+## Conclusion
+
+TF-IDF provides a powerful lens for understanding what makes texts distinctive within a corpus. Unlike simple frequency analysis, it reveals the words that truly characterize individual works, authors, genres, or time periods.
+
+Our analysis demonstrates how TF-IDF successfully creates "thematic fingerprints" for literature:
+
+- **Science Fiction** emerges as the most linguistically distinctive genre (avg TF-IDF: 0.0089), with specialized technical vocabulary
+- **Adventure** and **Fantasy** genres show strong thematic coherence through setting-specific and imaginative terminology  
+- **Social Fiction** spans multiple time periods, from Austen's `longbourn` to Fitzgerald's `garage`
+- **Gothic** literature maintains consistent atmospheric vocabulary across different authors and periods
+
+These linguistic signatures reveal how genres develop their own vocabularies and how individual works contribute to broader literary traditions. Our careful curation of the corpus demonstrates how analytical decisions shape results while maintaining scholarly integrity.
+
+::: {.callout-important title="Methodological Considerations"}
+**Corpus Curation Matters**: TF-IDF analysis is shaped by both technical parameters and curatorial choices. The resulting thematic fingerprints reflect not just linguistic patterns but also our analytical goals and values as researchers.
+:::
+
+These insights form the foundation for more sophisticated analyses like document similarity measures and topic modeling, which we'll explore in the upcoming chapters.
+
+::: {.callout-tip title="Practice Exercises"}
+Try these exercises to deepen your understanding:
+
+1. **Expand the Corpus**: Add more books and see how TF-IDF results change
+2. **Experiment with Preprocessing**: Try including or excluding proper nouns, numbers, or different word types
+3. **Author Comparison**: Calculate TF-IDF for authors with multiple works in your corpus
+4. **Custom Stop Words**: Create domain-specific stop word lists to filter out less meaningful high-frequency terms
+
+Remember: TF-IDF is most informative when you have a diverse corpus with clear differences between documents.
+:::
+
+In the next chapter, we'll use these TF-IDF insights to explore **text similarity measures**, learning how to quantify how similar or different texts are from one another using techniques like cosine similarity and Euclidean distance.
+
