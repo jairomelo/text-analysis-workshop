@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 
-<title>05-findingSimilarities – Text Analysis with R</title>
+<title>Finding Similarities between Texts – Text Analysis with R</title>
 <style>
 code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
@@ -19,6 +19,40 @@ ul.task-list li input[type="checkbox"] {
   width: 0.8em;
   margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
   vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { display: inline-block; text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
 }
 </style>
 
@@ -67,8 +101,37 @@ ul.task-list li input[type="checkbox"] {
   }
 }</script>
 
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
 
-<link rel="stylesheet" href="static/css/styles.css">
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN") {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
+
+<link rel="stylesheet" href="_static/css/styles.css">
 </head>
 
 <body class="nav-sidebar docked">
@@ -80,9 +143,7 @@ ul.task-list li input[type="checkbox"] {
       <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
         <i class="bi bi-layout-text-sidebar-reverse"></i>
       </button>
-        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item">
-      Text Analysis with R
-      </li></ol></nav>
+        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="./05-findingSimilarities.html">5. Finding Similarities</a></li></ol></nav>
         <a class="flex-grow-1" role="navigation" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
         </a>
       <button type="button" class="btn quarto-search-button" aria-label="Search" onclick="window.quartoOpenSearch();">
@@ -94,7 +155,14 @@ ul.task-list li input[type="checkbox"] {
 <!-- content -->
 <div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article">
 <!-- sidebar -->
-  <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal quarto-sidebar-collapse-item sidebar-navigation docked overflow-auto">
+  <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal quarto-sidebar-collapse-item sidebar-navigation docked overflow-auto"><div class="quarto-sidebar-header"><div class="sidebar-header-item">
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="_static/images/analytics.png" class="img-fluid figure-img"></p>
+<figcaption><a href="https://www.flaticon.com/free-icons/report" title="report icons" target="_blank" class="header-icon-attribution">Report icons created by Freepik - Flaticon</a></figcaption>
+</figure>
+</div>
+</div></div>
     <div class="pt-lg-2 mt-2 text-left sidebar-header">
     <div class="sidebar-title mb-0 py-0">
       <a href="./">Text Analysis with R</a> 
@@ -128,20 +196,61 @@ ul.task-list li input[type="checkbox"] {
  <span class="menu-text">2. Creating a Corpus</span></a>
   </div>
 </li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./03-basicTextAnalysis.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">3. Basic Text Analysis</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./04-TF-IDF.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">4. TF-IDF Analysis</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./05-findingSimilarities.html" class="sidebar-item-text sidebar-link active">
+ <span class="menu-text">5. Finding Similarities</span></a>
+  </div>
+</li>
     </ul>
     </div>
 </nav>
 <div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
 <!-- margin-sidebar -->
-    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar zindex-bottom">
-        
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul>
+  <li><a href="#understanding-distance-and-similarity" id="toc-understanding-distance-and-similarity" class="nav-link active" data-scroll-target="#understanding-distance-and-similarity">Understanding Distance and Similarity</a>
+  <ul class="collapse">
+  <li><a href="#the-mathematics-of-text-distance" id="toc-the-mathematics-of-text-distance" class="nav-link" data-scroll-target="#the-mathematics-of-text-distance">The Mathematics of Text Distance</a></li>
+  </ul></li>
+  <li><a href="#setting-up-our-analysis" id="toc-setting-up-our-analysis" class="nav-link" data-scroll-target="#setting-up-our-analysis">Setting Up Our Analysis</a></li>
+  <li><a href="#creating-tf-idf-vectors-for-similarity" id="toc-creating-tf-idf-vectors-for-similarity" class="nav-link" data-scroll-target="#creating-tf-idf-vectors-for-similarity">Creating TF-IDF Vectors for Similarity</a></li>
+  <li><a href="#cosine-distance" id="toc-cosine-distance" class="nav-link" data-scroll-target="#cosine-distance">Cosine Distance</a>
+  <ul class="collapse">
+  <li><a href="#mathematical-foundation" id="toc-mathematical-foundation" class="nav-link" data-scroll-target="#mathematical-foundation">Mathematical Foundation</a></li>
+  </ul></li>
+  <li><a href="#euclidean-distance" id="toc-euclidean-distance" class="nav-link" data-scroll-target="#euclidean-distance">Euclidean Distance</a>
+  <ul class="collapse">
+  <li><a href="#mathematical-foundation-1" id="toc-mathematical-foundation-1" class="nav-link" data-scroll-target="#mathematical-foundation-1">Mathematical Foundation</a></li>
+  </ul></li>
+  <li><a href="#comparing-cosine-vs.-euclidean-distance" id="toc-comparing-cosine-vs.-euclidean-distance" class="nav-link" data-scroll-target="#comparing-cosine-vs.-euclidean-distance">Comparing Cosine vs.&nbsp;Euclidean Distance</a></li>
+  <li><a href="#hierarchical-clustering-with-distance-measures" id="toc-hierarchical-clustering-with-distance-measures" class="nav-link" data-scroll-target="#hierarchical-clustering-with-distance-measures">Hierarchical Clustering with Distance Measures</a></li>
+  <li><a href="#genre-similarity-analysis" id="toc-genre-similarity-analysis" class="nav-link" data-scroll-target="#genre-similarity-analysis">Genre Similarity Analysis</a></li>
+  <li><a href="#summary-and-interpretation" id="toc-summary-and-interpretation" class="nav-link" data-scroll-target="#summary-and-interpretation">Summary and Interpretation</a></li>
+  </ul>
+</nav>
     </div>
 <!-- main -->
 <main class="content" id="quarto-document-content">
 
 <header id="title-block-header" class="quarto-title-block default">
 <div class="quarto-title">
-<h1 class="title">05-findingSimilarities</h1>
+<h1 class="title">Finding Similarities between Texts</h1>
 </div>
 
 
@@ -158,8 +267,1528 @@ ul.task-list li input[type="checkbox"] {
 </header>
 
 
+<p>In our previous episodes, we explored word frequencies, lexical density, readability metrics, and TF-IDF to understand individual characteristics of texts. Now we turn to a fundamental question in computational text analysis: <strong>How similar are different texts to each other?</strong></p>
+<p>Text similarity is crucial for many applications: detecting plagiarism, finding texts by similar authors, grouping documents by topic, or discovering literary influences. In this episode, we’ll explore two key mathematical approaches for measuring textual similarity: <strong>cosine distance</strong> and <strong>Euclidean distance</strong>.</p>
+<div class="callout callout-style-default callout-note callout-titled" title="Why Similarity Matters">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+Why Similarity Matters
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>Measuring text similarity allows us to: - <strong>Compare authorship styles</strong> across different works - <strong>Group texts by genre or theme</strong> based on vocabulary patterns - <strong>Identify literary influences</strong> between authors and time periods - <strong>Detect document clustering</strong> for large corpus analysis - <strong>Explore stylistic evolution</strong> within an author’s work over time</p>
+</div>
+</div>
+<section id="understanding-distance-and-similarity" class="level2">
+<h2 class="anchored" data-anchor-id="understanding-distance-and-similarity">Understanding Distance and Similarity</h2>
+<p>When we measure text similarity, we’re actually measuring how “close” or “distant” texts are in a mathematical space. Each text can be represented as a vector (a list of numbers), where each dimension represents a word and its value represents how important that word is in the text.</p>
+<p>For this analysis, we’ll use <strong>TF-IDF vectors</strong> - representing each text by the TF-IDF scores of all words in our corpus. This gives us a nuanced view that considers both word frequency and distinctiveness.</p>
+<section id="the-mathematics-of-text-distance" class="level3">
+<h3 class="anchored" data-anchor-id="the-mathematics-of-text-distance">The Mathematics of Text Distance</h3>
+<p><strong>Distance</strong> and <strong>similarity</strong> are inversely related: - <strong>Small distance</strong> = <strong>High similarity</strong> (texts are alike) - <strong>Large distance</strong> = <strong>Low similarity</strong> (texts are different)</p>
+<p>We’ll explore two fundamental distance metrics:</p>
+<ol type="1">
+<li><strong>Cosine Distance</strong>: Measures the angle between text vectors (focuses on proportional word usage)</li>
+<li><strong>Euclidean Distance</strong>: Measures the straight-line distance between text vectors (considers both proportions and magnitudes)</li>
+</ol>
+</section>
+</section>
+<section id="setting-up-our-analysis" class="level2">
+<h2 class="anchored" data-anchor-id="setting-up-our-analysis">Setting Up Our Analysis</h2>
+<p>Let’s work with our established corpus, focusing on a subset for clearer visualization. We’ll use texts from different genres to see how mathematical similarity aligns with literary categories:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Select a strategically chosen subset for similarity analysis</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="co"># Based on the cosine similarity matrix, these texts show more variation and interesting patterns</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>similarity_corpus <span class="ot">&lt;-</span> <span class="fu">tribble</span>(</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>  <span class="sc">~</span>author, <span class="sc">~</span>title, <span class="sc">~</span>year, <span class="sc">~</span>glID, <span class="sc">~</span>genre,</span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Social Fiction - but with some internal variation</span></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>  <span class="st">"Jane Austen"</span>, <span class="st">"Pride and Prejudice"</span>, <span class="dv">1813</span>, <span class="dv">1342</span>, <span class="st">"Social Fiction"</span>,</span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>  <span class="st">"Charles Dickens"</span>, <span class="st">"Great Expectations"</span>, <span class="dv">1861</span>, <span class="dv">1400</span>, <span class="st">"Social Fiction"</span>, </span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>  <span class="st">"Mark Twain"</span>, <span class="st">"Tom Sawyer"</span>, <span class="dv">1876</span>, <span class="dv">74</span>, <span class="st">"Adventure"</span>, <span class="co"># Shows interesting patterns</span></span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Gothic - distinctive vocabulary</span></span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>  <span class="st">"Mary Wollstonecraft Shelley"</span>, <span class="st">"Frankenstein; Or, The Modern Prometheus"</span>, <span class="dv">1818</span>, <span class="dv">84</span>, <span class="st">"Gothic"</span>,</span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>  <span class="st">"Bram Stoker"</span>, <span class="st">"Dracula"</span>, <span class="dv">1897</span>, <span class="dv">521</span>, <span class="st">"Gothic"</span>,</span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>  <span class="st">"Charlotte Brontë"</span>, <span class="st">"Jane Eyre"</span>, <span class="dv">1847</span>, <span class="dv">145</span>, <span class="st">"Gothic"</span>,</span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Fantasy - should cluster together</span></span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a>  <span class="st">"Lewis Carroll"</span>, <span class="st">"Alice's Adventures in Wonderland"</span>, <span class="dv">1865</span>, <span class="dv">11</span>, <span class="st">"Fantasy"</span>,</span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a>  <span class="st">"Kenneth Grahame"</span>, <span class="st">"The Wind in the Willows"</span>, <span class="dv">1908</span>, <span class="dv">27805</span>, <span class="st">"Fantasy"</span>,</span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Science Fiction - technical vocabulary</span></span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a>  <span class="st">"Jules Verne"</span>, <span class="st">"Twenty Thousand Leagues Under the Seas"</span>, <span class="dv">1870</span>, <span class="dv">2488</span>, <span class="st">"Science Fiction"</span>,</span>
+<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a>  <span class="st">"H. G. Wells"</span>, <span class="st">"The Time Machine"</span>, <span class="dv">1895</span>, <span class="dv">43</span>, <span class="st">"Science Fiction"</span>,</span>
+<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Domestic Fiction - should show similarity to social fiction</span></span>
+<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a>  <span class="st">"Elizabeth Gaskell"</span>, <span class="st">"Cranford"</span>, <span class="dv">1853</span>, <span class="dv">394</span>, <span class="st">"Domestic Fiction"</span>,</span>
+<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a>  <span class="st">"Louisa May Alcott"</span>, <span class="st">"Little Women"</span>, <span class="dv">1868</span>, <span class="dv">37106</span>, <span class="st">"Domestic Fiction"</span></span>
+<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a><span class="co"># Download and clean the texts</span></span>
+<span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a>similarity_texts <span class="ot">&lt;-</span> similarity_corpus <span class="sc">%&gt;%</span></span>
+<span id="cb1-26"><a href="#cb1-26" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">text =</span> <span class="fu">map</span>(glID, <span class="sc">~</span><span class="fu">gutenberg_download</span>(.x) <span class="sc">%&gt;%</span></span>
+<span id="cb1-27"><a href="#cb1-27" aria-hidden="true" tabindex="-1"></a>  <span class="fu">pull</span>(text) <span class="sc">%&gt;%</span></span>
+<span id="cb1-28"><a href="#cb1-28" aria-hidden="true" tabindex="-1"></a>  <span class="fu">paste</span>(<span class="at">collapse =</span> <span class="st">" "</span>))) <span class="sc">%&gt;%</span></span>
+<span id="cb1-29"><a href="#cb1-29" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb1-30"><a href="#cb1-30" aria-hidden="true" tabindex="-1"></a>   <span class="at">text_clean =</span> <span class="fu">str_to_lower</span>(text) <span class="sc">%&gt;%</span></span>
+<span id="cb1-31"><a href="#cb1-31" aria-hidden="true" tabindex="-1"></a>      <span class="fu">str_remove_all</span>(<span class="st">"'s</span><span class="sc">\\</span><span class="st">b"</span>) <span class="sc">%&gt;%</span>                    <span class="co"># Remove possessive 's</span></span>
+<span id="cb1-32"><a href="#cb1-32" aria-hidden="true" tabindex="-1"></a>      <span class="fu">str_remove_all</span>(<span class="st">"[[:punct:]]"</span>) <span class="sc">%&gt;%</span>              <span class="co"># Remove punctuation</span></span>
+<span id="cb1-33"><a href="#cb1-33" aria-hidden="true" tabindex="-1"></a>      <span class="fu">str_squish</span>()                                    <span class="co"># Remove extra whitespace</span></span>
+<span id="cb1-34"><a href="#cb1-34" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
+<span id="cb1-35"><a href="#cb1-35" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(author, title, year, genre, text_clean)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Determining mirror for Project Gutenberg from
+https://www.gutenberg.org/robot/harvest.
+Using mirror http://aleph.gutenberg.org.</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(<span class="fu">paste</span>(<span class="st">"Loaded"</span>, <span class="fu">nrow</span>(similarity_texts), <span class="st">"texts for similarity analysis"</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "Loaded 12 texts for similarity analysis"</code></pre>
+</div>
+</div>
+</section>
+<section id="creating-tf-idf-vectors-for-similarity" class="level2">
+<h2 class="anchored" data-anchor-id="creating-tf-idf-vectors-for-similarity">Creating TF-IDF Vectors for Similarity</h2>
+<p>To calculate distances between texts, we need to represent each text as a vector in a common space. We’ll create a TF-IDF matrix where: - Each row represents a text - Each column represents a unique word in our corpus - Each cell contains the TF-IDF score for that word in that text</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Create TF-IDF matrix for similarity calculations</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>corpus_words <span class="ot">&lt;-</span> similarity_texts <span class="sc">%&gt;%</span></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(title, author, genre, text_clean) <span class="sc">%&gt;%</span></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">unnest_tokens</span>(word, text_clean) <span class="sc">%&gt;%</span></span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Apply lemmatization for better thematic grouping</span></span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">word =</span> <span class="fu">lemmatize_words</span>(word)) <span class="sc">%&gt;%</span></span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">anti_join</span>(stop_words, <span class="at">by =</span> <span class="st">"word"</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Filter out problematic words that could conflict with column names</span></span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(<span class="sc">!</span>word <span class="sc">%in%</span> <span class="fu">c</span>(<span class="st">"title"</span>, <span class="st">"author"</span>, <span class="st">"genre"</span>, <span class="st">"text"</span>, <span class="st">"word"</span>)) <span class="sc">%&gt;%</span></span>
+<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Count words and aggregate after lemmatization (some words may become duplicates)</span></span>
+<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">count</span>(title, word, <span class="at">sort =</span> <span class="cn">TRUE</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Filter out very rare words (appear in fewer than 2 texts) for cleaner analysis</span></span>
+<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(word) <span class="sc">%&gt;%</span></span>
+<span id="cb5-14"><a href="#cb5-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(<span class="fu">n_distinct</span>(title) <span class="sc">&gt;=</span> <span class="dv">2</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb5-15"><a href="#cb5-15" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ungroup</span>()</span>
+<span id="cb5-16"><a href="#cb5-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-17"><a href="#cb5-17" aria-hidden="true" tabindex="-1"></a><span class="co"># Check for any remaining duplicates before creating matrix</span></span>
+<span id="cb5-18"><a href="#cb5-18" aria-hidden="true" tabindex="-1"></a>duplicate_check <span class="ot">&lt;-</span> corpus_words <span class="sc">%&gt;%</span></span>
+<span id="cb5-19"><a href="#cb5-19" aria-hidden="true" tabindex="-1"></a>  <span class="fu">count</span>(title, word) <span class="sc">%&gt;%</span></span>
+<span id="cb5-20"><a href="#cb5-20" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(n <span class="sc">&gt;</span> <span class="dv">1</span>)</span>
+<span id="cb5-21"><a href="#cb5-21" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-22"><a href="#cb5-22" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span>(<span class="fu">nrow</span>(duplicate_check) <span class="sc">&gt;</span> <span class="dv">0</span>) {</span>
+<span id="cb5-23"><a href="#cb5-23" aria-hidden="true" tabindex="-1"></a>  <span class="fu">print</span>(<span class="st">"Warning: Found duplicate title-word combinations:"</span>)</span>
+<span id="cb5-24"><a href="#cb5-24" aria-hidden="true" tabindex="-1"></a>  <span class="fu">print</span>(duplicate_check)</span>
+<span id="cb5-25"><a href="#cb5-25" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb5-26"><a href="#cb5-26" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-27"><a href="#cb5-27" aria-hidden="true" tabindex="-1"></a><span class="co"># Calculate TF-IDF scores</span></span>
+<span id="cb5-28"><a href="#cb5-28" aria-hidden="true" tabindex="-1"></a>corpus_tfidf <span class="ot">&lt;-</span> corpus_words <span class="sc">%&gt;%</span></span>
+<span id="cb5-29"><a href="#cb5-29" aria-hidden="true" tabindex="-1"></a>  <span class="fu">bind_tf_idf</span>(word, title, n)</span>
+<span id="cb5-30"><a href="#cb5-30" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-31"><a href="#cb5-31" aria-hidden="true" tabindex="-1"></a><span class="co"># Create TF-IDF matrix (texts as rows, words as columns)</span></span>
+<span id="cb5-32"><a href="#cb5-32" aria-hidden="true" tabindex="-1"></a>tfidf_matrix <span class="ot">&lt;-</span> corpus_tfidf <span class="sc">%&gt;%</span></span>
+<span id="cb5-33"><a href="#cb5-33" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(title, word, tf_idf) <span class="sc">%&gt;%</span></span>
+<span id="cb5-34"><a href="#cb5-34" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Ensure no duplicates by taking the maximum tf_idf if duplicates exist</span></span>
+<span id="cb5-35"><a href="#cb5-35" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(title, word) <span class="sc">%&gt;%</span></span>
+<span id="cb5-36"><a href="#cb5-36" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarise</span>(<span class="at">tf_idf =</span> <span class="fu">max</span>(tf_idf), <span class="at">.groups =</span> <span class="st">"drop"</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb5-37"><a href="#cb5-37" aria-hidden="true" tabindex="-1"></a>  <span class="fu">pivot_wider</span>(<span class="at">names_from =</span> word, <span class="at">values_from =</span> tf_idf, <span class="at">values_fill =</span> <span class="dv">0</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb5-38"><a href="#cb5-38" aria-hidden="true" tabindex="-1"></a>  <span class="fu">column_to_rownames</span>(<span class="st">"title"</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb5-39"><a href="#cb5-39" aria-hidden="true" tabindex="-1"></a>  <span class="fu">as.matrix</span>()</span>
+<span id="cb5-40"><a href="#cb5-40" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-41"><a href="#cb5-41" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(<span class="fu">paste</span>(<span class="st">"Created TF-IDF matrix with"</span>, <span class="fu">nrow</span>(tfidf_matrix), <span class="st">"texts and"</span>, <span class="fu">ncol</span>(tfidf_matrix), <span class="st">"words"</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "Created TF-IDF matrix with 12 texts and 11763 words"</code></pre>
+</div>
+</div>
+</section>
+<section id="cosine-distance" class="level2">
+<h2 class="anchored" data-anchor-id="cosine-distance">Cosine Distance</h2>
+<p><strong>Cosine distance</strong> measures the angle between two vectors, focusing on the <em>direction</em> rather than the <em>magnitude</em>. It’s particularly useful for text analysis because it emphasizes proportional word usage patterns rather than text length.</p>
+<section id="mathematical-foundation" class="level3">
+<h3 class="anchored" data-anchor-id="mathematical-foundation">Mathematical Foundation</h3>
+<p>For two vectors <strong>a</strong> and <strong>b</strong>, cosine similarity is:</p>
+<p><span class="math display">\[
+\text{cosine similarity} = \frac{\mathbf{a} \cdot \mathbf{b}}{|\mathbf{a}| \times |\mathbf{b}|}
+\]</span></p>
+<p>And cosine distance is:</p>
+<p><span class="math display">\[
+\text{cosine distance} = 1 - \text{cosine similarity}
+\]</span></p>
+<p>Values range from 0 to 1: - <strong>0</strong>: Identical direction (highest similarity) - <strong>1</strong>: Completely opposite direction (lowest similarity)</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Calculate cosine distance matrix</span></span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>cosine_distance <span class="ot">&lt;-</span> <span class="cf">function</span>(matrix) {</span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Normalize each row (document) by its magnitude</span></span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>  norms <span class="ot">&lt;-</span> <span class="fu">sqrt</span>(<span class="fu">rowSums</span>(matrix<span class="sc">^</span><span class="dv">2</span>))</span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Avoid division by zero</span></span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a>  norms[norms <span class="sc">==</span> <span class="dv">0</span>] <span class="ot">&lt;-</span> <span class="dv">1</span></span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a>  normalized_matrix <span class="ot">&lt;-</span> matrix <span class="sc">/</span> norms</span>
+<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb7-9"><a href="#cb7-9" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Calculate cosine similarity matrix</span></span>
+<span id="cb7-10"><a href="#cb7-10" aria-hidden="true" tabindex="-1"></a>  cosine_sim <span class="ot">&lt;-</span> normalized_matrix <span class="sc">%*%</span> <span class="fu">t</span>(normalized_matrix)</span>
+<span id="cb7-11"><a href="#cb7-11" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb7-12"><a href="#cb7-12" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Convert to distance (1 - similarity)</span></span>
+<span id="cb7-13"><a href="#cb7-13" aria-hidden="true" tabindex="-1"></a>  cosine_dist <span class="ot">&lt;-</span> <span class="dv">1</span> <span class="sc">-</span> cosine_sim</span>
+<span id="cb7-14"><a href="#cb7-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">return</span>(cosine_dist)</span>
+<span id="cb7-15"><a href="#cb7-15" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb7-16"><a href="#cb7-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-17"><a href="#cb7-17" aria-hidden="true" tabindex="-1"></a>cosine_dist_matrix <span class="ot">&lt;-</span> <span class="fu">cosine_distance</span>(tfidf_matrix)</span>
+<span id="cb7-18"><a href="#cb7-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-19"><a href="#cb7-19" aria-hidden="true" tabindex="-1"></a><span class="co"># Display the cosine distance matrix</span></span>
+<span id="cb7-20"><a href="#cb7-20" aria-hidden="true" tabindex="-1"></a><span class="fu">round</span>(cosine_dist_matrix, <span class="dv">3</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb7-21"><a href="#cb7-21" aria-hidden="true" tabindex="-1"></a>  knitr<span class="sc">::</span><span class="fu">kable</span>(<span class="at">caption =</span> <span class="st">"Cosine Distance Matrix (0 = identical, 1 = completely different)"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<table class="caption-top table table-sm table-striped small">
+<caption>Cosine Distance Matrix (0 = identical, 1 = completely different)</caption>
+<colgroup>
+<col style="width: 14%">
+<col style="width: 11%">
+<col style="width: 3%">
+<col style="width: 2%">
+<col style="width: 14%">
+<col style="width: 6%">
+<col style="width: 3%">
+<col style="width: 4%">
+<col style="width: 7%">
+<col style="width: 6%">
+<col style="width: 8%">
+<col style="width: 3%">
+<col style="width: 13%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: left;"></th>
+<th style="text-align: right;">Alice’s Adventures in Wonderland</th>
+<th style="text-align: right;">Cranford</th>
+<th style="text-align: right;">Dracula</th>
+<th style="text-align: right;">Frankenstein; Or, The Modern Prometheus</th>
+<th style="text-align: right;">Great Expectations</th>
+<th style="text-align: right;">Jane Eyre</th>
+<th style="text-align: right;">Little Women</th>
+<th style="text-align: right;">Pride and Prejudice</th>
+<th style="text-align: right;">The Time Machine</th>
+<th style="text-align: right;">The Wind in the Willows</th>
+<th style="text-align: right;">Tom Sawyer</th>
+<th style="text-align: right;">Twenty Thousand Leagues Under the Seas</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">Alice’s Adventures in Wonderland</td>
+<td style="text-align: right;">0.000</td>
+<td style="text-align: right;">0.995</td>
+<td style="text-align: right;">0.995</td>
+<td style="text-align: right;">0.996</td>
+<td style="text-align: right;">0.997</td>
+<td style="text-align: right;">0.994</td>
+<td style="text-align: right;">0.996</td>
+<td style="text-align: right;">0.998</td>
+<td style="text-align: right;">0.999</td>
+<td style="text-align: right;">0.996</td>
+<td style="text-align: right;">0.996</td>
+<td style="text-align: right;">0.992</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Cranford</td>
+<td style="text-align: right;">0.995</td>
+<td style="text-align: right;">0.000</td>
+<td style="text-align: right;">0.958</td>
+<td style="text-align: right;">0.937</td>
+<td style="text-align: right;">0.971</td>
+<td style="text-align: right;">0.905</td>
+<td style="text-align: right;">0.978</td>
+<td style="text-align: right;">0.937</td>
+<td style="text-align: right;">0.969</td>
+<td style="text-align: right;">0.987</td>
+<td style="text-align: right;">0.973</td>
+<td style="text-align: right;">0.956</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Dracula</td>
+<td style="text-align: right;">0.995</td>
+<td style="text-align: right;">0.958</td>
+<td style="text-align: right;">0.000</td>
+<td style="text-align: right;">0.849</td>
+<td style="text-align: right;">0.970</td>
+<td style="text-align: right;">0.962</td>
+<td style="text-align: right;">0.988</td>
+<td style="text-align: right;">0.977</td>
+<td style="text-align: right;">0.976</td>
+<td style="text-align: right;">0.971</td>
+<td style="text-align: right;">0.951</td>
+<td style="text-align: right;">0.865</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Frankenstein; Or, The Modern Prometheus</td>
+<td style="text-align: right;">0.996</td>
+<td style="text-align: right;">0.937</td>
+<td style="text-align: right;">0.849</td>
+<td style="text-align: right;">0.000</td>
+<td style="text-align: right;">0.969</td>
+<td style="text-align: right;">0.912</td>
+<td style="text-align: right;">0.977</td>
+<td style="text-align: right;">0.703</td>
+<td style="text-align: right;">0.914</td>
+<td style="text-align: right;">0.979</td>
+<td style="text-align: right;">0.969</td>
+<td style="text-align: right;">0.880</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Great Expectations</td>
+<td style="text-align: right;">0.997</td>
+<td style="text-align: right;">0.971</td>
+<td style="text-align: right;">0.970</td>
+<td style="text-align: right;">0.969</td>
+<td style="text-align: right;">0.000</td>
+<td style="text-align: right;">0.977</td>
+<td style="text-align: right;">0.982</td>
+<td style="text-align: right;">0.981</td>
+<td style="text-align: right;">0.987</td>
+<td style="text-align: right;">0.990</td>
+<td style="text-align: right;">0.622</td>
+<td style="text-align: right;">0.983</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Jane Eyre</td>
+<td style="text-align: right;">0.994</td>
+<td style="text-align: right;">0.905</td>
+<td style="text-align: right;">0.962</td>
+<td style="text-align: right;">0.912</td>
+<td style="text-align: right;">0.977</td>
+<td style="text-align: right;">0.000</td>
+<td style="text-align: right;">0.921</td>
+<td style="text-align: right;">0.943</td>
+<td style="text-align: right;">0.960</td>
+<td style="text-align: right;">0.986</td>
+<td style="text-align: right;">0.968</td>
+<td style="text-align: right;">0.944</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Little Women</td>
+<td style="text-align: right;">0.996</td>
+<td style="text-align: right;">0.978</td>
+<td style="text-align: right;">0.988</td>
+<td style="text-align: right;">0.977</td>
+<td style="text-align: right;">0.982</td>
+<td style="text-align: right;">0.921</td>
+<td style="text-align: right;">0.000</td>
+<td style="text-align: right;">0.984</td>
+<td style="text-align: right;">0.994</td>
+<td style="text-align: right;">0.993</td>
+<td style="text-align: right;">0.970</td>
+<td style="text-align: right;">0.970</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Pride and Prejudice</td>
+<td style="text-align: right;">0.998</td>
+<td style="text-align: right;">0.937</td>
+<td style="text-align: right;">0.977</td>
+<td style="text-align: right;">0.703</td>
+<td style="text-align: right;">0.981</td>
+<td style="text-align: right;">0.943</td>
+<td style="text-align: right;">0.984</td>
+<td style="text-align: right;">0.000</td>
+<td style="text-align: right;">0.988</td>
+<td style="text-align: right;">0.995</td>
+<td style="text-align: right;">0.986</td>
+<td style="text-align: right;">0.990</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">The Time Machine</td>
+<td style="text-align: right;">0.999</td>
+<td style="text-align: right;">0.969</td>
+<td style="text-align: right;">0.976</td>
+<td style="text-align: right;">0.914</td>
+<td style="text-align: right;">0.987</td>
+<td style="text-align: right;">0.960</td>
+<td style="text-align: right;">0.994</td>
+<td style="text-align: right;">0.988</td>
+<td style="text-align: right;">0.000</td>
+<td style="text-align: right;">0.992</td>
+<td style="text-align: right;">0.986</td>
+<td style="text-align: right;">0.979</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">The Wind in the Willows</td>
+<td style="text-align: right;">0.996</td>
+<td style="text-align: right;">0.987</td>
+<td style="text-align: right;">0.971</td>
+<td style="text-align: right;">0.979</td>
+<td style="text-align: right;">0.990</td>
+<td style="text-align: right;">0.986</td>
+<td style="text-align: right;">0.993</td>
+<td style="text-align: right;">0.995</td>
+<td style="text-align: right;">0.992</td>
+<td style="text-align: right;">0.000</td>
+<td style="text-align: right;">0.989</td>
+<td style="text-align: right;">0.979</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Tom Sawyer</td>
+<td style="text-align: right;">0.996</td>
+<td style="text-align: right;">0.973</td>
+<td style="text-align: right;">0.951</td>
+<td style="text-align: right;">0.969</td>
+<td style="text-align: right;">0.622</td>
+<td style="text-align: right;">0.968</td>
+<td style="text-align: right;">0.970</td>
+<td style="text-align: right;">0.986</td>
+<td style="text-align: right;">0.986</td>
+<td style="text-align: right;">0.989</td>
+<td style="text-align: right;">0.000</td>
+<td style="text-align: right;">0.972</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Twenty Thousand Leagues Under the Seas</td>
+<td style="text-align: right;">0.992</td>
+<td style="text-align: right;">0.956</td>
+<td style="text-align: right;">0.865</td>
+<td style="text-align: right;">0.880</td>
+<td style="text-align: right;">0.983</td>
+<td style="text-align: right;">0.944</td>
+<td style="text-align: right;">0.970</td>
+<td style="text-align: right;">0.990</td>
+<td style="text-align: right;">0.979</td>
+<td style="text-align: right;">0.979</td>
+<td style="text-align: right;">0.972</td>
+<td style="text-align: right;">0.000</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<p>Let’s visualize the cosine distances as a heatmap to see patterns:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb8"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Create a more readable heatmap for cosine distances</span></span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>cosine_dist_df <span class="ot">&lt;-</span> cosine_dist_matrix <span class="sc">%&gt;%</span></span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">as.data.frame</span>() <span class="sc">%&gt;%</span></span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rownames_to_column</span>(<span class="st">"text1"</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">pivot_longer</span>(<span class="sc">-</span>text1, <span class="at">names_to =</span> <span class="st">"text2"</span>, <span class="at">values_to =</span> <span class="st">"cosine_distance"</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Add genre information</span></span>
+<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">left_join</span>(similarity_texts <span class="sc">%&gt;%</span> <span class="fu">select</span>(title, genre) <span class="sc">%&gt;%</span> <span class="fu">rename</span>(<span class="at">text1 =</span> title, <span class="at">genre1 =</span> genre), <span class="at">by =</span> <span class="st">"text1"</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb8-8"><a href="#cb8-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">left_join</span>(similarity_texts <span class="sc">%&gt;%</span> <span class="fu">select</span>(title, genre) <span class="sc">%&gt;%</span> <span class="fu">rename</span>(<span class="at">text2 =</span> title, <span class="at">genre2 =</span> genre), <span class="at">by =</span> <span class="st">"text2"</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb8-9"><a href="#cb8-9" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Create shorter titles for better visualization</span></span>
+<span id="cb8-10"><a href="#cb8-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb8-11"><a href="#cb8-11" aria-hidden="true" tabindex="-1"></a>    <span class="at">text1_short =</span> <span class="fu">case_when</span>(</span>
+<span id="cb8-12"><a href="#cb8-12" aria-hidden="true" tabindex="-1"></a>      <span class="fu">str_detect</span>(text1, <span class="st">"Pride"</span>) <span class="sc">~</span> <span class="st">"Pride &amp; Prejudice"</span>,</span>
+<span id="cb8-13"><a href="#cb8-13" aria-hidden="true" tabindex="-1"></a>      <span class="fu">str_detect</span>(text1, <span class="st">"Frankenstein"</span>) <span class="sc">~</span> <span class="st">"Frankenstein"</span>,</span>
+<span id="cb8-14"><a href="#cb8-14" aria-hidden="true" tabindex="-1"></a>      <span class="fu">str_detect</span>(text1, <span class="st">"Alice"</span>) <span class="sc">~</span> <span class="st">"Alice in Wonderland"</span>,</span>
+<span id="cb8-15"><a href="#cb8-15" aria-hidden="true" tabindex="-1"></a>      <span class="fu">str_detect</span>(text1, <span class="st">"Twenty"</span>) <span class="sc">~</span> <span class="st">"20,000 Leagues"</span>,</span>
+<span id="cb8-16"><a href="#cb8-16" aria-hidden="true" tabindex="-1"></a>      <span class="fu">str_detect</span>(text1, <span class="st">"Treasure"</span>) <span class="sc">~</span> <span class="st">"Treasure Island"</span>,</span>
+<span id="cb8-17"><a href="#cb8-17" aria-hidden="true" tabindex="-1"></a>      <span class="fu">str_detect</span>(text1, <span class="st">"Dracula"</span>) <span class="sc">~</span> <span class="st">"Dracula"</span>,</span>
+<span id="cb8-18"><a href="#cb8-18" aria-hidden="true" tabindex="-1"></a>      <span class="fu">str_detect</span>(text1, <span class="st">"Time Machine"</span>) <span class="sc">~</span> <span class="st">"Time Machine"</span>,</span>
+<span id="cb8-19"><a href="#cb8-19" aria-hidden="true" tabindex="-1"></a>      <span class="fu">str_detect</span>(text1, <span class="st">"Wind"</span>) <span class="sc">~</span> <span class="st">"Wind in the Willows"</span>,</span>
+<span id="cb8-20"><a href="#cb8-20" aria-hidden="true" tabindex="-1"></a>      <span class="fu">str_detect</span>(text1, <span class="st">"Gatsby"</span>) <span class="sc">~</span> <span class="st">"Great Gatsby"</span>,</span>
+<span id="cb8-21"><a href="#cb8-21" aria-hidden="true" tabindex="-1"></a>      <span class="fu">str_detect</span>(text1, <span class="st">"Great Expectations"</span>) <span class="sc">~</span> <span class="st">"Great Expectations"</span>,</span>
+<span id="cb8-22"><a href="#cb8-22" aria-hidden="true" tabindex="-1"></a>      <span class="cn">TRUE</span> <span class="sc">~</span> text1</span>
+<span id="cb8-23"><a href="#cb8-23" aria-hidden="true" tabindex="-1"></a>    ),</span>
+<span id="cb8-24"><a href="#cb8-24" aria-hidden="true" tabindex="-1"></a>    <span class="at">text2_short =</span> <span class="fu">case_when</span>(</span>
+<span id="cb8-25"><a href="#cb8-25" aria-hidden="true" tabindex="-1"></a>      <span class="fu">str_detect</span>(text2, <span class="st">"Pride"</span>) <span class="sc">~</span> <span class="st">"Pride &amp; Prejudice"</span>,</span>
+<span id="cb8-26"><a href="#cb8-26" aria-hidden="true" tabindex="-1"></a>      <span class="fu">str_detect</span>(text2, <span class="st">"Frankenstein"</span>) <span class="sc">~</span> <span class="st">"Frankenstein"</span>,</span>
+<span id="cb8-27"><a href="#cb8-27" aria-hidden="true" tabindex="-1"></a>      <span class="fu">str_detect</span>(text2, <span class="st">"Alice"</span>) <span class="sc">~</span> <span class="st">"Alice in Wonderland"</span>,</span>
+<span id="cb8-28"><a href="#cb8-28" aria-hidden="true" tabindex="-1"></a>      <span class="fu">str_detect</span>(text2, <span class="st">"Twenty"</span>) <span class="sc">~</span> <span class="st">"20,000 Leagues"</span>,</span>
+<span id="cb8-29"><a href="#cb8-29" aria-hidden="true" tabindex="-1"></a>      <span class="fu">str_detect</span>(text2, <span class="st">"Treasure"</span>) <span class="sc">~</span> <span class="st">"Treasure Island"</span>,</span>
+<span id="cb8-30"><a href="#cb8-30" aria-hidden="true" tabindex="-1"></a>      <span class="fu">str_detect</span>(text2, <span class="st">"Dracula"</span>) <span class="sc">~</span> <span class="st">"Dracula"</span>,</span>
+<span id="cb8-31"><a href="#cb8-31" aria-hidden="true" tabindex="-1"></a>      <span class="fu">str_detect</span>(text2, <span class="st">"Time Machine"</span>) <span class="sc">~</span> <span class="st">"Time Machine"</span>,</span>
+<span id="cb8-32"><a href="#cb8-32" aria-hidden="true" tabindex="-1"></a>      <span class="fu">str_detect</span>(text2, <span class="st">"Wind"</span>) <span class="sc">~</span> <span class="st">"Wind in the Willows"</span>,</span>
+<span id="cb8-33"><a href="#cb8-33" aria-hidden="true" tabindex="-1"></a>      <span class="fu">str_detect</span>(text2, <span class="st">"Gatsby"</span>) <span class="sc">~</span> <span class="st">"Great Gatsby"</span>,</span>
+<span id="cb8-34"><a href="#cb8-34" aria-hidden="true" tabindex="-1"></a>      <span class="fu">str_detect</span>(text2, <span class="st">"Great Expectations"</span>) <span class="sc">~</span> <span class="st">"Great Expectations"</span>,</span>
+<span id="cb8-35"><a href="#cb8-35" aria-hidden="true" tabindex="-1"></a>      <span class="cn">TRUE</span> <span class="sc">~</span> text2</span>
+<span id="cb8-36"><a href="#cb8-36" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb8-37"><a href="#cb8-37" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb8-38"><a href="#cb8-38" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-39"><a href="#cb8-39" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(cosine_dist_df, <span class="fu">aes</span>(<span class="at">x =</span> text1_short, <span class="at">y =</span> text2_short, <span class="at">fill =</span> cosine_distance)) <span class="sc">+</span></span>
+<span id="cb8-40"><a href="#cb8-40" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_tile</span>() <span class="sc">+</span></span>
+<span id="cb8-41"><a href="#cb8-41" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_fill_gradient2</span>(<span class="at">low =</span> <span class="st">"blue"</span>, <span class="at">mid =</span> <span class="st">"white"</span>, <span class="at">high =</span> <span class="st">"red"</span>, </span>
+<span id="cb8-42"><a href="#cb8-42" aria-hidden="true" tabindex="-1"></a>                       <span class="at">midpoint =</span> <span class="fl">0.5</span>, <span class="at">name =</span> <span class="st">"Cosine</span><span class="sc">\n</span><span class="st">Distance"</span>) <span class="sc">+</span></span>
+<span id="cb8-43"><a href="#cb8-43" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(</span>
+<span id="cb8-44"><a href="#cb8-44" aria-hidden="true" tabindex="-1"></a>    <span class="at">title =</span> <span class="st">"Cosine Distance Between Texts"</span>,</span>
+<span id="cb8-45"><a href="#cb8-45" aria-hidden="true" tabindex="-1"></a>    <span class="at">subtitle =</span> <span class="st">"Blue = More Similar, Red = More Different"</span>,</span>
+<span id="cb8-46"><a href="#cb8-46" aria-hidden="true" tabindex="-1"></a>    <span class="at">x =</span> <span class="st">"Text 1"</span>, <span class="at">y =</span> <span class="st">"Text 2"</span></span>
+<span id="cb8-47"><a href="#cb8-47" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">+</span></span>
+<span id="cb8-48"><a href="#cb8-48" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_minimal</span>() <span class="sc">+</span></span>
+<span id="cb8-49"><a href="#cb8-49" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme</span>(</span>
+<span id="cb8-50"><a href="#cb8-50" aria-hidden="true" tabindex="-1"></a>    <span class="at">axis.text.x =</span> <span class="fu">element_text</span>(<span class="at">angle =</span> <span class="dv">45</span>, <span class="at">hjust =</span> <span class="dv">1</span>, <span class="at">size =</span> <span class="dv">9</span>),</span>
+<span id="cb8-51"><a href="#cb8-51" aria-hidden="true" tabindex="-1"></a>    <span class="at">axis.text.y =</span> <span class="fu">element_text</span>(<span class="at">size =</span> <span class="dv">9</span>),</span>
+<span id="cb8-52"><a href="#cb8-52" aria-hidden="true" tabindex="-1"></a>    <span class="at">plot.title =</span> <span class="fu">element_text</span>(<span class="at">hjust =</span> <span class="fl">0.5</span>),</span>
+<span id="cb8-53"><a href="#cb8-53" aria-hidden="true" tabindex="-1"></a>    <span class="at">plot.subtitle =</span> <span class="fu">element_text</span>(<span class="at">hjust =</span> <span class="fl">0.5</span>)</span>
+<span id="cb8-54"><a href="#cb8-54" aria-hidden="true" tabindex="-1"></a>  )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="05-findingSimilarities_files/figure-html/unnamed-chunk-5-1.png" class="img-fluid figure-img" width="960"></p>
+</figure>
+</div>
+</div>
+</div>
+<p>Now let’s find the most and least similar text pairs using cosine distance:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Find most similar and least similar pairs (excluding self-comparisons)</span></span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>cosine_pairs <span class="ot">&lt;-</span> cosine_dist_df <span class="sc">%&gt;%</span></span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(text1 <span class="sc">!=</span> text2) <span class="sc">%&gt;%</span></span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Remove duplicate pairs (A-B and B-A are the same)</span></span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(text1 <span class="sc">&lt;</span> text2) <span class="sc">%&gt;%</span></span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">arrange</span>(cosine_distance)</span>
+<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a><span class="co"># Most similar pairs</span></span>
+<span id="cb9-9"><a href="#cb9-9" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"MOST SIMILAR TEXTS (Cosine Distance):</span><span class="sc">\n</span><span class="st">"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>MOST SIMILAR TEXTS (Cosine Distance):</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb11"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(cosine_pairs, <span class="dv">5</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(text1_short, text2_short, cosine_distance, genre1, genre2) <span class="sc">%&gt;%</span></span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">cosine_distance =</span> <span class="fu">round</span>(cosine_distance, <span class="dv">3</span>)) <span class="sc">%&gt;%</span></span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a>  knitr<span class="sc">::</span><span class="fu">kable</span>(<span class="at">col.names =</span> <span class="fu">c</span>(<span class="st">"Text 1"</span>, <span class="st">"Text 2"</span>, <span class="st">"Cosine Distance"</span>, <span class="st">"Genre 1"</span>, <span class="st">"Genre 2"</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<table class="caption-top table table-sm table-striped small">
+<colgroup>
+<col style="width: 22%">
+<col style="width: 21%">
+<col style="width: 19%">
+<col style="width: 17%">
+<col style="width: 19%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: left;">Text 1</th>
+<th style="text-align: left;">Text 2</th>
+<th style="text-align: right;">Cosine Distance</th>
+<th style="text-align: left;">Genre 1</th>
+<th style="text-align: left;">Genre 2</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">Great Expectations</td>
+<td style="text-align: left;">Tom Sawyer</td>
+<td style="text-align: right;">0.622</td>
+<td style="text-align: left;">Social Fiction</td>
+<td style="text-align: left;">Adventure</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Frankenstein</td>
+<td style="text-align: left;">Pride &amp; Prejudice</td>
+<td style="text-align: right;">0.703</td>
+<td style="text-align: left;">Gothic</td>
+<td style="text-align: left;">Social Fiction</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Dracula</td>
+<td style="text-align: left;">Frankenstein</td>
+<td style="text-align: right;">0.849</td>
+<td style="text-align: left;">Gothic</td>
+<td style="text-align: left;">Gothic</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Dracula</td>
+<td style="text-align: left;">20,000 Leagues</td>
+<td style="text-align: right;">0.865</td>
+<td style="text-align: left;">Gothic</td>
+<td style="text-align: left;">Science Fiction</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Frankenstein</td>
+<td style="text-align: left;">20,000 Leagues</td>
+<td style="text-align: right;">0.880</td>
+<td style="text-align: left;">Gothic</td>
+<td style="text-align: left;">Science Fiction</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sourceCode cell-code" id="cb12"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"</span><span class="sc">\n</span><span class="st">LEAST SIMILAR TEXTS (Cosine Distance):</span><span class="sc">\n</span><span class="st">"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+LEAST SIMILAR TEXTS (Cosine Distance):</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb14"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="fu">tail</span>(cosine_pairs, <span class="dv">5</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(text1_short, text2_short, cosine_distance, genre1, genre2) <span class="sc">%&gt;%</span></span>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">cosine_distance =</span> <span class="fu">round</span>(cosine_distance, <span class="dv">3</span>)) <span class="sc">%&gt;%</span></span>
+<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a>  knitr<span class="sc">::</span><span class="fu">kable</span>(<span class="at">col.names =</span> <span class="fu">c</span>(<span class="st">"Text 1"</span>, <span class="st">"Text 2"</span>, <span class="st">"Cosine Distance"</span>, <span class="st">"Genre 1"</span>, <span class="st">"Genre 2"</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<table class="caption-top table table-sm table-striped small">
+<colgroup>
+<col style="width: 25%">
+<col style="width: 23%">
+<col style="width: 20%">
+<col style="width: 10%">
+<col style="width: 21%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: left;">Text 1</th>
+<th style="text-align: left;">Text 2</th>
+<th style="text-align: right;">Cosine Distance</th>
+<th style="text-align: left;">Genre 1</th>
+<th style="text-align: left;">Genre 2</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">Alice in Wonderland</td>
+<td style="text-align: left;">Frankenstein</td>
+<td style="text-align: right;">0.996</td>
+<td style="text-align: left;">Fantasy</td>
+<td style="text-align: left;">Gothic</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Alice in Wonderland</td>
+<td style="text-align: left;">Little Women</td>
+<td style="text-align: right;">0.996</td>
+<td style="text-align: left;">Fantasy</td>
+<td style="text-align: left;">Domestic Fiction</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Alice in Wonderland</td>
+<td style="text-align: left;">Great Expectations</td>
+<td style="text-align: right;">0.997</td>
+<td style="text-align: left;">Fantasy</td>
+<td style="text-align: left;">Social Fiction</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Alice in Wonderland</td>
+<td style="text-align: left;">Pride &amp; Prejudice</td>
+<td style="text-align: right;">0.998</td>
+<td style="text-align: left;">Fantasy</td>
+<td style="text-align: left;">Social Fiction</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Alice in Wonderland</td>
+<td style="text-align: left;">Time Machine</td>
+<td style="text-align: right;">0.999</td>
+<td style="text-align: left;">Fantasy</td>
+<td style="text-align: left;">Science Fiction</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</section>
+</section>
+<section id="euclidean-distance" class="level2">
+<h2 class="anchored" data-anchor-id="euclidean-distance">Euclidean Distance</h2>
+<p><strong>Euclidean distance</strong> measures the straight-line distance between two points in space. Unlike cosine distance, it considers both the direction and magnitude of vectors, making it sensitive to the actual values of TF-IDF scores.</p>
+<section id="mathematical-foundation-1" class="level3">
+<h3 class="anchored" data-anchor-id="mathematical-foundation-1">Mathematical Foundation</h3>
+<p>For two vectors <strong>a</strong> and <strong>b</strong>, Euclidean distance is:</p>
+<p><span class="math display">\[
+\text{Euclidean distance} = \sqrt{\sum_{i=1}^{n} (a_i - b_i)^2}
+\]</span></p>
+<p>Where <span class="math inline">\(n\)</span> is the number of dimensions (words in our vocabulary).</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb15"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Calculate Euclidean distance matrix</span></span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>euclidean_dist_matrix <span class="ot">&lt;-</span> <span class="fu">as.matrix</span>(<span class="fu">dist</span>(tfidf_matrix, <span class="at">method =</span> <span class="st">"euclidean"</span>))</span>
+<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Display part of the Euclidean distance matrix</span></span>
+<span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a><span class="fu">round</span>(euclidean_dist_matrix, <span class="dv">3</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb15-6"><a href="#cb15-6" aria-hidden="true" tabindex="-1"></a>  knitr<span class="sc">::</span><span class="fu">kable</span>(<span class="at">caption =</span> <span class="st">"Euclidean Distance Matrix (smaller = more similar)"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<table class="caption-top table table-sm table-striped small">
+<caption>Euclidean Distance Matrix (smaller = more similar)</caption>
+<colgroup>
+<col style="width: 14%">
+<col style="width: 11%">
+<col style="width: 3%">
+<col style="width: 2%">
+<col style="width: 14%">
+<col style="width: 6%">
+<col style="width: 3%">
+<col style="width: 4%">
+<col style="width: 7%">
+<col style="width: 6%">
+<col style="width: 8%">
+<col style="width: 3%">
+<col style="width: 13%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: left;"></th>
+<th style="text-align: right;">Alice’s Adventures in Wonderland</th>
+<th style="text-align: right;">Cranford</th>
+<th style="text-align: right;">Dracula</th>
+<th style="text-align: right;">Frankenstein; Or, The Modern Prometheus</th>
+<th style="text-align: right;">Great Expectations</th>
+<th style="text-align: right;">Jane Eyre</th>
+<th style="text-align: right;">Little Women</th>
+<th style="text-align: right;">Pride and Prejudice</th>
+<th style="text-align: right;">The Time Machine</th>
+<th style="text-align: right;">The Wind in the Willows</th>
+<th style="text-align: right;">Tom Sawyer</th>
+<th style="text-align: right;">Twenty Thousand Leagues Under the Seas</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">Alice’s Adventures in Wonderland</td>
+<td style="text-align: right;">0.000</td>
+<td style="text-align: right;">0.097</td>
+<td style="text-align: right;">0.096</td>
+<td style="text-align: right;">0.096</td>
+<td style="text-align: right;">0.101</td>
+<td style="text-align: right;">0.097</td>
+<td style="text-align: right;">0.106</td>
+<td style="text-align: right;">0.098</td>
+<td style="text-align: right;">0.098</td>
+<td style="text-align: right;">0.105</td>
+<td style="text-align: right;">0.100</td>
+<td style="text-align: right;">0.097</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Cranford</td>
+<td style="text-align: right;">0.097</td>
+<td style="text-align: right;">0.000</td>
+<td style="text-align: right;">0.019</td>
+<td style="text-align: right;">0.017</td>
+<td style="text-align: right;">0.036</td>
+<td style="text-align: right;">0.020</td>
+<td style="text-align: right;">0.049</td>
+<td style="text-align: right;">0.026</td>
+<td style="text-align: right;">0.027</td>
+<td style="text-align: right;">0.046</td>
+<td style="text-align: right;">0.033</td>
+<td style="text-align: right;">0.023</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Dracula</td>
+<td style="text-align: right;">0.096</td>
+<td style="text-align: right;">0.019</td>
+<td style="text-align: right;">0.000</td>
+<td style="text-align: right;">0.014</td>
+<td style="text-align: right;">0.035</td>
+<td style="text-align: right;">0.019</td>
+<td style="text-align: right;">0.048</td>
+<td style="text-align: right;">0.026</td>
+<td style="text-align: right;">0.026</td>
+<td style="text-align: right;">0.045</td>
+<td style="text-align: right;">0.032</td>
+<td style="text-align: right;">0.021</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Frankenstein; Or, The Modern Prometheus</td>
+<td style="text-align: right;">0.096</td>
+<td style="text-align: right;">0.017</td>
+<td style="text-align: right;">0.014</td>
+<td style="text-align: right;">0.000</td>
+<td style="text-align: right;">0.034</td>
+<td style="text-align: right;">0.017</td>
+<td style="text-align: right;">0.047</td>
+<td style="text-align: right;">0.022</td>
+<td style="text-align: right;">0.024</td>
+<td style="text-align: right;">0.044</td>
+<td style="text-align: right;">0.031</td>
+<td style="text-align: right;">0.020</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Great Expectations</td>
+<td style="text-align: right;">0.101</td>
+<td style="text-align: right;">0.036</td>
+<td style="text-align: right;">0.035</td>
+<td style="text-align: right;">0.034</td>
+<td style="text-align: right;">0.000</td>
+<td style="text-align: right;">0.036</td>
+<td style="text-align: right;">0.057</td>
+<td style="text-align: right;">0.040</td>
+<td style="text-align: right;">0.040</td>
+<td style="text-align: right;">0.054</td>
+<td style="text-align: right;">0.035</td>
+<td style="text-align: right;">0.037</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Jane Eyre</td>
+<td style="text-align: right;">0.097</td>
+<td style="text-align: right;">0.020</td>
+<td style="text-align: right;">0.019</td>
+<td style="text-align: right;">0.017</td>
+<td style="text-align: right;">0.036</td>
+<td style="text-align: right;">0.000</td>
+<td style="text-align: right;">0.048</td>
+<td style="text-align: right;">0.027</td>
+<td style="text-align: right;">0.027</td>
+<td style="text-align: right;">0.046</td>
+<td style="text-align: right;">0.034</td>
+<td style="text-align: right;">0.023</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Little Women</td>
+<td style="text-align: right;">0.106</td>
+<td style="text-align: right;">0.049</td>
+<td style="text-align: right;">0.048</td>
+<td style="text-align: right;">0.047</td>
+<td style="text-align: right;">0.057</td>
+<td style="text-align: right;">0.048</td>
+<td style="text-align: right;">0.000</td>
+<td style="text-align: right;">0.052</td>
+<td style="text-align: right;">0.052</td>
+<td style="text-align: right;">0.064</td>
+<td style="text-align: right;">0.055</td>
+<td style="text-align: right;">0.050</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Pride and Prejudice</td>
+<td style="text-align: right;">0.098</td>
+<td style="text-align: right;">0.026</td>
+<td style="text-align: right;">0.026</td>
+<td style="text-align: right;">0.022</td>
+<td style="text-align: right;">0.040</td>
+<td style="text-align: right;">0.027</td>
+<td style="text-align: right;">0.052</td>
+<td style="text-align: right;">0.000</td>
+<td style="text-align: right;">0.032</td>
+<td style="text-align: right;">0.049</td>
+<td style="text-align: right;">0.038</td>
+<td style="text-align: right;">0.030</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">The Time Machine</td>
+<td style="text-align: right;">0.098</td>
+<td style="text-align: right;">0.027</td>
+<td style="text-align: right;">0.026</td>
+<td style="text-align: right;">0.024</td>
+<td style="text-align: right;">0.040</td>
+<td style="text-align: right;">0.027</td>
+<td style="text-align: right;">0.052</td>
+<td style="text-align: right;">0.032</td>
+<td style="text-align: right;">0.000</td>
+<td style="text-align: right;">0.049</td>
+<td style="text-align: right;">0.038</td>
+<td style="text-align: right;">0.029</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">The Wind in the Willows</td>
+<td style="text-align: right;">0.105</td>
+<td style="text-align: right;">0.046</td>
+<td style="text-align: right;">0.045</td>
+<td style="text-align: right;">0.044</td>
+<td style="text-align: right;">0.054</td>
+<td style="text-align: right;">0.046</td>
+<td style="text-align: right;">0.064</td>
+<td style="text-align: right;">0.049</td>
+<td style="text-align: right;">0.049</td>
+<td style="text-align: right;">0.000</td>
+<td style="text-align: right;">0.053</td>
+<td style="text-align: right;">0.047</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Tom Sawyer</td>
+<td style="text-align: right;">0.100</td>
+<td style="text-align: right;">0.033</td>
+<td style="text-align: right;">0.032</td>
+<td style="text-align: right;">0.031</td>
+<td style="text-align: right;">0.035</td>
+<td style="text-align: right;">0.034</td>
+<td style="text-align: right;">0.055</td>
+<td style="text-align: right;">0.038</td>
+<td style="text-align: right;">0.038</td>
+<td style="text-align: right;">0.053</td>
+<td style="text-align: right;">0.000</td>
+<td style="text-align: right;">0.035</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Twenty Thousand Leagues Under the Seas</td>
+<td style="text-align: right;">0.097</td>
+<td style="text-align: right;">0.023</td>
+<td style="text-align: right;">0.021</td>
+<td style="text-align: right;">0.020</td>
+<td style="text-align: right;">0.037</td>
+<td style="text-align: right;">0.023</td>
+<td style="text-align: right;">0.050</td>
+<td style="text-align: right;">0.030</td>
+<td style="text-align: right;">0.029</td>
+<td style="text-align: right;">0.047</td>
+<td style="text-align: right;">0.035</td>
+<td style="text-align: right;">0.000</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<p>Let’s visualize the Euclidean distances:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb16"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Create heatmap for Euclidean distances</span></span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a>euclidean_dist_df <span class="ot">&lt;-</span> euclidean_dist_matrix <span class="sc">%&gt;%</span></span>
+<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">as.data.frame</span>() <span class="sc">%&gt;%</span></span>
+<span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rownames_to_column</span>(<span class="st">"text1"</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb16-5"><a href="#cb16-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">pivot_longer</span>(<span class="sc">-</span>text1, <span class="at">names_to =</span> <span class="st">"text2"</span>, <span class="at">values_to =</span> <span class="st">"euclidean_distance"</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb16-6"><a href="#cb16-6" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Add genre information and short titles</span></span>
+<span id="cb16-7"><a href="#cb16-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">left_join</span>(similarity_texts <span class="sc">%&gt;%</span> <span class="fu">select</span>(title, genre) <span class="sc">%&gt;%</span> <span class="fu">rename</span>(<span class="at">text1 =</span> title, <span class="at">genre1 =</span> genre), <span class="at">by =</span> <span class="st">"text1"</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb16-8"><a href="#cb16-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">left_join</span>(similarity_texts <span class="sc">%&gt;%</span> <span class="fu">select</span>(title, genre) <span class="sc">%&gt;%</span> <span class="fu">rename</span>(<span class="at">text2 =</span> title, <span class="at">genre2 =</span> genre), <span class="at">by =</span> <span class="st">"text2"</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb16-9"><a href="#cb16-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb16-10"><a href="#cb16-10" aria-hidden="true" tabindex="-1"></a>    <span class="at">text1_short =</span> <span class="fu">case_when</span>(</span>
+<span id="cb16-11"><a href="#cb16-11" aria-hidden="true" tabindex="-1"></a>      <span class="fu">str_detect</span>(text1, <span class="st">"Pride"</span>) <span class="sc">~</span> <span class="st">"Pride &amp; Prejudice"</span>,</span>
+<span id="cb16-12"><a href="#cb16-12" aria-hidden="true" tabindex="-1"></a>      <span class="fu">str_detect</span>(text1, <span class="st">"Frankenstein"</span>) <span class="sc">~</span> <span class="st">"Frankenstein"</span>,</span>
+<span id="cb16-13"><a href="#cb16-13" aria-hidden="true" tabindex="-1"></a>      <span class="fu">str_detect</span>(text1, <span class="st">"Alice"</span>) <span class="sc">~</span> <span class="st">"Alice in Wonderland"</span>,</span>
+<span id="cb16-14"><a href="#cb16-14" aria-hidden="true" tabindex="-1"></a>      <span class="fu">str_detect</span>(text1, <span class="st">"Twenty"</span>) <span class="sc">~</span> <span class="st">"20,000 Leagues"</span>,</span>
+<span id="cb16-15"><a href="#cb16-15" aria-hidden="true" tabindex="-1"></a>      <span class="fu">str_detect</span>(text1, <span class="st">"Treasure"</span>) <span class="sc">~</span> <span class="st">"Treasure Island"</span>,</span>
+<span id="cb16-16"><a href="#cb16-16" aria-hidden="true" tabindex="-1"></a>      <span class="fu">str_detect</span>(text1, <span class="st">"Dracula"</span>) <span class="sc">~</span> <span class="st">"Dracula"</span>,</span>
+<span id="cb16-17"><a href="#cb16-17" aria-hidden="true" tabindex="-1"></a>      <span class="fu">str_detect</span>(text1, <span class="st">"Time Machine"</span>) <span class="sc">~</span> <span class="st">"Time Machine"</span>,</span>
+<span id="cb16-18"><a href="#cb16-18" aria-hidden="true" tabindex="-1"></a>      <span class="fu">str_detect</span>(text1, <span class="st">"Wind"</span>) <span class="sc">~</span> <span class="st">"Wind in the Willows"</span>,</span>
+<span id="cb16-19"><a href="#cb16-19" aria-hidden="true" tabindex="-1"></a>      <span class="fu">str_detect</span>(text1, <span class="st">"Gatsby"</span>) <span class="sc">~</span> <span class="st">"Great Gatsby"</span>,</span>
+<span id="cb16-20"><a href="#cb16-20" aria-hidden="true" tabindex="-1"></a>      <span class="fu">str_detect</span>(text1, <span class="st">"Great Expectations"</span>) <span class="sc">~</span> <span class="st">"Great Expectations"</span>,</span>
+<span id="cb16-21"><a href="#cb16-21" aria-hidden="true" tabindex="-1"></a>      <span class="cn">TRUE</span> <span class="sc">~</span> text1</span>
+<span id="cb16-22"><a href="#cb16-22" aria-hidden="true" tabindex="-1"></a>    ),</span>
+<span id="cb16-23"><a href="#cb16-23" aria-hidden="true" tabindex="-1"></a>    <span class="at">text2_short =</span> <span class="fu">case_when</span>(</span>
+<span id="cb16-24"><a href="#cb16-24" aria-hidden="true" tabindex="-1"></a>      <span class="fu">str_detect</span>(text2, <span class="st">"Pride"</span>) <span class="sc">~</span> <span class="st">"Pride &amp; Prejudice"</span>,</span>
+<span id="cb16-25"><a href="#cb16-25" aria-hidden="true" tabindex="-1"></a>      <span class="fu">str_detect</span>(text2, <span class="st">"Frankenstein"</span>) <span class="sc">~</span> <span class="st">"Frankenstein"</span>,</span>
+<span id="cb16-26"><a href="#cb16-26" aria-hidden="true" tabindex="-1"></a>      <span class="fu">str_detect</span>(text2, <span class="st">"Alice"</span>) <span class="sc">~</span> <span class="st">"Alice in Wonderland"</span>,</span>
+<span id="cb16-27"><a href="#cb16-27" aria-hidden="true" tabindex="-1"></a>      <span class="fu">str_detect</span>(text2, <span class="st">"Twenty"</span>) <span class="sc">~</span> <span class="st">"20,000 Leagues"</span>,</span>
+<span id="cb16-28"><a href="#cb16-28" aria-hidden="true" tabindex="-1"></a>      <span class="fu">str_detect</span>(text2, <span class="st">"Treasure"</span>) <span class="sc">~</span> <span class="st">"Treasure Island"</span>,</span>
+<span id="cb16-29"><a href="#cb16-29" aria-hidden="true" tabindex="-1"></a>      <span class="fu">str_detect</span>(text2, <span class="st">"Dracula"</span>) <span class="sc">~</span> <span class="st">"Dracula"</span>,</span>
+<span id="cb16-30"><a href="#cb16-30" aria-hidden="true" tabindex="-1"></a>      <span class="fu">str_detect</span>(text2, <span class="st">"Time Machine"</span>) <span class="sc">~</span> <span class="st">"Time Machine"</span>,</span>
+<span id="cb16-31"><a href="#cb16-31" aria-hidden="true" tabindex="-1"></a>      <span class="fu">str_detect</span>(text2, <span class="st">"Wind"</span>) <span class="sc">~</span> <span class="st">"Wind in the Willows"</span>,</span>
+<span id="cb16-32"><a href="#cb16-32" aria-hidden="true" tabindex="-1"></a>      <span class="fu">str_detect</span>(text2, <span class="st">"Gatsby"</span>) <span class="sc">~</span> <span class="st">"Great Gatsby"</span>,</span>
+<span id="cb16-33"><a href="#cb16-33" aria-hidden="true" tabindex="-1"></a>      <span class="fu">str_detect</span>(text2, <span class="st">"Great Expectations"</span>) <span class="sc">~</span> <span class="st">"Great Expectations"</span>,</span>
+<span id="cb16-34"><a href="#cb16-34" aria-hidden="true" tabindex="-1"></a>      <span class="cn">TRUE</span> <span class="sc">~</span> text2</span>
+<span id="cb16-35"><a href="#cb16-35" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb16-36"><a href="#cb16-36" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb16-37"><a href="#cb16-37" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-38"><a href="#cb16-38" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(euclidean_dist_df, <span class="fu">aes</span>(<span class="at">x =</span> text1_short, <span class="at">y =</span> text2_short, <span class="at">fill =</span> euclidean_distance)) <span class="sc">+</span></span>
+<span id="cb16-39"><a href="#cb16-39" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_tile</span>() <span class="sc">+</span></span>
+<span id="cb16-40"><a href="#cb16-40" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_fill_gradient2</span>(<span class="at">low =</span> <span class="st">"blue"</span>, <span class="at">mid =</span> <span class="st">"white"</span>, <span class="at">high =</span> <span class="st">"red"</span>, </span>
+<span id="cb16-41"><a href="#cb16-41" aria-hidden="true" tabindex="-1"></a>                       <span class="at">midpoint =</span> <span class="fu">median</span>(euclidean_dist_df<span class="sc">$</span>euclidean_distance), </span>
+<span id="cb16-42"><a href="#cb16-42" aria-hidden="true" tabindex="-1"></a>                       <span class="at">name =</span> <span class="st">"Euclidean</span><span class="sc">\n</span><span class="st">Distance"</span>) <span class="sc">+</span></span>
+<span id="cb16-43"><a href="#cb16-43" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(</span>
+<span id="cb16-44"><a href="#cb16-44" aria-hidden="true" tabindex="-1"></a>    <span class="at">title =</span> <span class="st">"Euclidean Distance Between Texts"</span>,</span>
+<span id="cb16-45"><a href="#cb16-45" aria-hidden="true" tabindex="-1"></a>    <span class="at">subtitle =</span> <span class="st">"Blue = More Similar, Red = More Different"</span>,</span>
+<span id="cb16-46"><a href="#cb16-46" aria-hidden="true" tabindex="-1"></a>    <span class="at">x =</span> <span class="st">"Text 1"</span>, <span class="at">y =</span> <span class="st">"Text 2"</span></span>
+<span id="cb16-47"><a href="#cb16-47" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">+</span></span>
+<span id="cb16-48"><a href="#cb16-48" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_minimal</span>() <span class="sc">+</span></span>
+<span id="cb16-49"><a href="#cb16-49" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme</span>(</span>
+<span id="cb16-50"><a href="#cb16-50" aria-hidden="true" tabindex="-1"></a>    <span class="at">axis.text.x =</span> <span class="fu">element_text</span>(<span class="at">angle =</span> <span class="dv">45</span>, <span class="at">hjust =</span> <span class="dv">1</span>, <span class="at">size =</span> <span class="dv">9</span>),</span>
+<span id="cb16-51"><a href="#cb16-51" aria-hidden="true" tabindex="-1"></a>    <span class="at">axis.text.y =</span> <span class="fu">element_text</span>(<span class="at">size =</span> <span class="dv">9</span>),</span>
+<span id="cb16-52"><a href="#cb16-52" aria-hidden="true" tabindex="-1"></a>    <span class="at">plot.title =</span> <span class="fu">element_text</span>(<span class="at">hjust =</span> <span class="fl">0.5</span>),</span>
+<span id="cb16-53"><a href="#cb16-53" aria-hidden="true" tabindex="-1"></a>    <span class="at">plot.subtitle =</span> <span class="fu">element_text</span>(<span class="at">hjust =</span> <span class="fl">0.5</span>)</span>
+<span id="cb16-54"><a href="#cb16-54" aria-hidden="true" tabindex="-1"></a>  )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="05-findingSimilarities_files/figure-html/unnamed-chunk-8-1.png" class="img-fluid figure-img" width="960"></p>
+</figure>
+</div>
+</div>
+</div>
+<p>Let’s find the most and least similar pairs using Euclidean distance:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb17"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Find most similar and least similar pairs using Euclidean distance</span></span>
+<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a>euclidean_pairs <span class="ot">&lt;-</span> euclidean_dist_df <span class="sc">%&gt;%</span></span>
+<span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(text1 <span class="sc">!=</span> text2) <span class="sc">%&gt;%</span></span>
+<span id="cb17-4"><a href="#cb17-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(text1 <span class="sc">&lt;</span> text2) <span class="sc">%&gt;%</span></span>
+<span id="cb17-5"><a href="#cb17-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">arrange</span>(euclidean_distance)</span>
+<span id="cb17-6"><a href="#cb17-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-7"><a href="#cb17-7" aria-hidden="true" tabindex="-1"></a><span class="co"># Most similar pairs</span></span>
+<span id="cb17-8"><a href="#cb17-8" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"MOST SIMILAR TEXTS (Euclidean Distance):</span><span class="sc">\n</span><span class="st">"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>MOST SIMILAR TEXTS (Euclidean Distance):</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb19"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(euclidean_pairs, <span class="dv">5</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(text1_short, text2_short, euclidean_distance, genre1, genre2) <span class="sc">%&gt;%</span></span>
+<span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">euclidean_distance =</span> <span class="fu">round</span>(euclidean_distance, <span class="dv">3</span>)) <span class="sc">%&gt;%</span></span>
+<span id="cb19-4"><a href="#cb19-4" aria-hidden="true" tabindex="-1"></a>  knitr<span class="sc">::</span><span class="fu">kable</span>(<span class="at">col.names =</span> <span class="fu">c</span>(<span class="st">"Text 1"</span>, <span class="st">"Text 2"</span>, <span class="st">"Euclidean Distance"</span>, <span class="st">"Genre 1"</span>, <span class="st">"Genre 2"</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<table class="caption-top table table-sm table-striped small">
+<colgroup>
+<col style="width: 18%">
+<col style="width: 18%">
+<col style="width: 27%">
+<col style="width: 24%">
+<col style="width: 11%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: left;">Text 1</th>
+<th style="text-align: left;">Text 2</th>
+<th style="text-align: right;">Euclidean Distance</th>
+<th style="text-align: left;">Genre 1</th>
+<th style="text-align: left;">Genre 2</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">Dracula</td>
+<td style="text-align: left;">Frankenstein</td>
+<td style="text-align: right;">0.014</td>
+<td style="text-align: left;">Gothic</td>
+<td style="text-align: left;">Gothic</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Cranford</td>
+<td style="text-align: left;">Frankenstein</td>
+<td style="text-align: right;">0.017</td>
+<td style="text-align: left;">Domestic Fiction</td>
+<td style="text-align: left;">Gothic</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Frankenstein</td>
+<td style="text-align: left;">Jane Eyre</td>
+<td style="text-align: right;">0.017</td>
+<td style="text-align: left;">Gothic</td>
+<td style="text-align: left;">Gothic</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Cranford</td>
+<td style="text-align: left;">Dracula</td>
+<td style="text-align: right;">0.019</td>
+<td style="text-align: left;">Domestic Fiction</td>
+<td style="text-align: left;">Gothic</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Dracula</td>
+<td style="text-align: left;">Jane Eyre</td>
+<td style="text-align: right;">0.019</td>
+<td style="text-align: left;">Gothic</td>
+<td style="text-align: left;">Gothic</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sourceCode cell-code" id="cb20"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"</span><span class="sc">\n</span><span class="st">LEAST SIMILAR TEXTS (Euclidean Distance):</span><span class="sc">\n</span><span class="st">"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+LEAST SIMILAR TEXTS (Euclidean Distance):</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb22"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a><span class="fu">tail</span>(euclidean_pairs, <span class="dv">5</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(text1_short, text2_short, euclidean_distance, genre1, genre2) <span class="sc">%&gt;%</span></span>
+<span id="cb22-3"><a href="#cb22-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">euclidean_distance =</span> <span class="fu">round</span>(euclidean_distance, <span class="dv">3</span>)) <span class="sc">%&gt;%</span></span>
+<span id="cb22-4"><a href="#cb22-4" aria-hidden="true" tabindex="-1"></a>  knitr<span class="sc">::</span><span class="fu">kable</span>(<span class="at">col.names =</span> <span class="fu">c</span>(<span class="st">"Text 1"</span>, <span class="st">"Text 2"</span>, <span class="st">"Euclidean Distance"</span>, <span class="st">"Genre 1"</span>, <span class="st">"Genre 2"</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<table class="caption-top table table-sm table-striped small">
+<colgroup>
+<col style="width: 23%">
+<col style="width: 23%">
+<col style="width: 22%">
+<col style="width: 9%">
+<col style="width: 20%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: left;">Text 1</th>
+<th style="text-align: left;">Text 2</th>
+<th style="text-align: right;">Euclidean Distance</th>
+<th style="text-align: left;">Genre 1</th>
+<th style="text-align: left;">Genre 2</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">Alice in Wonderland</td>
+<td style="text-align: left;">Time Machine</td>
+<td style="text-align: right;">0.098</td>
+<td style="text-align: left;">Fantasy</td>
+<td style="text-align: left;">Science Fiction</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Alice in Wonderland</td>
+<td style="text-align: left;">Tom Sawyer</td>
+<td style="text-align: right;">0.100</td>
+<td style="text-align: left;">Fantasy</td>
+<td style="text-align: left;">Adventure</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Alice in Wonderland</td>
+<td style="text-align: left;">Great Expectations</td>
+<td style="text-align: right;">0.101</td>
+<td style="text-align: left;">Fantasy</td>
+<td style="text-align: left;">Social Fiction</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Alice in Wonderland</td>
+<td style="text-align: left;">Wind in the Willows</td>
+<td style="text-align: right;">0.105</td>
+<td style="text-align: left;">Fantasy</td>
+<td style="text-align: left;">Fantasy</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Alice in Wonderland</td>
+<td style="text-align: left;">Little Women</td>
+<td style="text-align: right;">0.106</td>
+<td style="text-align: left;">Fantasy</td>
+<td style="text-align: left;">Domestic Fiction</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</section>
+</section>
+<section id="comparing-cosine-vs.-euclidean-distance" class="level2">
+<h2 class="anchored" data-anchor-id="comparing-cosine-vs.-euclidean-distance">Comparing Cosine vs.&nbsp;Euclidean Distance</h2>
+<p>Let’s directly compare how these two distance measures rank text similarities:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb23"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Compare the two distance measures</span></span>
+<span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a>distance_comparison <span class="ot">&lt;-</span> cosine_pairs <span class="sc">%&gt;%</span></span>
+<span id="cb23-3"><a href="#cb23-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(text1, text2, cosine_distance) <span class="sc">%&gt;%</span></span>
+<span id="cb23-4"><a href="#cb23-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">left_join</span>(</span>
+<span id="cb23-5"><a href="#cb23-5" aria-hidden="true" tabindex="-1"></a>    euclidean_pairs <span class="sc">%&gt;%</span> <span class="fu">select</span>(text1, text2, euclidean_distance),</span>
+<span id="cb23-6"><a href="#cb23-6" aria-hidden="true" tabindex="-1"></a>    <span class="at">by =</span> <span class="fu">c</span>(<span class="st">"text1"</span>, <span class="st">"text2"</span>)</span>
+<span id="cb23-7"><a href="#cb23-7" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
+<span id="cb23-8"><a href="#cb23-8" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Calculate rankings for each distance measure</span></span>
+<span id="cb23-9"><a href="#cb23-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb23-10"><a href="#cb23-10" aria-hidden="true" tabindex="-1"></a>    <span class="at">cosine_rank =</span> <span class="fu">rank</span>(cosine_distance),</span>
+<span id="cb23-11"><a href="#cb23-11" aria-hidden="true" tabindex="-1"></a>    <span class="at">euclidean_rank =</span> <span class="fu">rank</span>(euclidean_distance),</span>
+<span id="cb23-12"><a href="#cb23-12" aria-hidden="true" tabindex="-1"></a>    <span class="at">rank_difference =</span> <span class="fu">abs</span>(cosine_rank <span class="sc">-</span> euclidean_rank)</span>
+<span id="cb23-13"><a href="#cb23-13" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
+<span id="cb23-14"><a href="#cb23-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">left_join</span>(similarity_texts <span class="sc">%&gt;%</span> <span class="fu">select</span>(title, genre) <span class="sc">%&gt;%</span> <span class="fu">rename</span>(<span class="at">text1 =</span> title, <span class="at">genre1 =</span> genre), <span class="at">by =</span> <span class="st">"text1"</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb23-15"><a href="#cb23-15" aria-hidden="true" tabindex="-1"></a>  <span class="fu">left_join</span>(similarity_texts <span class="sc">%&gt;%</span> <span class="fu">select</span>(title, genre) <span class="sc">%&gt;%</span> <span class="fu">rename</span>(<span class="at">text2 =</span> title, <span class="at">genre2 =</span> genre), <span class="at">by =</span> <span class="st">"text2"</span>)</span>
+<span id="cb23-16"><a href="#cb23-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb23-17"><a href="#cb23-17" aria-hidden="true" tabindex="-1"></a><span class="co"># Show pairs where the rankings differ most</span></span>
+<span id="cb23-18"><a href="#cb23-18" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"PAIRS WITH BIGGEST RANKING DIFFERENCES:</span><span class="sc">\n</span><span class="st">"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>PAIRS WITH BIGGEST RANKING DIFFERENCES:</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb25"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a>distance_comparison <span class="sc">%&gt;%</span></span>
+<span id="cb25-2"><a href="#cb25-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">arrange</span>(<span class="fu">desc</span>(rank_difference)) <span class="sc">%&gt;%</span></span>
+<span id="cb25-3"><a href="#cb25-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">head</span>(<span class="dv">10</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb25-4"><a href="#cb25-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb25-5"><a href="#cb25-5" aria-hidden="true" tabindex="-1"></a>    <span class="at">text1_short =</span> <span class="fu">str_trunc</span>(text1, <span class="dv">20</span>),</span>
+<span id="cb25-6"><a href="#cb25-6" aria-hidden="true" tabindex="-1"></a>    <span class="at">text2_short =</span> <span class="fu">str_trunc</span>(text2, <span class="dv">20</span>)</span>
+<span id="cb25-7"><a href="#cb25-7" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
+<span id="cb25-8"><a href="#cb25-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(text1_short, text2_short, cosine_rank, euclidean_rank, rank_difference, genre1, genre2) <span class="sc">%&gt;%</span></span>
+<span id="cb25-9"><a href="#cb25-9" aria-hidden="true" tabindex="-1"></a>  knitr<span class="sc">::</span><span class="fu">kable</span>(<span class="at">col.names =</span> <span class="fu">c</span>(<span class="st">"Text 1"</span>, <span class="st">"Text 2"</span>, <span class="st">"Cosine Rank"</span>, <span class="st">"Euclidean Rank"</span>, <span class="st">"Difference"</span>, <span class="st">"Genre 1"</span>, <span class="st">"Genre 2"</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<table class="caption-top table table-sm table-striped small">
+<colgroup>
+<col style="width: 17%">
+<col style="width: 18%">
+<col style="width: 10%">
+<col style="width: 13%">
+<col style="width: 9%">
+<col style="width: 15%">
+<col style="width: 15%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: left;">Text 1</th>
+<th style="text-align: left;">Text 2</th>
+<th style="text-align: right;">Cosine Rank</th>
+<th style="text-align: right;">Euclidean Rank</th>
+<th style="text-align: right;">Difference</th>
+<th style="text-align: left;">Genre 1</th>
+<th style="text-align: left;">Genre 2</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">Jane Eyre</td>
+<td style="text-align: left;">Little Women</td>
+<td style="text-align: right;">9</td>
+<td style="text-align: right;">43</td>
+<td style="text-align: right;">34</td>
+<td style="text-align: left;">Gothic</td>
+<td style="text-align: left;">Domestic Fiction</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Little Women</td>
+<td style="text-align: left;">Tom Sawyer</td>
+<td style="text-align: right;">23</td>
+<td style="text-align: right;">53</td>
+<td style="text-align: right;">30</td>
+<td style="text-align: left;">Domestic Fiction</td>
+<td style="text-align: left;">Adventure</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Pride and Prejudice</td>
+<td style="text-align: left;">Twenty Thousand L…</td>
+<td style="text-align: right;">50</td>
+<td style="text-align: right;">20</td>
+<td style="text-align: right;">30</td>
+<td style="text-align: left;">Social Fiction</td>
+<td style="text-align: left;">Science Fiction</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Great Expectations</td>
+<td style="text-align: left;">Tom Sawyer</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">28</td>
+<td style="text-align: right;">27</td>
+<td style="text-align: left;">Social Fiction</td>
+<td style="text-align: left;">Adventure</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Little Women</td>
+<td style="text-align: left;">Twenty Thousand L…</td>
+<td style="text-align: right;">24</td>
+<td style="text-align: right;">48</td>
+<td style="text-align: right;">24</td>
+<td style="text-align: left;">Domestic Fiction</td>
+<td style="text-align: left;">Science Fiction</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Pride and Prejudice</td>
+<td style="text-align: left;">The Time Machine</td>
+<td style="text-align: right;">47</td>
+<td style="text-align: right;">23</td>
+<td style="text-align: right;">24</td>
+<td style="text-align: left;">Social Fiction</td>
+<td style="text-align: left;">Science Fiction</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Dracula</td>
+<td style="text-align: left;">Pride and Prejudice</td>
+<td style="text-align: right;">32</td>
+<td style="text-align: right;">13</td>
+<td style="text-align: right;">19</td>
+<td style="text-align: left;">Gothic</td>
+<td style="text-align: left;">Social Fiction</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">The Time Machine</td>
+<td style="text-align: left;">Twenty Thousand L…</td>
+<td style="text-align: right;">36</td>
+<td style="text-align: right;">19</td>
+<td style="text-align: right;">17</td>
+<td style="text-align: left;">Science Fiction</td>
+<td style="text-align: left;">Science Fiction</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Dracula</td>
+<td style="text-align: left;">The Time Machine</td>
+<td style="text-align: right;">30</td>
+<td style="text-align: right;">14</td>
+<td style="text-align: right;">16</td>
+<td style="text-align: left;">Gothic</td>
+<td style="text-align: left;">Science Fiction</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Great Expectations</td>
+<td style="text-align: left;">Little Women</td>
+<td style="text-align: right;">39</td>
+<td style="text-align: right;">54</td>
+<td style="text-align: right;">15</td>
+<td style="text-align: left;">Social Fiction</td>
+<td style="text-align: left;">Domestic Fiction</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<p>Let’s create a scatter plot to visualize the relationship between the two distance measures:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb26"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Scatter plot comparing the two distance measures</span></span>
+<span id="cb26-2"><a href="#cb26-2" aria-hidden="true" tabindex="-1"></a>distance_comparison <span class="sc">%&gt;%</span></span>
+<span id="cb26-3"><a href="#cb26-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb26-4"><a href="#cb26-4" aria-hidden="true" tabindex="-1"></a>    <span class="at">same_genre =</span> genre1 <span class="sc">==</span> genre2,</span>
+<span id="cb26-5"><a href="#cb26-5" aria-hidden="true" tabindex="-1"></a>    <span class="at">pair_label =</span> <span class="fu">ifelse</span>(rank_difference <span class="sc">&gt;=</span> <span class="dv">10</span>, </span>
+<span id="cb26-6"><a href="#cb26-6" aria-hidden="true" tabindex="-1"></a>                       <span class="fu">paste</span>(<span class="fu">str_trunc</span>(text1, <span class="dv">15</span>), <span class="st">"vs"</span>, <span class="fu">str_trunc</span>(text2, <span class="dv">15</span>)), <span class="st">""</span>)</span>
+<span id="cb26-7"><a href="#cb26-7" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
+<span id="cb26-8"><a href="#cb26-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="at">x =</span> cosine_distance, <span class="at">y =</span> euclidean_distance, <span class="at">color =</span> same_genre)) <span class="sc">+</span></span>
+<span id="cb26-9"><a href="#cb26-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>(<span class="at">size =</span> <span class="dv">3</span>, <span class="at">alpha =</span> <span class="fl">0.7</span>) <span class="sc">+</span></span>
+<span id="cb26-10"><a href="#cb26-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_text</span>(<span class="fu">aes</span>(<span class="at">label =</span> pair_label), <span class="at">hjust =</span> <span class="dv">0</span>, <span class="at">vjust =</span> <span class="dv">0</span>, <span class="at">size =</span> <span class="dv">3</span>, <span class="at">check_overlap =</span> <span class="cn">TRUE</span>) <span class="sc">+</span></span>
+<span id="cb26-11"><a href="#cb26-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_smooth</span>(<span class="at">method =</span> <span class="st">"lm"</span>, <span class="at">se =</span> <span class="cn">FALSE</span>, <span class="at">color =</span> <span class="st">"black"</span>, <span class="at">linetype =</span> <span class="st">"dashed"</span>) <span class="sc">+</span></span>
+<span id="cb26-12"><a href="#cb26-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(</span>
+<span id="cb26-13"><a href="#cb26-13" aria-hidden="true" tabindex="-1"></a>    <span class="at">title =</span> <span class="st">"Cosine vs. Euclidean Distance: How Do They Compare?"</span>,</span>
+<span id="cb26-14"><a href="#cb26-14" aria-hidden="true" tabindex="-1"></a>    <span class="at">subtitle =</span> <span class="st">"Each point represents a pair of texts"</span>,</span>
+<span id="cb26-15"><a href="#cb26-15" aria-hidden="true" tabindex="-1"></a>    <span class="at">x =</span> <span class="st">"Cosine Distance"</span>,</span>
+<span id="cb26-16"><a href="#cb26-16" aria-hidden="true" tabindex="-1"></a>    <span class="at">y =</span> <span class="st">"Euclidean Distance"</span>,</span>
+<span id="cb26-17"><a href="#cb26-17" aria-hidden="true" tabindex="-1"></a>    <span class="at">color =</span> <span class="st">"Same Genre"</span></span>
+<span id="cb26-18"><a href="#cb26-18" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">+</span></span>
+<span id="cb26-19"><a href="#cb26-19" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_minimal</span>() <span class="sc">+</span></span>
+<span id="cb26-20"><a href="#cb26-20" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_color_manual</span>(<span class="at">values =</span> <span class="fu">c</span>(<span class="st">"FALSE"</span> <span class="ot">=</span> <span class="st">"red"</span>, <span class="st">"TRUE"</span> <span class="ot">=</span> <span class="st">"blue"</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>`geom_smooth()` using formula = 'y ~ x'</code></pre>
+</div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="05-findingSimilarities_files/figure-html/unnamed-chunk-11-1.png" class="img-fluid figure-img" width="960"></p>
+</figure>
+</div>
+</div>
+</div>
+</section>
+<section id="hierarchical-clustering-with-distance-measures" class="level2">
+<h2 class="anchored" data-anchor-id="hierarchical-clustering-with-distance-measures">Hierarchical Clustering with Distance Measures</h2>
+<p>One powerful application of distance measures is <strong>hierarchical clustering</strong> - automatically grouping texts based on their similarities. Let’s create dendrograms using both distance measures:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb28"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Create hierarchical clustering dendrograms</span></span>
+<span id="cb28-2"><a href="#cb28-2" aria-hidden="true" tabindex="-1"></a><span class="fu">par</span>(<span class="at">mfrow =</span> <span class="fu">c</span>(<span class="dv">2</span>, <span class="dv">1</span>))</span>
+<span id="cb28-3"><a href="#cb28-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb28-4"><a href="#cb28-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Cosine distance clustering</span></span>
+<span id="cb28-5"><a href="#cb28-5" aria-hidden="true" tabindex="-1"></a>cosine_hclust <span class="ot">&lt;-</span> <span class="fu">hclust</span>(<span class="fu">as.dist</span>(cosine_dist_matrix), <span class="at">method =</span> <span class="st">"ward.D2"</span>)</span>
+<span id="cb28-6"><a href="#cb28-6" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(cosine_hclust, <span class="at">main =</span> <span class="st">"Hierarchical Clustering - Cosine Distance"</span>, </span>
+<span id="cb28-7"><a href="#cb28-7" aria-hidden="true" tabindex="-1"></a>     <span class="at">xlab =</span> <span class="st">"Texts"</span>, <span class="at">ylab =</span> <span class="st">"Distance"</span>, <span class="at">cex =</span> <span class="fl">0.8</span>)</span>
+<span id="cb28-8"><a href="#cb28-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb28-9"><a href="#cb28-9" aria-hidden="true" tabindex="-1"></a><span class="co"># Euclidean distance clustering  </span></span>
+<span id="cb28-10"><a href="#cb28-10" aria-hidden="true" tabindex="-1"></a>euclidean_hclust <span class="ot">&lt;-</span> <span class="fu">hclust</span>(<span class="fu">as.dist</span>(euclidean_dist_matrix), <span class="at">method =</span> <span class="st">"ward.D2"</span>)</span>
+<span id="cb28-11"><a href="#cb28-11" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(euclidean_hclust, <span class="at">main =</span> <span class="st">"Hierarchical Clustering - Euclidean Distance"</span>, </span>
+<span id="cb28-12"><a href="#cb28-12" aria-hidden="true" tabindex="-1"></a>     <span class="at">xlab =</span> <span class="st">"Texts"</span>, <span class="at">ylab =</span> <span class="st">"Distance"</span>, <span class="at">cex =</span> <span class="fl">0.8</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="05-findingSimilarities_files/figure-html/unnamed-chunk-12-1.png" class="img-fluid figure-img" width="960"></p>
+</figure>
+</div>
+</div>
+<div class="sourceCode cell-code" id="cb29"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a><span class="fu">par</span>(<span class="at">mfrow =</span> <span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">1</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>Let’s examine how well these clusters align with our known genres:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb30"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Create clusters and compare with actual genres</span></span>
+<span id="cb30-2"><a href="#cb30-2" aria-hidden="true" tabindex="-1"></a><span class="co"># Cut the dendrograms to create groups (6 genres in our focused subset)</span></span>
+<span id="cb30-3"><a href="#cb30-3" aria-hidden="true" tabindex="-1"></a>cosine_clusters <span class="ot">&lt;-</span> <span class="fu">cutree</span>(cosine_hclust, <span class="at">k =</span> <span class="dv">6</span>)  </span>
+<span id="cb30-4"><a href="#cb30-4" aria-hidden="true" tabindex="-1"></a>euclidean_clusters <span class="ot">&lt;-</span> <span class="fu">cutree</span>(euclidean_hclust, <span class="at">k =</span> <span class="dv">6</span>)</span>
+<span id="cb30-5"><a href="#cb30-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb30-6"><a href="#cb30-6" aria-hidden="true" tabindex="-1"></a><span class="co"># Create comparison table</span></span>
+<span id="cb30-7"><a href="#cb30-7" aria-hidden="true" tabindex="-1"></a>cluster_comparison <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(</span>
+<span id="cb30-8"><a href="#cb30-8" aria-hidden="true" tabindex="-1"></a>  <span class="at">Title =</span> <span class="fu">names</span>(cosine_clusters),</span>
+<span id="cb30-9"><a href="#cb30-9" aria-hidden="true" tabindex="-1"></a>  <span class="at">Actual_Genre =</span> similarity_texts<span class="sc">$</span>genre[<span class="fu">match</span>(<span class="fu">names</span>(cosine_clusters), similarity_texts<span class="sc">$</span>title)],</span>
+<span id="cb30-10"><a href="#cb30-10" aria-hidden="true" tabindex="-1"></a>  <span class="at">Cosine_Cluster =</span> cosine_clusters,</span>
+<span id="cb30-11"><a href="#cb30-11" aria-hidden="true" tabindex="-1"></a>  <span class="at">Euclidean_Cluster =</span> euclidean_clusters</span>
+<span id="cb30-12"><a href="#cb30-12" aria-hidden="true" tabindex="-1"></a>) <span class="sc">%&gt;%</span></span>
+<span id="cb30-13"><a href="#cb30-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb30-14"><a href="#cb30-14" aria-hidden="true" tabindex="-1"></a>    <span class="at">Title_Short =</span> <span class="fu">case_when</span>(</span>
+<span id="cb30-15"><a href="#cb30-15" aria-hidden="true" tabindex="-1"></a>      <span class="fu">str_detect</span>(Title, <span class="st">"Pride"</span>) <span class="sc">~</span> <span class="st">"Pride &amp; Prejudice"</span>,</span>
+<span id="cb30-16"><a href="#cb30-16" aria-hidden="true" tabindex="-1"></a>      <span class="fu">str_detect</span>(Title, <span class="st">"Frankenstein"</span>) <span class="sc">~</span> <span class="st">"Frankenstein"</span>,</span>
+<span id="cb30-17"><a href="#cb30-17" aria-hidden="true" tabindex="-1"></a>      <span class="fu">str_detect</span>(Title, <span class="st">"Alice"</span>) <span class="sc">~</span> <span class="st">"Alice in Wonderland"</span>,</span>
+<span id="cb30-18"><a href="#cb30-18" aria-hidden="true" tabindex="-1"></a>      <span class="fu">str_detect</span>(Title, <span class="st">"Twenty"</span>) <span class="sc">~</span> <span class="st">"20,000 Leagues"</span>,</span>
+<span id="cb30-19"><a href="#cb30-19" aria-hidden="true" tabindex="-1"></a>      <span class="fu">str_detect</span>(Title, <span class="st">"Treasure"</span>) <span class="sc">~</span> <span class="st">"Treasure Island"</span>,</span>
+<span id="cb30-20"><a href="#cb30-20" aria-hidden="true" tabindex="-1"></a>      <span class="fu">str_detect</span>(Title, <span class="st">"Dracula"</span>) <span class="sc">~</span> <span class="st">"Dracula"</span>,</span>
+<span id="cb30-21"><a href="#cb30-21" aria-hidden="true" tabindex="-1"></a>      <span class="fu">str_detect</span>(Title, <span class="st">"Time Machine"</span>) <span class="sc">~</span> <span class="st">"Time Machine"</span>,</span>
+<span id="cb30-22"><a href="#cb30-22" aria-hidden="true" tabindex="-1"></a>      <span class="fu">str_detect</span>(Title, <span class="st">"Wind"</span>) <span class="sc">~</span> <span class="st">"Wind in the Willows"</span>,</span>
+<span id="cb30-23"><a href="#cb30-23" aria-hidden="true" tabindex="-1"></a>      <span class="fu">str_detect</span>(Title, <span class="st">"Gatsby"</span>) <span class="sc">~</span> <span class="st">"Great Gatsby"</span>,</span>
+<span id="cb30-24"><a href="#cb30-24" aria-hidden="true" tabindex="-1"></a>      <span class="fu">str_detect</span>(Title, <span class="st">"Great Expectations"</span>) <span class="sc">~</span> <span class="st">"Great Expectations"</span>,</span>
+<span id="cb30-25"><a href="#cb30-25" aria-hidden="true" tabindex="-1"></a>      <span class="cn">TRUE</span> <span class="sc">~</span> Title</span>
+<span id="cb30-26"><a href="#cb30-26" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb30-27"><a href="#cb30-27" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
+<span id="cb30-28"><a href="#cb30-28" aria-hidden="true" tabindex="-1"></a>  <span class="fu">arrange</span>(Actual_Genre, Title_Short)</span>
+<span id="cb30-29"><a href="#cb30-29" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb30-30"><a href="#cb30-30" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">kable</span>(cluster_comparison <span class="sc">%&gt;%</span> <span class="fu">select</span>(<span class="sc">-</span>Title), </span>
+<span id="cb30-31"><a href="#cb30-31" aria-hidden="true" tabindex="-1"></a>             <span class="at">col.names =</span> <span class="fu">c</span>(<span class="st">"Book"</span>, <span class="st">"Actual Genre"</span>, <span class="st">"Cosine Cluster"</span>, <span class="st">"Euclidean Cluster"</span>),</span>
+<span id="cb30-32"><a href="#cb30-32" aria-hidden="true" tabindex="-1"></a>             <span class="at">caption =</span> <span class="st">"Clustering Results vs. Actual Genres"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<table class="caption-top table table-sm table-striped small">
+<caption>Clustering Results vs.&nbsp;Actual Genres</caption>
+<colgroup>
+<col style="width: 38%">
+<col style="width: 16%">
+<col style="width: 12%">
+<col style="width: 14%">
+<col style="width: 19%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: left;"></th>
+<th style="text-align: left;">Book</th>
+<th style="text-align: right;">Actual Genre</th>
+<th style="text-align: right;">Cosine Cluster</th>
+<th style="text-align: left;">Euclidean Cluster</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">Tom Sawyer</td>
+<td style="text-align: left;">Adventure</td>
+<td style="text-align: right;">5</td>
+<td style="text-align: right;">6</td>
+<td style="text-align: left;">Tom Sawyer</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Cranford</td>
+<td style="text-align: left;">Domestic Fiction</td>
+<td style="text-align: right;">2</td>
+<td style="text-align: right;">2</td>
+<td style="text-align: left;">Cranford</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Little Women</td>
+<td style="text-align: left;">Domestic Fiction</td>
+<td style="text-align: right;">2</td>
+<td style="text-align: right;">4</td>
+<td style="text-align: left;">Little Women</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Alice’s Adventures in Wonderland</td>
+<td style="text-align: left;">Fantasy</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: left;">Alice in Wonderland</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">The Wind in the Willows</td>
+<td style="text-align: left;">Fantasy</td>
+<td style="text-align: right;">6</td>
+<td style="text-align: right;">5</td>
+<td style="text-align: left;">Wind in the Willows</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Dracula</td>
+<td style="text-align: left;">Gothic</td>
+<td style="text-align: right;">3</td>
+<td style="text-align: right;">2</td>
+<td style="text-align: left;">Dracula</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Frankenstein; Or, The Modern Prometheus</td>
+<td style="text-align: left;">Gothic</td>
+<td style="text-align: right;">4</td>
+<td style="text-align: right;">2</td>
+<td style="text-align: left;">Frankenstein</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Jane Eyre</td>
+<td style="text-align: left;">Gothic</td>
+<td style="text-align: right;">2</td>
+<td style="text-align: right;">2</td>
+<td style="text-align: left;">Jane Eyre</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Twenty Thousand Leagues Under the Seas</td>
+<td style="text-align: left;">Science Fiction</td>
+<td style="text-align: right;">3</td>
+<td style="text-align: right;">2</td>
+<td style="text-align: left;">20,000 Leagues</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">The Time Machine</td>
+<td style="text-align: left;">Science Fiction</td>
+<td style="text-align: right;">6</td>
+<td style="text-align: right;">2</td>
+<td style="text-align: left;">Time Machine</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Great Expectations</td>
+<td style="text-align: left;">Social Fiction</td>
+<td style="text-align: right;">5</td>
+<td style="text-align: right;">3</td>
+<td style="text-align: left;">Great Expectations</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Pride and Prejudice</td>
+<td style="text-align: left;">Social Fiction</td>
+<td style="text-align: right;">4</td>
+<td style="text-align: right;">2</td>
+<td style="text-align: left;">Pride &amp; Prejudice</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</section>
+<section id="genre-similarity-analysis" class="level2">
+<h2 class="anchored" data-anchor-id="genre-similarity-analysis">Genre Similarity Analysis</h2>
+<p>Finally, let’s examine how our distance measures capture similarities within and between literary genres:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb31"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Calculate average distances within and between genres</span></span>
+<span id="cb31-2"><a href="#cb31-2" aria-hidden="true" tabindex="-1"></a>genre_distances <span class="ot">&lt;-</span> cosine_dist_df <span class="sc">%&gt;%</span></span>
+<span id="cb31-3"><a href="#cb31-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(text1 <span class="sc">!=</span> text2) <span class="sc">%&gt;%</span></span>
+<span id="cb31-4"><a href="#cb31-4" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Add euclidean distance data</span></span>
+<span id="cb31-5"><a href="#cb31-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">left_join</span>(euclidean_dist_df <span class="sc">%&gt;%</span> <span class="fu">select</span>(text1, text2, euclidean_distance), </span>
+<span id="cb31-6"><a href="#cb31-6" aria-hidden="true" tabindex="-1"></a>            <span class="at">by =</span> <span class="fu">c</span>(<span class="st">"text1"</span>, <span class="st">"text2"</span>)) <span class="sc">%&gt;%</span></span>
+<span id="cb31-7"><a href="#cb31-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb31-8"><a href="#cb31-8" aria-hidden="true" tabindex="-1"></a>    <span class="at">relationship =</span> <span class="fu">case_when</span>(</span>
+<span id="cb31-9"><a href="#cb31-9" aria-hidden="true" tabindex="-1"></a>      genre1 <span class="sc">==</span> genre2 <span class="sc">~</span> <span class="fu">paste</span>(<span class="st">"Within"</span>, genre1),</span>
+<span id="cb31-10"><a href="#cb31-10" aria-hidden="true" tabindex="-1"></a>      <span class="cn">TRUE</span> <span class="sc">~</span> <span class="fu">paste</span>(<span class="fu">pmin</span>(genre1, genre2), <span class="st">"vs"</span>, <span class="fu">pmax</span>(genre1, genre2))</span>
+<span id="cb31-11"><a href="#cb31-11" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb31-12"><a href="#cb31-12" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
+<span id="cb31-13"><a href="#cb31-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(relationship) <span class="sc">%&gt;%</span></span>
+<span id="cb31-14"><a href="#cb31-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarise</span>(</span>
+<span id="cb31-15"><a href="#cb31-15" aria-hidden="true" tabindex="-1"></a>    <span class="at">avg_cosine_distance =</span> <span class="fu">mean</span>(cosine_distance),</span>
+<span id="cb31-16"><a href="#cb31-16" aria-hidden="true" tabindex="-1"></a>    <span class="at">avg_euclidean_distance =</span> <span class="fu">mean</span>(euclidean_distance, <span class="at">na.rm =</span> <span class="cn">TRUE</span>),</span>
+<span id="cb31-17"><a href="#cb31-17" aria-hidden="true" tabindex="-1"></a>    <span class="at">n_pairs =</span> <span class="fu">n</span>(),</span>
+<span id="cb31-18"><a href="#cb31-18" aria-hidden="true" tabindex="-1"></a>    <span class="at">.groups =</span> <span class="st">"drop"</span></span>
+<span id="cb31-19"><a href="#cb31-19" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
+<span id="cb31-20"><a href="#cb31-20" aria-hidden="true" tabindex="-1"></a>  <span class="fu">arrange</span>(avg_cosine_distance)</span>
+<span id="cb31-21"><a href="#cb31-21" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb31-22"><a href="#cb31-22" aria-hidden="true" tabindex="-1"></a><span class="co"># Visualize genre relationships</span></span>
+<span id="cb31-23"><a href="#cb31-23" aria-hidden="true" tabindex="-1"></a>genre_distances <span class="sc">%&gt;%</span></span>
+<span id="cb31-24"><a href="#cb31-24" aria-hidden="true" tabindex="-1"></a>  <span class="fu">pivot_longer</span>(<span class="at">cols =</span> <span class="fu">c</span>(avg_cosine_distance, avg_euclidean_distance), </span>
+<span id="cb31-25"><a href="#cb31-25" aria-hidden="true" tabindex="-1"></a>               <span class="at">names_to =</span> <span class="st">"distance_type"</span>, <span class="at">values_to =</span> <span class="st">"distance"</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb31-26"><a href="#cb31-26" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb31-27"><a href="#cb31-27" aria-hidden="true" tabindex="-1"></a>    <span class="at">distance_type =</span> <span class="fu">case_when</span>(</span>
+<span id="cb31-28"><a href="#cb31-28" aria-hidden="true" tabindex="-1"></a>      distance_type <span class="sc">==</span> <span class="st">"avg_cosine_distance"</span> <span class="sc">~</span> <span class="st">"Cosine Distance"</span>,</span>
+<span id="cb31-29"><a href="#cb31-29" aria-hidden="true" tabindex="-1"></a>      distance_type <span class="sc">==</span> <span class="st">"avg_euclidean_distance"</span> <span class="sc">~</span> <span class="st">"Euclidean Distance"</span></span>
+<span id="cb31-30"><a href="#cb31-30" aria-hidden="true" tabindex="-1"></a>    ),</span>
+<span id="cb31-31"><a href="#cb31-31" aria-hidden="true" tabindex="-1"></a>    <span class="at">within_genre =</span> <span class="fu">str_detect</span>(relationship, <span class="st">"Within"</span>)</span>
+<span id="cb31-32"><a href="#cb31-32" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
+<span id="cb31-33"><a href="#cb31-33" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="at">x =</span> <span class="fu">reorder</span>(relationship, distance), <span class="at">y =</span> distance, </span>
+<span id="cb31-34"><a href="#cb31-34" aria-hidden="true" tabindex="-1"></a>             <span class="at">fill =</span> within_genre, <span class="at">alpha =</span> distance_type)) <span class="sc">+</span></span>
+<span id="cb31-35"><a href="#cb31-35" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_col</span>(<span class="at">position =</span> <span class="st">"dodge"</span>) <span class="sc">+</span></span>
+<span id="cb31-36"><a href="#cb31-36" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_alpha_manual</span>(<span class="at">values =</span> <span class="fu">c</span>(<span class="st">"Cosine Distance"</span> <span class="ot">=</span> <span class="fl">0.8</span>, <span class="st">"Euclidean Distance"</span> <span class="ot">=</span> <span class="fl">0.6</span>)) <span class="sc">+</span></span>
+<span id="cb31-37"><a href="#cb31-37" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_fill_manual</span>(<span class="at">values =</span> <span class="fu">c</span>(<span class="st">"TRUE"</span> <span class="ot">=</span> <span class="st">"darkgreen"</span>, <span class="st">"FALSE"</span> <span class="ot">=</span> <span class="st">"darkred"</span>)) <span class="sc">+</span></span>
+<span id="cb31-38"><a href="#cb31-38" aria-hidden="true" tabindex="-1"></a>  <span class="fu">coord_flip</span>() <span class="sc">+</span></span>
+<span id="cb31-39"><a href="#cb31-39" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(</span>
+<span id="cb31-40"><a href="#cb31-40" aria-hidden="true" tabindex="-1"></a>    <span class="at">title =</span> <span class="st">"Average Distances Within and Between Genres"</span>,</span>
+<span id="cb31-41"><a href="#cb31-41" aria-hidden="true" tabindex="-1"></a>    <span class="at">subtitle =</span> <span class="st">"Do texts cluster by literary genre?"</span>,</span>
+<span id="cb31-42"><a href="#cb31-42" aria-hidden="true" tabindex="-1"></a>    <span class="at">x =</span> <span class="st">"Genre Relationship"</span>,</span>
+<span id="cb31-43"><a href="#cb31-43" aria-hidden="true" tabindex="-1"></a>    <span class="at">y =</span> <span class="st">"Average Distance"</span>,</span>
+<span id="cb31-44"><a href="#cb31-44" aria-hidden="true" tabindex="-1"></a>    <span class="at">fill =</span> <span class="st">"Within Genre"</span>,</span>
+<span id="cb31-45"><a href="#cb31-45" aria-hidden="true" tabindex="-1"></a>    <span class="at">alpha =</span> <span class="st">"Distance Type"</span></span>
+<span id="cb31-46"><a href="#cb31-46" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">+</span></span>
+<span id="cb31-47"><a href="#cb31-47" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_minimal</span>() <span class="sc">+</span></span>
+<span id="cb31-48"><a href="#cb31-48" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme</span>(<span class="at">legend.position =</span> <span class="st">"bottom"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="05-findingSimilarities_files/figure-html/unnamed-chunk-14-1.png" class="img-fluid figure-img" width="960"></p>
+</figure>
+</div>
+</div>
+</div>
+</section>
+<section id="summary-and-interpretation" class="level2">
+<h2 class="anchored" data-anchor-id="summary-and-interpretation">Summary and Interpretation</h2>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb32"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Summary statistics</span></span>
+<span id="cb32-2"><a href="#cb32-2" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"SUMMARY OF FINDINGS:</span><span class="sc">\n</span><span class="st">"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>SUMMARY OF FINDINGS:</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb34"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb34-1"><a href="#cb34-1" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"====================</span><span class="sc">\n\n</span><span class="st">"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>====================</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb36"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb36-1"><a href="#cb36-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Overall correlation between distance measures</span></span>
+<span id="cb36-2"><a href="#cb36-2" aria-hidden="true" tabindex="-1"></a>correlation <span class="ot">&lt;-</span> <span class="fu">cor</span>(distance_comparison<span class="sc">$</span>cosine_distance, distance_comparison<span class="sc">$</span>euclidean_distance)</span>
+<span id="cb36-3"><a href="#cb36-3" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"Correlation between Cosine and Euclidean distances:"</span>, <span class="fu">round</span>(correlation, <span class="dv">3</span>), <span class="st">"</span><span class="sc">\n\n</span><span class="st">"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Correlation between Cosine and Euclidean distances: 0.401 </code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb38"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb38-1"><a href="#cb38-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Within-genre vs between-genre similarities</span></span>
+<span id="cb38-2"><a href="#cb38-2" aria-hidden="true" tabindex="-1"></a>within_genre_avg_cosine <span class="ot">&lt;-</span> <span class="fu">mean</span>(genre_distances<span class="sc">$</span>avg_cosine_distance[<span class="fu">str_detect</span>(genre_distances<span class="sc">$</span>relationship, <span class="st">"Within"</span>)])</span>
+<span id="cb38-3"><a href="#cb38-3" aria-hidden="true" tabindex="-1"></a>between_genre_avg_cosine <span class="ot">&lt;-</span> <span class="fu">mean</span>(genre_distances<span class="sc">$</span>avg_cosine_distance[<span class="sc">!</span><span class="fu">str_detect</span>(genre_distances<span class="sc">$</span>relationship, <span class="st">"Within"</span>)])</span>
+<span id="cb38-4"><a href="#cb38-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb38-5"><a href="#cb38-5" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"Average Cosine Distance:</span><span class="sc">\n</span><span class="st">"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Average Cosine Distance:</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb40"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb40-1"><a href="#cb40-1" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"  Within genres:"</span>, <span class="fu">round</span>(within_genre_avg_cosine, <span class="dv">3</span>), <span class="st">"</span><span class="sc">\n</span><span class="st">"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>  Within genres: 0.969 </code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb42"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb42-1"><a href="#cb42-1" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"  Between genres:"</span>, <span class="fu">round</span>(between_genre_avg_cosine, <span class="dv">3</span>), <span class="st">"</span><span class="sc">\n</span><span class="st">"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>  Between genres: 0.96 </code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb44"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb44-1"><a href="#cb44-1" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"  Difference:"</span>, <span class="fu">round</span>(between_genre_avg_cosine <span class="sc">-</span> within_genre_avg_cosine, <span class="dv">3</span>), <span class="st">"</span><span class="sc">\n\n</span><span class="st">"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>  Difference: -0.009 </code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb46"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb46-1"><a href="#cb46-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Most distinctive genres (smallest within-genre distances)</span></span>
+<span id="cb46-2"><a href="#cb46-2" aria-hidden="true" tabindex="-1"></a>most_cohesive_genre <span class="ot">&lt;-</span> genre_distances <span class="sc">%&gt;%</span></span>
+<span id="cb46-3"><a href="#cb46-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(<span class="fu">str_detect</span>(relationship, <span class="st">"Within"</span>)) <span class="sc">%&gt;%</span></span>
+<span id="cb46-4"><a href="#cb46-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">slice_min</span>(avg_cosine_distance, <span class="at">n =</span> <span class="dv">1</span>)</span>
+<span id="cb46-5"><a href="#cb46-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb46-6"><a href="#cb46-6" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"Most cohesive genre (by cosine distance):"</span>, most_cohesive_genre<span class="sc">$</span>relationship, </span>
+<span id="cb46-7"><a href="#cb46-7" aria-hidden="true" tabindex="-1"></a>    <span class="st">"with average distance"</span>, <span class="fu">round</span>(most_cohesive_genre<span class="sc">$</span>avg_cosine_distance, <span class="dv">3</span>), <span class="st">"</span><span class="sc">\n</span><span class="st">"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Most cohesive genre (by cosine distance): Within Gothic with average distance 0.908 </code></pre>
+</div>
+</div>
+<div class="callout callout-style-default callout-note callout-titled" title="Key Insights from Distance Analysis">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+Key Insights from Distance Analysis
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>Our exploration of text similarity reveals several important patterns:</p>
+<p><strong>1. Distance Measure Differences:</strong> - <strong>Cosine distance</strong> focuses on proportional word usage patterns, making it excellent for identifying thematic similarities regardless of text length - <strong>Euclidean distance</strong> considers both proportions and magnitudes, making it sensitive to vocabulary intensity and text scale</p>
+<p><strong>2. Genre Clustering:</strong> - Texts within the same genre generally show smaller distances (higher similarity) than texts from different genres - However, some cross-genre similarities emerge, suggesting shared narrative techniques or thematic elements</p>
+<p><strong>3. Mathematical vs.&nbsp;Literary Categories:</strong> - While distance measures often align with literary genres, they sometimes reveal unexpected similarities based on vocabulary patterns - This demonstrates how computational methods can both confirm and challenge traditional literary classifications</p>
+<p><strong>4. Applications:</strong> - <strong>Authorship attribution</strong>: Comparing unknown texts to known authors - <strong>Genre classification</strong>: Automatically categorizing texts by similarity to genre exemplars<br>
+- <strong>Literary influence</strong>: Detecting vocabulary patterns that suggest textual relationships - <strong>Corpus exploration</strong>: Discovering unexpected connections in large text collections</p>
+</div>
+</div>
+<p>These similarity measures provide the foundation for more advanced techniques like clustering, topic modeling, and machine learning applications in literary analysis. In our next episode, we’ll explore how these concepts extend into <strong>topic modeling</strong> and <strong>latent semantic analysis</strong>.</p>
 
 
+</section>
 
 </main> <!-- /main -->
 <script id="quarto-html-after-body" type="application/javascript">

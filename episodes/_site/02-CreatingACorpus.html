@@ -167,6 +167,24 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
  <span class="menu-text">2. Creating a Corpus</span></a>
   </div>
 </li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./03-basicTextAnalysis.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">3. Basic Text Analysis</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./04-TF-IDF.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">4. TF-IDF Analysis</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./05-findingSimilarities.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">5. Finding Similarities</span></a>
+  </div>
+</li>
     </ul>
     </div>
 </nav>
@@ -181,6 +199,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <li><a href="#create-a-corpus" id="toc-create-a-corpus" class="nav-link" data-scroll-target="#create-a-corpus">Create a Corpus</a>
   <ul class="collapse">
   <li><a href="#fetch-the-texts" id="toc-fetch-the-texts" class="nav-link" data-scroll-target="#fetch-the-texts">Fetch the Texts</a></li>
+  <li><a href="#cleaning" id="toc-cleaning" class="nav-link" data-scroll-target="#cleaning">Cleaning</a></li>
   </ul></li>
   </ul>
 </nav>
@@ -371,22 +390,21 @@ Note
 <span id="cb10-15"><a href="#cb10-15" aria-hidden="true" tabindex="-1"></a>  <span class="st">"Charles Dickens"</span>, <span class="st">"The Pickwick Papers"</span>, <span class="dv">1836</span>, <span class="dv">580</span>, <span class="st">"Social Fiction"</span>,</span>
 <span id="cb10-16"><a href="#cb10-16" aria-hidden="true" tabindex="-1"></a>  <span class="st">"J. M. Barrie"</span>, <span class="st">"Peter Pan"</span>, <span class="dv">1911</span>, <span class="dv">16</span>, <span class="st">"Fantasy"</span>,</span>
 <span id="cb10-17"><a href="#cb10-17" aria-hidden="true" tabindex="-1"></a>  <span class="st">"Charles Dickens"</span>, <span class="st">"Great Expectations"</span>, <span class="dv">1861</span>, <span class="dv">1400</span>, <span class="st">"Social Fiction"</span>,</span>
-<span id="cb10-18"><a href="#cb10-18" aria-hidden="true" tabindex="-1"></a>  <span class="st">"Harriet Beecher Stowe"</span>, <span class="st">"Uncle Tom's Cabin"</span>, <span class="dv">1852</span>, <span class="dv">203</span>, <span class="st">"Social Fiction"</span>,</span>
-<span id="cb10-19"><a href="#cb10-19" aria-hidden="true" tabindex="-1"></a>  <span class="st">"Robert Louis Stevenson"</span>, <span class="st">"Treasure Island"</span>, <span class="dv">1883</span>, <span class="dv">120</span>, <span class="st">"Adventure"</span>,</span>
-<span id="cb10-20"><a href="#cb10-20" aria-hidden="true" tabindex="-1"></a>  <span class="st">"Kenneth Grahame"</span>, <span class="st">"The Wind in the Willows"</span>, <span class="dv">1908</span>, <span class="dv">27805</span>, <span class="st">"Fantasy"</span>,</span>
-<span id="cb10-21"><a href="#cb10-21" aria-hidden="true" tabindex="-1"></a>  <span class="st">"Jules Verne"</span>, <span class="st">"Twenty Thousand Leagues Under the Seas"</span>, <span class="dv">1870</span>, <span class="dv">2488</span>, <span class="st">"Science Fiction"</span>,</span>
-<span id="cb10-22"><a href="#cb10-22" aria-hidden="true" tabindex="-1"></a>  <span class="st">"Jules Verne"</span>, <span class="st">"A Journey to the Centre of the Earth"</span>, <span class="dv">1864</span>, <span class="dv">18857</span>, <span class="st">"Science Fiction"</span>,</span>
-<span id="cb10-23"><a href="#cb10-23" aria-hidden="true" tabindex="-1"></a>  <span class="st">"Jules Verne"</span>, <span class="st">"Around the World in Eighty Days"</span>, <span class="dv">1873</span>, <span class="dv">103</span>, <span class="st">"Adventure"</span>,</span>
-<span id="cb10-24"><a href="#cb10-24" aria-hidden="true" tabindex="-1"></a>  <span class="st">"Bram Stoker"</span>, <span class="st">"Dracula"</span>, <span class="dv">1897</span>, <span class="dv">345</span>, <span class="st">"Gothic"</span>,</span>
-<span id="cb10-25"><a href="#cb10-25" aria-hidden="true" tabindex="-1"></a>  <span class="st">"H. G. Wells"</span>, <span class="st">"The Time Machine"</span>, <span class="dv">1895</span>, <span class="dv">35</span>, <span class="st">"Science Fiction"</span>,</span>
-<span id="cb10-26"><a href="#cb10-26" aria-hidden="true" tabindex="-1"></a>  <span class="st">"Charlotte Brontë"</span>, <span class="st">"Jane Eyre"</span>, <span class="dv">1847</span>, <span class="dv">1260</span>, <span class="st">"Gothic"</span>,</span>
-<span id="cb10-27"><a href="#cb10-27" aria-hidden="true" tabindex="-1"></a>  <span class="st">"Jane Austen"</span>, <span class="st">"Northanger Abbey"</span>, <span class="dv">1817</span>, <span class="dv">121</span>, <span class="st">"Social Fiction"</span>,</span>
-<span id="cb10-28"><a href="#cb10-28" aria-hidden="true" tabindex="-1"></a>  <span class="st">"Elizabeth Gaskell"</span>, <span class="st">"North and South"</span>, <span class="dv">1855</span>, <span class="dv">4276</span>, <span class="st">"Social Fiction"</span></span>
-<span id="cb10-29"><a href="#cb10-29" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb10-30"><a href="#cb10-30" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb10-31"><a href="#cb10-31" aria-hidden="true" tabindex="-1"></a>corpus</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb10-18"><a href="#cb10-18" aria-hidden="true" tabindex="-1"></a>  <span class="st">"Robert Louis Stevenson"</span>, <span class="st">"Treasure Island"</span>, <span class="dv">1883</span>, <span class="dv">120</span>, <span class="st">"Adventure"</span>,</span>
+<span id="cb10-19"><a href="#cb10-19" aria-hidden="true" tabindex="-1"></a>  <span class="st">"Kenneth Grahame"</span>, <span class="st">"The Wind in the Willows"</span>, <span class="dv">1908</span>, <span class="dv">27805</span>, <span class="st">"Fantasy"</span>,</span>
+<span id="cb10-20"><a href="#cb10-20" aria-hidden="true" tabindex="-1"></a>  <span class="st">"Jules Verne"</span>, <span class="st">"Twenty Thousand Leagues Under the Seas"</span>, <span class="dv">1870</span>, <span class="dv">2488</span>, <span class="st">"Science Fiction"</span>,</span>
+<span id="cb10-21"><a href="#cb10-21" aria-hidden="true" tabindex="-1"></a>  <span class="st">"Jules Verne"</span>, <span class="st">"A Journey to the Centre of the Earth"</span>, <span class="dv">1864</span>, <span class="dv">18857</span>, <span class="st">"Science Fiction"</span>,</span>
+<span id="cb10-22"><a href="#cb10-22" aria-hidden="true" tabindex="-1"></a>  <span class="st">"Jules Verne"</span>, <span class="st">"Around the World in Eighty Days"</span>, <span class="dv">1873</span>, <span class="dv">103</span>, <span class="st">"Adventure"</span>,</span>
+<span id="cb10-23"><a href="#cb10-23" aria-hidden="true" tabindex="-1"></a>  <span class="st">"Bram Stoker"</span>, <span class="st">"Dracula"</span>, <span class="dv">1897</span>, <span class="dv">345</span>, <span class="st">"Gothic"</span>,</span>
+<span id="cb10-24"><a href="#cb10-24" aria-hidden="true" tabindex="-1"></a>  <span class="st">"H. G. Wells"</span>, <span class="st">"The Time Machine"</span>, <span class="dv">1895</span>, <span class="dv">35</span>, <span class="st">"Science Fiction"</span>,</span>
+<span id="cb10-25"><a href="#cb10-25" aria-hidden="true" tabindex="-1"></a>  <span class="st">"Charlotte Brontë"</span>, <span class="st">"Jane Eyre"</span>, <span class="dv">1847</span>, <span class="dv">1260</span>, <span class="st">"Gothic"</span>,</span>
+<span id="cb10-26"><a href="#cb10-26" aria-hidden="true" tabindex="-1"></a>  <span class="st">"Jane Austen"</span>, <span class="st">"Northanger Abbey"</span>, <span class="dv">1817</span>, <span class="dv">121</span>, <span class="st">"Social Fiction"</span>,</span>
+<span id="cb10-27"><a href="#cb10-27" aria-hidden="true" tabindex="-1"></a>  <span class="st">"Elizabeth Gaskell"</span>, <span class="st">"North and South"</span>, <span class="dv">1855</span>, <span class="dv">4276</span>, <span class="st">"Social Fiction"</span></span>
+<span id="cb10-28"><a href="#cb10-28" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb10-29"><a href="#cb10-29" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-30"><a href="#cb10-30" aria-hidden="true" tabindex="-1"></a>corpus</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
-<pre><code># A tibble: 26 × 5
+<pre><code># A tibble: 25 × 5
    author                      title                            year  glID genre
    &lt;chr&gt;                       &lt;chr&gt;                           &lt;dbl&gt; &lt;dbl&gt; &lt;chr&gt;
  1 Jane Austen                 Pride and Prejudice              1813  1342 Soci…
@@ -399,7 +417,7 @@ Note
  8 Jonathan Swift              Gulliver's Travels               1726 17157 Sati…
  9 E. M. Forster               A Room with a View               1908  2641 Soci…
 10 Elizabeth Von Arnim         The Enchanted April              1922 16389 Soci…
-# ℹ 16 more rows</code></pre>
+# ℹ 15 more rows</code></pre>
 </div>
 </div>
 <p>We can have a glimpse of the corpus by examining how many authors and how many genres are represented.</p>
@@ -408,7 +426,7 @@ Note
 <span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>corpus <span class="sc">%&gt;%</span></span>
 <span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">count</span>(author, <span class="at">sort =</span> <span class="cn">TRUE</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
-<pre><code># A tibble: 20 × 2
+<pre><code># A tibble: 19 × 2
    author                          n
    &lt;chr&gt;                       &lt;int&gt;
  1 Charles Dickens                 3
@@ -421,16 +439,15 @@ Note
  8 Elizabeth Von Arnim             1
  9 F. Scott Fitzgerald             1
 10 H. G. Wells                     1
-11 Harriet Beecher Stowe           1
-12 Herman Melville                 1
-13 J. M. Barrie                    1
-14 Jonathan Swift                  1
-15 Kenneth Grahame                 1
-16 Lewis Carroll                   1
-17 Louisa May Alcott               1
-18 Mark Twain                      1
-19 Mary Wollstonecraft Shelley     1
-20 Robert Louis Stevenson          1</code></pre>
+11 Herman Melville                 1
+12 J. M. Barrie                    1
+13 Jonathan Swift                  1
+14 Kenneth Grahame                 1
+15 Lewis Carroll                   1
+16 Louisa May Alcott               1
+17 Mark Twain                      1
+18 Mary Wollstonecraft Shelley     1
+19 Robert Louis Stevenson          1</code></pre>
 </div>
 <div class="sourceCode cell-code" id="cb14"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>corpus <span class="sc">%&gt;%</span></span>
 <span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">count</span>(genre, <span class="at">sort =</span> <span class="cn">TRUE</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
@@ -438,7 +455,7 @@ Note
 <pre><code># A tibble: 7 × 2
   genre                 n
   &lt;chr&gt;             &lt;int&gt;
-1 Social Fiction       10
+1 Social Fiction        9
 2 Adventure             4
 3 Fantasy               3
 4 Gothic                3
@@ -492,7 +509,7 @@ Using mirror http://aleph.gutenberg.org.</code></pre>
 <span id="cb20-6"><a href="#cb20-6" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb20-7"><a href="#cb20-7" aria-hidden="true" tabindex="-1"></a>corpus_texts</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
-<pre><code># A tibble: 26 × 6
+<pre><code># A tibble: 25 × 6
    author                      title                      year  glID genre text 
    &lt;chr&gt;                       &lt;chr&gt;                     &lt;dbl&gt; &lt;dbl&gt; &lt;chr&gt; &lt;lis&gt;
  1 Jane Austen                 Pride and Prejudice        1813  1342 Soci… &lt;chr&gt;
@@ -505,7 +522,7 @@ Using mirror http://aleph.gutenberg.org.</code></pre>
  8 Jonathan Swift              Gulliver's Travels         1726 17157 Sati… &lt;chr&gt;
  9 E. M. Forster               A Room with a View         1908  2641 Soci… &lt;chr&gt;
 10 Elizabeth Von Arnim         The Enchanted April        1922 16389 Soci… &lt;chr&gt;
-# ℹ 16 more rows</code></pre>
+# ℹ 15 more rows</code></pre>
 </div>
 </div>
 <div class="callout callout-style-default callout-tip callout-titled" title="Understanding the `map()` function">
@@ -533,8 +550,88 @@ Understanding the <code>map()</code> function
 </div>
 </div>
 <p>In the end, we will have a <code>corpus_texts</code> tibble that contains the full text of each book in our corpus as a character vector stored in the <code>text</code> column.</p>
+</section>
+<section id="cleaning" class="level3">
+<h3 class="anchored" data-anchor-id="cleaning">Cleaning</h3>
+<p>The texts provided by the Gutenberg Library are almost ready for analysis. However, we still need to perform some basic cleaning steps to ensure consistency and remove any unwanted artifacts.</p>
+<section id="understanding-preprocessing-decisions" class="level4">
+<h4 class="anchored" data-anchor-id="understanding-preprocessing-decisions">Understanding Preprocessing Decisions</h4>
+<p>Before applying cleaning steps mechanically, it’s important to understand how our preprocessing choices affect the results. A common challenge is handling possessive forms properly.</p>
+<p>When we remove all punctuation indiscriminately, we transform possessive forms in ways that might not be intended:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb22"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Example text to demonstrate the issue</span></span>
+<span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a>example_text <span class="ot">&lt;-</span> <span class="st">"Beth's book and Joe's pen were left at Mary's house."</span></span>
+<span id="cb22-3"><a href="#cb22-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb22-4"><a href="#cb22-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Method 1: Remove all punctuation (problematic)</span></span>
+<span id="cb22-5"><a href="#cb22-5" aria-hidden="true" tabindex="-1"></a>simple_clean <span class="ot">&lt;-</span> example_text <span class="sc">%&gt;%</span></span>
+<span id="cb22-6"><a href="#cb22-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">str_to_lower</span>() <span class="sc">%&gt;%</span></span>
+<span id="cb22-7"><a href="#cb22-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">str_remove_all</span>(<span class="st">"[[:punct:]]"</span>)</span>
+<span id="cb22-8"><a href="#cb22-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb22-9"><a href="#cb22-9" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"Original:"</span>, example_text, <span class="st">"</span><span class="sc">\n</span><span class="st">"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Original: Beth's book and Joe's pen were left at Mary's house. </code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb24"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"Simple cleaning:"</span>, simple_clean, <span class="st">"</span><span class="sc">\n</span><span class="st">"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Simple cleaning: beths book and joes pen were left at marys house </code></pre>
+</div>
+</div>
+<p>The simple approach transforms “Beth’s” into “beths”, “Joe’s” into “joes”, etc. We can handle this more elegantly during tokenization by removing the possessive suffix after we’ve split the text into words.</p>
+<div class="callout callout-style-default callout-important callout-titled" title="Preprocessing Philosophy">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+Preprocessing Philosophy
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p><strong>Every preprocessing decision shapes your results.</strong> Always consider: - What linguistic information do you want to preserve? - How will your choices affect downstream analysis? - Can you make your preprocessing decisions explicit and reversible?</p>
+<p>For possessives, we have several options: - <strong>Remove ‘s suffix<strong>: “Mary’s” → “Mary” (treats possessive as just a reference to the person/thing) - </strong>Expand to ’has’</strong>: “Mary’s book” → “Mary has book” (preserves relationship)<br>
+- <strong>Keep as-is</strong>: Preserve the grammatical information</p>
+<p>For most text analysis tasks, removing the suffix is the most practical approach.</p>
+</div>
+</div>
+</section>
+<section id="applying-smart-cleaning" class="level4">
+<h4 class="anchored" data-anchor-id="applying-smart-cleaning">Applying Smart Cleaning</h4>
+<p>Let’s apply a straightforward approach: remove punctuation normally, then handle possessives during tokenization:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb26"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Cleaning the texts - simple approach</span></span>
+<span id="cb26-2"><a href="#cb26-2" aria-hidden="true" tabindex="-1"></a>corpus_texts <span class="ot">&lt;-</span> corpus_texts <span class="sc">%&gt;%</span></span>
+<span id="cb26-3"><a href="#cb26-3" aria-hidden="true" tabindex="-1"></a>   <span class="fu">mutate</span>(</span>
+<span id="cb26-4"><a href="#cb26-4" aria-hidden="true" tabindex="-1"></a>    <span class="at">text_clean =</span> <span class="fu">str_to_lower</span>(text) <span class="sc">%&gt;%</span>               <span class="co"># Convert to lowercase</span></span>
+<span id="cb26-5"><a href="#cb26-5" aria-hidden="true" tabindex="-1"></a>       <span class="fu">str_remove_all</span>(<span class="st">"'s</span><span class="sc">\\</span><span class="st">b"</span>) <span class="sc">%&gt;%</span>                    <span class="co"># Remove possessive 's from full text</span></span>
+<span id="cb26-6"><a href="#cb26-6" aria-hidden="true" tabindex="-1"></a>       <span class="fu">str_remove_all</span>(<span class="st">"[[:punct:]]"</span>) <span class="sc">%&gt;%</span>              <span class="co"># Remove remaining punctuation</span></span>
+<span id="cb26-7"><a href="#cb26-7" aria-hidden="true" tabindex="-1"></a>       <span class="fu">str_squish</span>()                                    <span class="co"># Remove extra whitespace</span></span>
+<span id="cb26-8"><a href="#cb26-8" aria-hidden="true" tabindex="-1"></a>   )</span>
+<span id="cb26-9"><a href="#cb26-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb26-10"><a href="#cb26-10" aria-hidden="true" tabindex="-1"></a>corpus_texts</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 25 × 7
+   author                      title           year  glID genre text  text_clean
+   &lt;chr&gt;                       &lt;chr&gt;          &lt;dbl&gt; &lt;dbl&gt; &lt;chr&gt; &lt;lis&gt; &lt;chr&gt;     
+ 1 Jane Austen                 Pride and Pre…  1813  1342 Soci… &lt;chr&gt; george al…
+ 2 Charles Dickens             A Tale of Two…  1859    98 Soci… &lt;chr&gt; a tale of…
+ 3 F. Scott Fitzgerald         The Great Gat…  1925 64317 Soci… &lt;chr&gt; the great…
+ 4 Mary Wollstonecraft Shelley Frankenstein;…  1818    84 Goth… &lt;chr&gt; frankenst…
+ 5 Herman Melville             Moby Dick       1851  2701 Adve… &lt;chr&gt; mobydick …
+ 6 Louisa May Alcott           Little Women    1868 37106 Dome… &lt;chr&gt; illustrat…
+ 7 Mark Twain                  Tom Sawyer      1876    74 Adve… &lt;chr&gt; the adven…
+ 8 Jonathan Swift              Gulliver's Tr…  1726 17157 Sati… &lt;chr&gt; gulliver …
+ 9 E. M. Forster               A Room with a…  1908  2641 Soci… &lt;chr&gt; illustrat…
+10 Elizabeth Von Arnim         The Enchanted…  1922 16389 Soci… &lt;chr&gt; illustrat…
+# ℹ 15 more rows</code></pre>
+</div>
+</div>
+<p>This code creates a new column <code>text_clean</code> in our <code>corpus_texts</code> tibble, which contains the cleaned text ready for analysis. The <code>str_squish()</code> function is particularly useful as it removes any leading, trailing, or extra spaces between words, ensuring that our text is tidy and consistent.</p>
+<p>These are basic cleaning steps that improve the quality of our text data and reduce noise that might interfere with our analysis. However, even after these steps, and even using a high-quality corpus like Project Gutenberg, we still face some challenges such as table of contents, chapter headers, editorial notes, and translator introductions.</p>
+<p>In real-world projects, text cleaning often involves both automated processes and manual review to ensure corpus consistency. For our workshop, we’ll assume these texts are clean enough for analysis, but in practice, you may need to spend considerably more time refining your corpus.</p>
+<p>Now that we have a clean, standardized corpus of 26 classic works, we’re ready to begin our text analysis journey. In the next section, we’ll start with fundamental techniques: examining word frequencies, calculating lexical density, and measuring readability scores. These basic analyses will give us our first insights into the linguistic patterns that distinguish different authors, genres, and time periods in our corpus.</p>
 
 
+</section>
 </section>
 </section>
 
