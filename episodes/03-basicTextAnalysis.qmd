@@ -1,0 +1,372 @@
+---
+title: "Basic Text Analysis"
+engine: knitr
+format:
+  html:
+    fig-width: 10
+    fig-height: 12
+    dpi: 300
+editor_options: 
+  chunk_output_type: inline
+---
+
+Now that we have our clean, standardized corpus of 26 classic works, we're ready to begin our text analysis journey. In this episode, we'll explore fundamental text analysis techniques that form the foundation for more sophisticated analyses.
+
+We'll start by examining word frequencies to understand which words appear most often in our texts. Then, we'll calculate lexical density to measure vocabulary richness across different works and authors. Finally, we'll explore readability metrics to assess text complexity. These basic analyses will give us our first insights into the linguistic patterns that distinguish different authors, genres, and time periods in our corpus.
+
+```{r}
+#| echo: false
+#| output: false
+
+library(tidyverse)
+library(tidytext)
+library(gutenbergr)
+
+corpus <- tribble(
+  ~author, ~title, ~year, ~glID, ~genre,
+  "Jane Austen", "Pride and Prejudice", 1813, 1342, "Social Fiction",
+  "Charles Dickens", "A Tale of Two Cities", 1859, 98, "Social Fiction",
+  "F. Scott Fitzgerald", "The Great Gatsby", 1925, 64317, "Social Fiction",
+  "Mary Wollstonecraft Shelley", "Frankenstein; Or, The Modern Prometheus", 1818, 84, "Gothic",
+  "Herman Melville", "Moby Dick", 1851, 2701, "Adventure",
+  "Louisa May Alcott", "Little Women", 1868, 37106, "Domestic Fiction",
+  "Mark Twain", "Tom Sawyer", 1876, 74, "Adventure",
+  "Jonathan Swift", "Gulliver's Travels", 1726, 17157, "Satirical Fiction",
+  "E. M. Forster", "A Room with a View", 1908, 2641, "Social Fiction",
+  "Elizabeth Von Arnim", "The Enchanted April", 1922, 16389, "Social Fiction",
+  "Lewis Carroll", "Alice's Adventures in Wonderland", 1865, 11, "Fantasy",
+  "Elizabeth Gaskell", "Cranford", 1853, 394, "Domestic Fiction",
+  "Charles Dickens", "The Pickwick Papers", 1836, 580, "Social Fiction",
+  "J. M. Barrie", "Peter Pan", 1911, 16, "Fantasy",
+  "Charles Dickens", "Great Expectations", 1861, 1400, "Social Fiction",
+  "Robert Louis Stevenson", "Treasure Island", 1883, 120, "Adventure",
+  "Kenneth Grahame", "The Wind in the Willows", 1908, 27805, "Fantasy",
+  "Jules Verne", "Twenty Thousand Leagues Under the Seas", 1870, 2488, "Science Fiction",
+  "Jules Verne", "A Journey to the Centre of the Earth", 1864, 18857, "Science Fiction",
+  "Jules Verne", "Around the World in Eighty Days", 1873, 103, "Adventure",
+  "Bram Stoker", "Dracula", 1897, 345, "Gothic",
+  "H. G. Wells", "The Time Machine", 1895, 35, "Science Fiction",
+  "Charlotte Brontë", "Jane Eyre", 1847, 1260, "Gothic",
+  "Jane Austen", "Northanger Abbey", 1817, 121, "Social Fiction",
+  "Elizabeth Gaskell", "North and South", 1855, 4276, "Social Fiction"
+)
+
+corpus_texts <- corpus %>%
+   mutate(text = map(glID, ~gutenberg_download(.x) %>%
+   pull(text) %>%
+   paste(collapse = " ")))
+
+corpus_texts <- corpus_texts %>%
+   mutate(
+    text_clean = str_to_lower(text) %>% # Convert to lowercase
+       str_remove_all("'s\\b") %>%      # Remove possessive 's from full text
+       str_remove_all("[[:punct:]]") %>% # Remove remaining punctuation
+       str_squish()                       # Remove extra whitespace
+   )
+
+```
+
+## Word Frequency Analysis
+
+Word frequency analysis is one of the most fundamental techniques in text analysis. It helps us understand which words appear most often in our texts and can reveal important patterns about content, style, and themes.
+
+### Basic Word Counts
+
+Let's start by tokenizing our texts and examining the most frequent words across our entire sample corpus:
+
+```{r}
+# Tokenize all texts and count word frequencies
+corpus_words <- corpus_texts %>%
+  select(author, title, text_clean) %>%
+  unnest_tokens(word, text_clean) %>%
+  count(word, sort = TRUE)
+
+# Display the top 20 most frequent words
+corpus_words %>%
+  slice_head(n = 20)
+```
+
+As expected, the most frequent words are stop words (function words like "the," "and," "to"). While these words are crucial for language structure, they don't tell us much about the content or themes of our texts.
+
+### Removing Stop Words
+
+Let's remove stop words to focus on content words that carry more meaning:
+
+```{r}
+# Remove stop words and examine content words
+content_words <- corpus_texts %>%
+  select(author, title, text_clean) %>%
+  unnest_tokens(word, text_clean) %>%
+  anti_join(stop_words, by = "word") %>%
+  count(word, sort = TRUE)
+
+# Display the top 20 most frequent content words
+content_words %>%
+  slice_head(n = 20)
+```
+
+Now we can see more meaningful words that give us insights into the themes and content of our corpus.
+
+### Visualizing Word Frequencies
+
+Let's create a visualization of the most frequent words:
+
+```{r}
+#| fig-height: 8
+content_words %>%
+  slice_head(n = 15) %>%
+  mutate(word = reorder(word, n)) %>%
+  ggplot(aes(x = word, y = n)) +
+  geom_col(fill = "steelblue", alpha = 0.8) +
+  coord_flip() +
+  labs(
+    title = "Most Frequent Words in Our Literary Corpus",
+    subtitle = "Stop words removed",
+    x = "Words",
+    y = "Frequency"
+  ) +
+  theme_minimal()
+```
+
+### Author-Specific Word Frequencies
+
+Now let's examine how word usage varies by author. This can reveal distinctive vocabulary patterns:
+
+```{r}
+# Calculate word frequencies by author
+author_words <- corpus_texts %>%
+  select(author, title, text_clean) %>%
+  unnest_tokens(word, text_clean) %>%
+  anti_join(stop_words, by = "word") %>%
+  count(author, word, sort = TRUE) %>%
+  group_by(author) %>%
+  slice_max(n, n = 10) %>%
+  ungroup()
+
+# Visualize top words by author
+author_words %>%
+  ggplot(aes(x = reorder_within(word, n, author), y = n, fill = author)) +
+  geom_col() +
+  scale_x_reordered() +
+  coord_flip() +
+  facet_wrap(~author, scales = "free") +
+  labs(
+    title = "Most Frequent Words by Author",
+    x = "Words",
+    y = "Frequency"
+  ) +
+  theme_minimal() +
+  theme(legend.position = "none")
+```
+
+## Lexical Density Analysis
+
+Lexical density measures the richness and variety of vocabulary in a text. It's calculated as the ratio of unique words to total words, often expressed as a percentage:
+
+$$
+\text{Lexical Density} = \frac{\text{Number of Unique Words}}{\text{Total Number of Words}} \times 100
+$$
+
+Higher lexical density indicates more varied vocabulary, while lower density suggests more repetitive language.
+
+### Calculating Lexical Density
+
+```{r}
+# Calculate lexical density for each text
+lexical_stats <- corpus_texts %>%
+  select(author, title, year, genre, text_clean) %>%
+  unnest_tokens(word, text_clean) %>%
+  anti_join(stop_words, by = "word") %>%
+  group_by(author, title, year, genre) %>%
+  summarise(
+    total_words = n(),
+    unique_words = n_distinct(word),
+    lexical_density = (unique_words / total_words) * 100,
+    .groups = "drop"
+  ) %>%
+  arrange(desc(lexical_density))
+
+lexical_stats
+```
+
+### Visualizing Lexical Density
+
+```{r}
+#| fig-height: 6
+lexical_stats %>%
+  mutate(title = str_wrap(title, 20)) %>%
+  ggplot(aes(x = reorder(title, lexical_density), y = lexical_density, fill = genre)) +
+  geom_col() +
+  coord_flip() +
+  labs(
+    title = "Lexical Density by Work",
+    subtitle = "Percentage of unique words (stop words excluded)",
+    x = "Work",
+    y = "Lexical Density (%)",
+    fill = "Genre"
+  ) +
+  theme_minimal()
+```
+
+### Exploring Relationships
+
+Let's examine how lexical density relates to text length and publication year:
+
+```{r}
+#| fig-height: 5
+# Lexical density vs. text length
+lexical_stats %>%
+  ggplot(aes(x = total_words, y = lexical_density)) +
+  geom_point(aes(color = genre), size = 3) +
+  geom_smooth(method = "lm", se = FALSE, color = "gray50", linetype = "dashed") +
+  geom_text(aes(label = str_wrap(title, 15)), vjust = -0.5, size = 3) +
+  labs(
+    title = "Lexical Density vs. Text Length",
+    x = "Total Words (excluding stop words)",
+    y = "Lexical Density (%)",
+    color = "Genre"
+  ) +
+  theme_minimal()
+```
+
+```{r}
+#| fig-height: 5
+# Lexical density vs. publication year
+lexical_stats %>%
+  ggplot(aes(x = year, y = lexical_density)) +
+  geom_point(aes(color = genre), size = 3) +
+  geom_smooth(method = "lm", se = FALSE, color = "gray50", linetype = "dashed") +
+  geom_text(aes(label = str_wrap(title, 15)), vjust = -0.5, size = 3) +
+  labs(
+    title = "Lexical Density Over Time",
+    x = "Publication Year",
+    y = "Lexical Density (%)",
+    color = "Genre"
+  ) +
+  theme_minimal()
+```
+
+## Basic Readability Metrics
+
+Readability metrics help us assess how easy or difficult a text is to read. While these metrics have limitations, they provide useful baseline measurements for comparing texts.
+
+### Average Word Length
+
+One simple measure of text complexity is average word length:
+
+```{r}
+# Calculate average word length per text
+word_length_stats <- corpus_texts %>%
+  select(author, title, text_clean) %>%
+  unnest_tokens(word, text_clean) %>%
+  mutate(word_length = nchar(word)) %>%
+  group_by(author, title) %>%
+  summarise(
+    avg_word_length = mean(word_length),
+    median_word_length = median(word_length),
+    .groups = "drop"
+  ) %>%
+  arrange(desc(avg_word_length))
+
+word_length_stats
+```
+
+### Sentence Length Analysis
+
+We can also estimate sentence complexity by analyzing sentence lengths:
+
+```{r}
+# Simple sentence splitting and length calculation
+sentence_stats <- corpus_texts %>%
+  select(author, title, text) %>%
+  mutate(
+    # Simple sentence splitting (this is crude but functional)
+    sentences = str_split(text, "[.!?]+")
+  ) %>%
+  unnest(sentences) %>%
+  mutate(
+    sentences = str_trim(sentences),
+    word_count = str_count(sentences, "\\S+")
+  ) %>%
+  filter(word_count > 0) %>%
+  group_by(author, title) %>%
+  summarise(
+    avg_sentence_length = mean(word_count),
+    median_sentence_length = median(word_count),
+    total_sentences = n(),
+    .groups = "drop"
+  ) %>%
+  arrange(desc(avg_sentence_length))
+
+sentence_stats
+```
+
+### Combined Readability Visualization
+
+Let's create a comprehensive view of our text complexity metrics:
+
+```{r}
+#| fig-height: 8
+# Combine our metrics
+readability_combined <- lexical_stats %>%
+  left_join(word_length_stats, by = c("author", "title")) %>%
+  left_join(sentence_stats, by = c("author", "title"))
+
+# Create a multi-faceted visualization
+readability_long <- readability_combined %>%
+  select(title, lexical_density, avg_word_length, avg_sentence_length) %>%
+  pivot_longer(cols = -title, names_to = "metric", values_to = "value") %>%
+  mutate(
+    title = str_wrap(title, 20),
+    metric = case_when(
+      metric == "lexical_density" ~ "Lexical Density (%)",
+      metric == "avg_word_length" ~ "Avg Word Length",
+      metric == "avg_sentence_length" ~ "Avg Sentence Length"
+    )
+  )
+
+readability_long %>%
+  ggplot(aes(x = reorder(title, value), y = value)) +
+  geom_col(fill = "steelblue", alpha = 0.7) +
+  coord_flip() +
+  facet_wrap(~metric, scales = "free_x") +
+  labs(
+    title = "Text Complexity Metrics Across Our Corpus",
+    x = "Work",
+    y = "Value"
+  ) +
+  theme_minimal() +
+  theme(strip.text = element_text(size = 12, face = "bold"))
+```
+
+## Interpreting the Results
+
+Based on our analysis, we can draw several insights:
+
+1. **Word Frequency Patterns**: Different authors show distinct vocabulary preferences, reflecting their writing styles, themes, and time periods.
+
+2. **Lexical Density Variations**: Our sample shows that lexical density varies significantly across works, potentially influenced by factors such as:
+   - Genre conventions (Fantasy vs. Mystery vs. Romance)
+   - Target audience (Children's vs. Adult literature)
+   - Narrative style (Dialogue-heavy vs. Descriptive)
+
+3. **Complexity Correlations**: There appears to be relationships between text length, lexical density, and readability metrics that warrant further investigation.
+
+## Next Steps
+
+These basic text analysis techniques provide a foundation for more sophisticated analyses. In the upcoming episodes, we'll explore:
+
+- **TF-IDF (Term Frequency-Inverse Document Frequency)**: To identify words that are characteristic of specific texts or authors
+- **Text Similarity Measures**: To quantify how similar different texts are to each other
+- **Topic Modeling**: To discover hidden thematic structures in our corpus
+
+::: {.callout-tip title="Practice Exercise"}
+Try applying these techniques to different subsets of the corpus:
+
+1. Compare lexical density across different genres
+2. Analyze how readability metrics change over time periods
+3. Investigate whether certain authors consistently use longer or shorter sentences
+
+These exercises will help you develop intuition for interpreting text analysis results and identifying meaningful patterns in literary data.
+:::
+
