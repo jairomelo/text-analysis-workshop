@@ -1,0 +1,614 @@
+---
+title: "Finding Similarities between Texts"
+engine: knitr
+format:
+  html:
+    fig-width: 10
+    fig-height: 12
+    dpi: 300
+editor_options: 
+  chunk_output_type: inline
+---
+
+In our previous episodes, we explored word frequencies, lexical density, readability metrics, and TF-IDF to understand individual characteristics of texts. Now we turn to a fundamental question in computational text analysis: **How similar are different texts to each other?**
+
+Text similarity is crucial for many applications: detecting plagiarism, finding texts by similar authors, grouping documents by topic, or discovering literary influences. In this episode, we'll explore two key mathematical approaches for measuring textual similarity: **cosine distance** and **Euclidean distance**.
+
+::: {.callout-note title="Why Similarity Matters"}
+Measuring text similarity allows us to:
+- **Compare authorship styles** across different works
+- **Group texts by genre or theme** based on vocabulary patterns
+- **Identify literary influences** between authors and time periods
+- **Detect document clustering** for large corpus analysis
+- **Explore stylistic evolution** within an author's work over time
+:::
+
+## Understanding Distance and Similarity
+
+When we measure text similarity, we're actually measuring how "close" or "distant" texts are in a mathematical space. Each text can be represented as a vector (a list of numbers), where each dimension represents a word and its value represents how important that word is in the text.
+
+For this analysis, we'll use **TF-IDF vectors** - representing each text by the TF-IDF scores of all words in our corpus. This gives us a nuanced view that considers both word frequency and distinctiveness.
+
+### The Mathematics of Text Distance
+
+**Distance** and **similarity** are inversely related:
+- **Small distance** = **High similarity** (texts are alike)
+- **Large distance** = **Low similarity** (texts are different)
+
+We'll explore two fundamental distance metrics:
+
+1. **Cosine Distance**: Measures the angle between text vectors (focuses on proportional word usage)
+2. **Euclidean Distance**: Measures the straight-line distance between text vectors (considers both proportions and magnitudes)
+
+## Setting Up Our Analysis
+
+```{r}
+#| echo: false
+#| output: false
+
+library(tidyverse)
+library(tidytext)
+library(gutenbergr)
+library(textstem)
+library(ggdendro)
+library(cluster)
+library(corrplot)
+```
+
+Let's work with our established corpus, focusing on a subset for clearer visualization. We'll use texts from different genres to see how mathematical similarity aligns with literary categories:
+
+```{r}
+# Select a strategically chosen subset for similarity analysis
+# Based on the cosine similarity matrix, these texts show more variation and interesting patterns
+similarity_corpus <- tribble(
+  ~author, ~title, ~year, ~glID, ~genre,
+  # Social Fiction - but with some internal variation
+  "Jane Austen", "Pride and Prejudice", 1813, 1342, "Social Fiction",
+  "Charles Dickens", "Great Expectations", 1861, 1400, "Social Fiction", 
+  "Mark Twain", "Tom Sawyer", 1876, 74, "Adventure", # Shows interesting patterns
+  # Gothic - distinctive vocabulary
+  "Mary Wollstonecraft Shelley", "Frankenstein; Or, The Modern Prometheus", 1818, 84, "Gothic",
+  "Bram Stoker", "Dracula", 1897, 521, "Gothic",
+  "Charlotte Brontë", "Jane Eyre", 1847, 145, "Gothic",
+  # Fantasy - should cluster together
+  "Lewis Carroll", "Alice's Adventures in Wonderland", 1865, 11, "Fantasy",
+  "Kenneth Grahame", "The Wind in the Willows", 1908, 27805, "Fantasy",
+  # Science Fiction - technical vocabulary
+  "Jules Verne", "Twenty Thousand Leagues Under the Seas", 1870, 2488, "Science Fiction",
+  "H. G. Wells", "The Time Machine", 1895, 43, "Science Fiction",
+  # Domestic Fiction - should show similarity to social fiction
+  "Elizabeth Gaskell", "Cranford", 1853, 394, "Domestic Fiction",
+  "Louisa May Alcott", "Little Women", 1868, 37106, "Domestic Fiction"
+)
+
+# Download and clean the texts
+similarity_texts <- similarity_corpus %>%
+  mutate(text = map(glID, ~gutenberg_download(.x) %>%
+  pull(text) %>%
+  paste(collapse = " "))) %>%
+  mutate(
+   text_clean = str_to_lower(text) %>%
+      str_remove_all("'s\\b") %>%                    # Remove possessive 's
+      str_remove_all("[[:punct:]]") %>%              # Remove punctuation
+      str_squish()                                    # Remove extra whitespace
+  ) %>%
+  select(author, title, year, genre, text_clean)
+
+print(paste("Loaded", nrow(similarity_texts), "texts for similarity analysis"))
+```
+
+## Creating TF-IDF Vectors for Similarity
+
+To calculate distances between texts, we need to represent each text as a vector in a common space. We'll create a TF-IDF matrix where:
+- Each row represents a text
+- Each column represents a unique word in our corpus
+- Each cell contains the TF-IDF score for that word in that text
+
+```{r}
+# Create TF-IDF matrix for similarity calculations
+corpus_words <- similarity_texts %>%
+  select(title, author, genre, text_clean) %>%
+  unnest_tokens(word, text_clean) %>%
+  # Apply lemmatization for better thematic grouping
+  mutate(word = lemmatize_words(word)) %>%
+  anti_join(stop_words, by = "word") %>%
+  # Filter out problematic words that could conflict with column names
+  filter(!word %in% c("title", "author", "genre", "text", "word")) %>%
+  # Count words and aggregate after lemmatization (some words may become duplicates)
+  count(title, word, sort = TRUE) %>%
+  # Filter out very rare words (appear in fewer than 2 texts) for cleaner analysis
+  group_by(word) %>%
+  filter(n_distinct(title) >= 2) %>%
+  ungroup()
+
+# Check for any remaining duplicates before creating matrix
+duplicate_check <- corpus_words %>%
+  count(title, word) %>%
+  filter(n > 1)
+
+if(nrow(duplicate_check) > 0) {
+  print("Warning: Found duplicate title-word combinations:")
+  print(duplicate_check)
+}
+
+# Calculate TF-IDF scores
+corpus_tfidf <- corpus_words %>%
+  bind_tf_idf(word, title, n)
+
+# Create TF-IDF matrix (texts as rows, words as columns)
+tfidf_matrix <- corpus_tfidf %>%
+  select(title, word, tf_idf) %>%
+  # Ensure no duplicates by taking the maximum tf_idf if duplicates exist
+  group_by(title, word) %>%
+  summarise(tf_idf = max(tf_idf), .groups = "drop") %>%
+  pivot_wider(names_from = word, values_from = tf_idf, values_fill = 0) %>%
+  column_to_rownames("title") %>%
+  as.matrix()
+
+print(paste("Created TF-IDF matrix with", nrow(tfidf_matrix), "texts and", ncol(tfidf_matrix), "words"))
+```
+
+## Cosine Distance
+
+**Cosine distance** measures the angle between two vectors, focusing on the *direction* rather than the *magnitude*. It's particularly useful for text analysis because it emphasizes proportional word usage patterns rather than text length.
+
+### Mathematical Foundation
+
+For two vectors **a** and **b**, cosine similarity is:
+
+$$
+\text{cosine similarity} = \frac{\mathbf{a} \cdot \mathbf{b}}{|\mathbf{a}| \times |\mathbf{b}|}
+$$
+
+And cosine distance is:
+
+$$
+\text{cosine distance} = 1 - \text{cosine similarity}
+$$
+
+Values range from 0 to 1:
+- **0**: Identical direction (highest similarity)
+- **1**: Completely opposite direction (lowest similarity)
+
+```{r}
+# Calculate cosine distance matrix
+cosine_distance <- function(matrix) {
+  # Normalize each row (document) by its magnitude
+  norms <- sqrt(rowSums(matrix^2))
+  # Avoid division by zero
+  norms[norms == 0] <- 1
+  normalized_matrix <- matrix / norms
+  
+  # Calculate cosine similarity matrix
+  cosine_sim <- normalized_matrix %*% t(normalized_matrix)
+  
+  # Convert to distance (1 - similarity)
+  cosine_dist <- 1 - cosine_sim
+  return(cosine_dist)
+}
+
+cosine_dist_matrix <- cosine_distance(tfidf_matrix)
+
+# Display the cosine distance matrix
+round(cosine_dist_matrix, 3) %>%
+  knitr::kable(caption = "Cosine Distance Matrix (0 = identical, 1 = completely different)")
+```
+
+Let's visualize the cosine distances as a heatmap to see patterns:
+
+```{r}
+#| fig-height: 8
+# Create a more readable heatmap for cosine distances
+cosine_dist_df <- cosine_dist_matrix %>%
+  as.data.frame() %>%
+  rownames_to_column("text1") %>%
+  pivot_longer(-text1, names_to = "text2", values_to = "cosine_distance") %>%
+  # Add genre information
+  left_join(similarity_texts %>% select(title, genre) %>% rename(text1 = title, genre1 = genre), by = "text1") %>%
+  left_join(similarity_texts %>% select(title, genre) %>% rename(text2 = title, genre2 = genre), by = "text2") %>%
+  # Create shorter titles for better visualization
+  mutate(
+    text1_short = case_when(
+      str_detect(text1, "Pride") ~ "Pride & Prejudice",
+      str_detect(text1, "Frankenstein") ~ "Frankenstein",
+      str_detect(text1, "Alice") ~ "Alice in Wonderland",
+      str_detect(text1, "Twenty") ~ "20,000 Leagues",
+      str_detect(text1, "Treasure") ~ "Treasure Island",
+      str_detect(text1, "Dracula") ~ "Dracula",
+      str_detect(text1, "Time Machine") ~ "Time Machine",
+      str_detect(text1, "Wind") ~ "Wind in the Willows",
+      str_detect(text1, "Gatsby") ~ "Great Gatsby",
+      str_detect(text1, "Great Expectations") ~ "Great Expectations",
+      TRUE ~ text1
+    ),
+    text2_short = case_when(
+      str_detect(text2, "Pride") ~ "Pride & Prejudice",
+      str_detect(text2, "Frankenstein") ~ "Frankenstein",
+      str_detect(text2, "Alice") ~ "Alice in Wonderland",
+      str_detect(text2, "Twenty") ~ "20,000 Leagues",
+      str_detect(text2, "Treasure") ~ "Treasure Island",
+      str_detect(text2, "Dracula") ~ "Dracula",
+      str_detect(text2, "Time Machine") ~ "Time Machine",
+      str_detect(text2, "Wind") ~ "Wind in the Willows",
+      str_detect(text2, "Gatsby") ~ "Great Gatsby",
+      str_detect(text2, "Great Expectations") ~ "Great Expectations",
+      TRUE ~ text2
+    )
+  )
+
+ggplot(cosine_dist_df, aes(x = text1_short, y = text2_short, fill = cosine_distance)) +
+  geom_tile() +
+  scale_fill_gradient2(low = "blue", mid = "white", high = "red", 
+                       midpoint = 0.5, name = "Cosine\nDistance") +
+  labs(
+    title = "Cosine Distance Between Texts",
+    subtitle = "Blue = More Similar, Red = More Different",
+    x = "Text 1", y = "Text 2"
+  ) +
+  theme_minimal() +
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1, size = 9),
+    axis.text.y = element_text(size = 9),
+    plot.title = element_text(hjust = 0.5),
+    plot.subtitle = element_text(hjust = 0.5)
+  )
+```
+
+Now let's find the most and least similar text pairs using cosine distance:
+
+```{r}
+# Find most similar and least similar pairs (excluding self-comparisons)
+cosine_pairs <- cosine_dist_df %>%
+  filter(text1 != text2) %>%
+  # Remove duplicate pairs (A-B and B-A are the same)
+  filter(text1 < text2) %>%
+  arrange(cosine_distance)
+
+# Most similar pairs
+cat("MOST SIMILAR TEXTS (Cosine Distance):\n")
+head(cosine_pairs, 5) %>%
+  select(text1_short, text2_short, cosine_distance, genre1, genre2) %>%
+  mutate(cosine_distance = round(cosine_distance, 3)) %>%
+  knitr::kable(col.names = c("Text 1", "Text 2", "Cosine Distance", "Genre 1", "Genre 2"))
+
+cat("\nLEAST SIMILAR TEXTS (Cosine Distance):\n")
+tail(cosine_pairs, 5) %>%
+  select(text1_short, text2_short, cosine_distance, genre1, genre2) %>%
+  mutate(cosine_distance = round(cosine_distance, 3)) %>%
+  knitr::kable(col.names = c("Text 1", "Text 2", "Cosine Distance", "Genre 1", "Genre 2"))
+```
+
+## Euclidean Distance
+
+**Euclidean distance** measures the straight-line distance between two points in space. Unlike cosine distance, it considers both the direction and magnitude of vectors, making it sensitive to the actual values of TF-IDF scores.
+
+### Mathematical Foundation
+
+For two vectors **a** and **b**, Euclidean distance is:
+
+$$
+\text{Euclidean distance} = \sqrt{\sum_{i=1}^{n} (a_i - b_i)^2}
+$$
+
+Where $n$ is the number of dimensions (words in our vocabulary).
+
+```{r}
+# Calculate Euclidean distance matrix
+euclidean_dist_matrix <- as.matrix(dist(tfidf_matrix, method = "euclidean"))
+
+# Display part of the Euclidean distance matrix
+round(euclidean_dist_matrix, 3) %>%
+  knitr::kable(caption = "Euclidean Distance Matrix (smaller = more similar)")
+```
+
+Let's visualize the Euclidean distances:
+
+```{r}
+#| fig-height: 8
+# Create heatmap for Euclidean distances
+euclidean_dist_df <- euclidean_dist_matrix %>%
+  as.data.frame() %>%
+  rownames_to_column("text1") %>%
+  pivot_longer(-text1, names_to = "text2", values_to = "euclidean_distance") %>%
+  # Add genre information and short titles
+  left_join(similarity_texts %>% select(title, genre) %>% rename(text1 = title, genre1 = genre), by = "text1") %>%
+  left_join(similarity_texts %>% select(title, genre) %>% rename(text2 = title, genre2 = genre), by = "text2") %>%
+  mutate(
+    text1_short = case_when(
+      str_detect(text1, "Pride") ~ "Pride & Prejudice",
+      str_detect(text1, "Frankenstein") ~ "Frankenstein",
+      str_detect(text1, "Alice") ~ "Alice in Wonderland",
+      str_detect(text1, "Twenty") ~ "20,000 Leagues",
+      str_detect(text1, "Treasure") ~ "Treasure Island",
+      str_detect(text1, "Dracula") ~ "Dracula",
+      str_detect(text1, "Time Machine") ~ "Time Machine",
+      str_detect(text1, "Wind") ~ "Wind in the Willows",
+      str_detect(text1, "Gatsby") ~ "Great Gatsby",
+      str_detect(text1, "Great Expectations") ~ "Great Expectations",
+      TRUE ~ text1
+    ),
+    text2_short = case_when(
+      str_detect(text2, "Pride") ~ "Pride & Prejudice",
+      str_detect(text2, "Frankenstein") ~ "Frankenstein",
+      str_detect(text2, "Alice") ~ "Alice in Wonderland",
+      str_detect(text2, "Twenty") ~ "20,000 Leagues",
+      str_detect(text2, "Treasure") ~ "Treasure Island",
+      str_detect(text2, "Dracula") ~ "Dracula",
+      str_detect(text2, "Time Machine") ~ "Time Machine",
+      str_detect(text2, "Wind") ~ "Wind in the Willows",
+      str_detect(text2, "Gatsby") ~ "Great Gatsby",
+      str_detect(text2, "Great Expectations") ~ "Great Expectations",
+      TRUE ~ text2
+    )
+  )
+
+ggplot(euclidean_dist_df, aes(x = text1_short, y = text2_short, fill = euclidean_distance)) +
+  geom_tile() +
+  scale_fill_gradient2(low = "blue", mid = "white", high = "red", 
+                       midpoint = median(euclidean_dist_df$euclidean_distance), 
+                       name = "Euclidean\nDistance") +
+  labs(
+    title = "Euclidean Distance Between Texts",
+    subtitle = "Blue = More Similar, Red = More Different",
+    x = "Text 1", y = "Text 2"
+  ) +
+  theme_minimal() +
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1, size = 9),
+    axis.text.y = element_text(size = 9),
+    plot.title = element_text(hjust = 0.5),
+    plot.subtitle = element_text(hjust = 0.5)
+  )
+```
+
+Let's find the most and least similar pairs using Euclidean distance:
+
+```{r}
+# Find most similar and least similar pairs using Euclidean distance
+euclidean_pairs <- euclidean_dist_df %>%
+  filter(text1 != text2) %>%
+  filter(text1 < text2) %>%
+  arrange(euclidean_distance)
+
+# Most similar pairs
+cat("MOST SIMILAR TEXTS (Euclidean Distance):\n")
+head(euclidean_pairs, 5) %>%
+  select(text1_short, text2_short, euclidean_distance, genre1, genre2) %>%
+  mutate(euclidean_distance = round(euclidean_distance, 3)) %>%
+  knitr::kable(col.names = c("Text 1", "Text 2", "Euclidean Distance", "Genre 1", "Genre 2"))
+
+cat("\nLEAST SIMILAR TEXTS (Euclidean Distance):\n")
+tail(euclidean_pairs, 5) %>%
+  select(text1_short, text2_short, euclidean_distance, genre1, genre2) %>%
+  mutate(euclidean_distance = round(euclidean_distance, 3)) %>%
+  knitr::kable(col.names = c("Text 1", "Text 2", "Euclidean Distance", "Genre 1", "Genre 2"))
+```
+
+## Comparing Cosine vs. Euclidean Distance
+
+Let's directly compare how these two distance measures rank text similarities:
+
+```{r}
+# Compare the two distance measures
+distance_comparison <- cosine_pairs %>%
+  select(text1, text2, cosine_distance) %>%
+  left_join(
+    euclidean_pairs %>% select(text1, text2, euclidean_distance),
+    by = c("text1", "text2")
+  ) %>%
+  # Calculate rankings for each distance measure
+  mutate(
+    cosine_rank = rank(cosine_distance),
+    euclidean_rank = rank(euclidean_distance),
+    rank_difference = abs(cosine_rank - euclidean_rank)
+  ) %>%
+  left_join(similarity_texts %>% select(title, genre) %>% rename(text1 = title, genre1 = genre), by = "text1") %>%
+  left_join(similarity_texts %>% select(title, genre) %>% rename(text2 = title, genre2 = genre), by = "text2")
+
+# Show pairs where the rankings differ most
+cat("PAIRS WITH BIGGEST RANKING DIFFERENCES:\n")
+distance_comparison %>%
+  arrange(desc(rank_difference)) %>%
+  head(10) %>%
+  mutate(
+    text1_short = str_trunc(text1, 20),
+    text2_short = str_trunc(text2, 20)
+  ) %>%
+  select(text1_short, text2_short, cosine_rank, euclidean_rank, rank_difference, genre1, genre2) %>%
+  knitr::kable(col.names = c("Text 1", "Text 2", "Cosine Rank", "Euclidean Rank", "Difference", "Genre 1", "Genre 2"))
+```
+
+Let's create a scatter plot to visualize the relationship between the two distance measures:
+
+```{r}
+#| fig-height: 8
+# Scatter plot comparing the two distance measures
+distance_comparison %>%
+  mutate(
+    same_genre = genre1 == genre2,
+    pair_label = ifelse(rank_difference >= 10, 
+                       paste(str_trunc(text1, 15), "vs", str_trunc(text2, 15)), "")
+  ) %>%
+  ggplot(aes(x = cosine_distance, y = euclidean_distance, color = same_genre)) +
+  geom_point(size = 3, alpha = 0.7) +
+  geom_text(aes(label = pair_label), hjust = 0, vjust = 0, size = 3, check_overlap = TRUE) +
+  geom_smooth(method = "lm", se = FALSE, color = "black", linetype = "dashed") +
+  labs(
+    title = "Cosine vs. Euclidean Distance: How Do They Compare?",
+    subtitle = "Each point represents a pair of texts",
+    x = "Cosine Distance",
+    y = "Euclidean Distance",
+    color = "Same Genre"
+  ) +
+  theme_minimal() +
+  scale_color_manual(values = c("FALSE" = "red", "TRUE" = "blue"))
+```
+
+## Hierarchical Clustering with Distance Measures
+
+One powerful application of distance measures is **hierarchical clustering** - automatically grouping texts based on their similarities. Let's create dendrograms using both distance measures:
+
+```{r}
+#| fig-height: 10
+# Create hierarchical clustering dendrograms
+par(mfrow = c(2, 1))
+
+# Cosine distance clustering
+cosine_hclust <- hclust(as.dist(cosine_dist_matrix), method = "ward.D2")
+plot(cosine_hclust, main = "Hierarchical Clustering - Cosine Distance", 
+     xlab = "Texts", ylab = "Distance", cex = 0.8)
+
+# Euclidean distance clustering  
+euclidean_hclust <- hclust(as.dist(euclidean_dist_matrix), method = "ward.D2")
+plot(euclidean_hclust, main = "Hierarchical Clustering - Euclidean Distance", 
+     xlab = "Texts", ylab = "Distance", cex = 0.8)
+
+par(mfrow = c(1, 1))
+```
+
+Let's examine how well these clusters align with our known genres:
+
+```{r}
+# Create clusters and compare with actual genres
+# Cut the dendrograms to create groups (6 genres in our focused subset)
+cosine_clusters <- cutree(cosine_hclust, k = 6)  
+euclidean_clusters <- cutree(euclidean_hclust, k = 6)
+
+# Create comparison table
+cluster_comparison <- data.frame(
+  Title = names(cosine_clusters),
+  Actual_Genre = similarity_texts$genre[match(names(cosine_clusters), similarity_texts$title)],
+  Cosine_Cluster = cosine_clusters,
+  Euclidean_Cluster = euclidean_clusters
+) %>%
+  mutate(
+    Title_Short = case_when(
+      str_detect(Title, "Pride") ~ "Pride & Prejudice",
+      str_detect(Title, "Frankenstein") ~ "Frankenstein",
+      str_detect(Title, "Alice") ~ "Alice in Wonderland",
+      str_detect(Title, "Twenty") ~ "20,000 Leagues",
+      str_detect(Title, "Treasure") ~ "Treasure Island",
+      str_detect(Title, "Dracula") ~ "Dracula",
+      str_detect(Title, "Time Machine") ~ "Time Machine",
+      str_detect(Title, "Wind") ~ "Wind in the Willows",
+      str_detect(Title, "Gatsby") ~ "Great Gatsby",
+      str_detect(Title, "Great Expectations") ~ "Great Expectations",
+      TRUE ~ Title
+    )
+  ) %>%
+  arrange(Actual_Genre, Title_Short)
+
+knitr::kable(cluster_comparison %>% select(-Title), 
+             col.names = c("Book", "Actual Genre", "Cosine Cluster", "Euclidean Cluster"),
+             caption = "Clustering Results vs. Actual Genres")
+```
+
+## Genre Similarity Analysis
+
+Finally, let's examine how our distance measures capture similarities within and between literary genres:
+
+```{r}
+#| fig-height: 8
+# Calculate average distances within and between genres
+genre_distances <- cosine_dist_df %>%
+  filter(text1 != text2) %>%
+  # Add euclidean distance data
+  left_join(euclidean_dist_df %>% select(text1, text2, euclidean_distance), 
+            by = c("text1", "text2")) %>%
+  mutate(
+    relationship = case_when(
+      genre1 == genre2 ~ paste("Within", genre1),
+      TRUE ~ paste(pmin(genre1, genre2), "vs", pmax(genre1, genre2))
+    )
+  ) %>%
+  group_by(relationship) %>%
+  summarise(
+    avg_cosine_distance = mean(cosine_distance),
+    avg_euclidean_distance = mean(euclidean_distance, na.rm = TRUE),
+    n_pairs = n(),
+    .groups = "drop"
+  ) %>%
+  arrange(avg_cosine_distance)
+
+# Visualize genre relationships
+genre_distances %>%
+  pivot_longer(cols = c(avg_cosine_distance, avg_euclidean_distance), 
+               names_to = "distance_type", values_to = "distance") %>%
+  mutate(
+    distance_type = case_when(
+      distance_type == "avg_cosine_distance" ~ "Cosine Distance",
+      distance_type == "avg_euclidean_distance" ~ "Euclidean Distance"
+    ),
+    within_genre = str_detect(relationship, "Within")
+  ) %>%
+  ggplot(aes(x = reorder(relationship, distance), y = distance, 
+             fill = within_genre, alpha = distance_type)) +
+  geom_col(position = "dodge") +
+  scale_alpha_manual(values = c("Cosine Distance" = 0.8, "Euclidean Distance" = 0.6)) +
+  scale_fill_manual(values = c("TRUE" = "darkgreen", "FALSE" = "darkred")) +
+  coord_flip() +
+  labs(
+    title = "Average Distances Within and Between Genres",
+    subtitle = "Do texts cluster by literary genre?",
+    x = "Genre Relationship",
+    y = "Average Distance",
+    fill = "Within Genre",
+    alpha = "Distance Type"
+  ) +
+  theme_minimal() +
+  theme(legend.position = "bottom")
+```
+
+## Summary and Interpretation
+
+```{r}
+# Summary statistics
+cat("SUMMARY OF FINDINGS:\n")
+cat("====================\n\n")
+
+# Overall correlation between distance measures
+correlation <- cor(distance_comparison$cosine_distance, distance_comparison$euclidean_distance)
+cat("Correlation between Cosine and Euclidean distances:", round(correlation, 3), "\n\n")
+
+# Within-genre vs between-genre similarities
+within_genre_avg_cosine <- mean(genre_distances$avg_cosine_distance[str_detect(genre_distances$relationship, "Within")])
+between_genre_avg_cosine <- mean(genre_distances$avg_cosine_distance[!str_detect(genre_distances$relationship, "Within")])
+
+cat("Average Cosine Distance:\n")
+cat("  Within genres:", round(within_genre_avg_cosine, 3), "\n")
+cat("  Between genres:", round(between_genre_avg_cosine, 3), "\n")
+cat("  Difference:", round(between_genre_avg_cosine - within_genre_avg_cosine, 3), "\n\n")
+
+# Most distinctive genres (smallest within-genre distances)
+most_cohesive_genre <- genre_distances %>%
+  filter(str_detect(relationship, "Within")) %>%
+  slice_min(avg_cosine_distance, n = 1)
+
+cat("Most cohesive genre (by cosine distance):", most_cohesive_genre$relationship, 
+    "with average distance", round(most_cohesive_genre$avg_cosine_distance, 3), "\n")
+```
+
+::: {.callout-note title="Key Insights from Distance Analysis"}
+
+Our exploration of text similarity reveals several important patterns:
+
+**1. Distance Measure Differences:**
+- **Cosine distance** focuses on proportional word usage patterns, making it excellent for identifying thematic similarities regardless of text length
+- **Euclidean distance** considers both proportions and magnitudes, making it sensitive to vocabulary intensity and text scale
+
+**2. Genre Clustering:**
+- Texts within the same genre generally show smaller distances (higher similarity) than texts from different genres
+- However, some cross-genre similarities emerge, suggesting shared narrative techniques or thematic elements
+
+**3. Mathematical vs. Literary Categories:**
+- While distance measures often align with literary genres, they sometimes reveal unexpected similarities based on vocabulary patterns
+- This demonstrates how computational methods can both confirm and challenge traditional literary classifications
+
+**4. Applications:**
+- **Authorship attribution**: Comparing unknown texts to known authors
+- **Genre classification**: Automatically categorizing texts by similarity to genre exemplars  
+- **Literary influence**: Detecting vocabulary patterns that suggest textual relationships
+- **Corpus exploration**: Discovering unexpected connections in large text collections
+:::
+
+These similarity measures provide the foundation for more advanced techniques like clustering, topic modeling, and machine learning applications in literary analysis. In our next episode, we'll explore how these concepts extend into **topic modeling** and **latent semantic analysis**.
