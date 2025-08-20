@@ -30,7 +30,12 @@ website:
         href: 01-basicConcepts.qmd
       - text: "2. Creating a Corpus"
         href: 02-CreatingACorpus.qmd
-
+      - text: "3. Basic Text Analysis"
+        href: 03-basicTextAnalysis.qmd
+      - text: "4. TF-IDF Analysis"
+        href: 04-TF-IDF.qmd
+      - text: "5. Finding Similarities"
+        href: 05-findingSimilarities.qmd
 
 format:
   html:
