@@ -1,4 +1,28 @@
 ---
-title: "index"
+title: "Text Analysis with R Workshop"
 format: html
 ---
+
+# Welcome to Text Analysis with R
+
+This workshop introduces fundamental concepts and techniques for computational text analysis using R. You'll learn to prepare, analyze, and extract insights from textual data through hands-on exercises with real texts.
+
+## What You'll Learn
+
+- **Basic concepts** of text analysis and corpus creation
+- **Text preprocessing** and quality assessment techniques  
+- **TF-IDF analysis** for identifying important terms
+- **Similarity measures** for comparing texts
+
+## Workshop Structure
+
+1. [Basic Concepts](01-basicConcepts.qmd) - Understanding text analysis fundamentals
+2. [Creating a Corpus](02-CreatingACorpus.qmd) - Building your text collection
+3. [Basic Text Analysis](03-basicTextAnalysis.qmd) - Core analytical techniques
+4. [Text Quality](04-textQuality.qmd) - Assessing and improving text data
+5. [TF-IDF Analysis](05-TF-IDF.qmd) - Term frequency and importance
+6. [Finding Similarities](06-findingSimilarities.qmd) - Comparing texts
+
+## Setup Instructions
+
+TBD
