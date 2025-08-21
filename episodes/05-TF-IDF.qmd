@@ -257,9 +257,12 @@ The table above clearly shows that **character names dominate TF-IDF results in 
 
 Now let's focus on the distinctive words that aren't character names, to discover the thematic fingerprint of each work. We'll create a comprehensive list of character names to exclude from our analysis:
 
+::: {.callout-note collapse="true"}
+This list was created manually by identifying character names in the text that appeared as results in the table above and in the subsequent thematic fingerprint results. The process was repeated until we achieved this comprehensive list.
+:::
+
 ```{r}
-# Create a comprehensive list of character names based on the table above
-# Note: With proper possessive handling, we no longer need possessive forms like "beths", "megs"
+# Comprehensive list of character names
 character_names <- c("darcy", "bennet", "bingley", "elizabeth", "wickham", "lydia", "collins", "jane", "alice", "gryphon", "hatter", "turtle", "dormouse", "duchess", "caterpillar", "rabbit", "mouse", "francis", "huckleberry", "sawyer", "potter", "joe", "ben", "cranford", "martha", "jamieson", "matilda", "teddy", "beth", "meg", "demi", "laurie", "gatsby", "daisy", "tom", "jordan", "wilson", "wolfshiem", "hans", "lucy", "bartlett", "cecil", "honeychurch", "beebe", "freddy", "emerson", "vyse", "charlotte", "lorry", "defarge", "manette", "pross", "darnay", "lucie", "carton", "cruncher", "stryver", "fogg", "passepartout", "phileas", "aouda", "foggs", "matty", "jenkyns", "glenmire", "forrester", "mattys", "hoggins", "deborah", "jessie", "helsing", "mina", "jonathan", "harker", "van", "godalming", "seward", "quincey", "harkers", "clerval", "justine", "felix", "frankenstein", "safie", "agatha", "wemmick", "havisham", "estella", "biddy", "jaggers", "herbert", "pip", "pumblechook", "wopsle", "glumdalclitch", "rochester", "adèle", "eyre", "fairfax", "bessie", "ingram", "reed", "jo", "amy", "jos", "laurence", "brooke", "bhaer", "hannah", "ahab", "stubb", "queequeg", "starbuck", "ahabs", "margaret", "thornton", "hale", "dixon", "margarets", "edith", "higgins", "lennox", "catherine", "tilney", "morland", "thorpe", "isabella", "allen", "eleanor", "catherines", "tilneys", "thorpes", "wendy", "peter", "nana", "michael", "smee", "tootles", "nibs", "tink", "wendys", "starkey", "wilkins", "fisher", "arbuthnot", "caroline", "briggs", "lotty", "salvatore", "mellersh", "frederick", "scrap", "pickwick", "weller", "winkle", "sam", "wardle", "tupman", "pickwicks", "perker", "snodgrass", "pott", "weena", "psychologist", "filby", "toad", "mole", "badger", "rat", "ratty", "toads", "huck", "becky", "sid", "injun", "thatcher", "toms", "harper", "jim", "livesey", "hawkins", "trelawney", "conseil", "nemo", "ned", "aronnax", "eva", "clare", "legree", "ophelia", "haley", "cassy", "shelby", "topsy", "morgan", "diana", "helen", "mason", "saknussemm", "hardwigg", "emersons", "alans", "minnie", "lucys", "bertolini", "cecils", "jerry", "tellsons", "jacques", "marquis", "antoine", "havishams", "drummle", "handel", "orlick", "compeyson", "joes", "gargery", "milton", "helstone", "bessy", "thorntons", "hales", "shaw", "boucher", "northanger", "fullerton", "morlands", "allens", "henry", "woodston", "isabellas", "francesca", "meryton", "pemberley", "bingleys", "domenico", "wilkinss", "kate", "costanza", "gatsbys", "daisys", "buchanan", "michaelis", "mckee", "bardell", "sammy", "dodson", "bob", "arabella", "masr", "chloe", "marie", "eliza", "andy", "emmeline", "polly", "hucks", "alices", "jamiesons", "sallie", "marmee", "fred", "hook", "sewards", "morris", "arthur", "renfield", "victor", "rochesters", "georgiana", "gretchen", "alan", "cissie", "sydney", "fanny", "kitty", "lizzy", "james", "henrys", "myrtle", "baker", "cody", "trotter", "jingle", "augustine", "phineas", "estellas", "jaggerss", "wemmicks", "darcys", "lottys", "arbuthnots", "bartletts", "beebes", "leonards", "dixons", "lucas", "droitwiches", "bildad", "beckys", "redruth", "jem", "dinah", "westenra", "eshton", "sophie", "harry", "lorrys", "pumblechooks", "trabbs", "eleanors", "lydias", "bennets", "bourgh", "carraway", "sloane", "beppo", "lumley", "dowler", "peters", "peleg", "arley", "george", "defarges", "generals", "fitzwilliam", "hurst", "wickhams", "briggss", "gatz", "adolph", "poole", "morton", "abbot", "smollett", "gunn", "capn", "holbrook", "signor", "fitzadam", "mulliner", "brunoni", "barkers", "moffat", "dr", "andy", "barker", "jenkynss", "forresters"
 )
 
@@ -460,36 +463,4 @@ These thematic fingerprints enable:
 - **Genre Classification**: Clear linguistic markers distinguish literary traditions
 - **Content Analysis**: Specialized vocabularies reveal thematic preoccupations
 - **Cultural Analysis**: Word choices reflect historical and social contexts
-
-## Conclusion
-
-TF-IDF provides a powerful lens for understanding what makes texts distinctive within a corpus. Unlike simple frequency analysis, it reveals the words that truly characterize individual works, authors, genres, or time periods.
-
-Our analysis demonstrates how TF-IDF successfully creates "thematic fingerprints" for literature:
-
-- **Science Fiction** emerges as the most linguistically distinctive genre (avg TF-IDF: 0.0089), with specialized technical vocabulary
-- **Adventure** and **Fantasy** genres show strong thematic coherence through setting-specific and imaginative terminology  
-- **Social Fiction** spans multiple time periods, from Austen's `longbourn` to Fitzgerald's `garage`
-- **Gothic** literature maintains consistent atmospheric vocabulary across different authors and periods
-
-These linguistic signatures reveal how genres develop their own vocabularies and how individual works contribute to broader literary traditions. Our careful curation of the corpus demonstrates how analytical decisions shape results while maintaining scholarly integrity.
-
-::: {.callout-important title="Methodological Considerations"}
-**Corpus Curation Matters**: TF-IDF analysis is shaped by both technical parameters and curatorial choices. The resulting thematic fingerprints reflect not just linguistic patterns but also our analytical goals and values as researchers.
-:::
-
-These insights form the foundation for more sophisticated analyses like document similarity measures and topic modeling, which we'll explore in the upcoming chapters.
-
-::: {.callout-tip title="Practice Exercises"}
-Try these exercises to deepen your understanding:
-
-1. **Expand the Corpus**: Add more books and see how TF-IDF results change
-2. **Experiment with Preprocessing**: Try including or excluding proper nouns, numbers, or different word types
-3. **Author Comparison**: Calculate TF-IDF for authors with multiple works in your corpus
-4. **Custom Stop Words**: Create domain-specific stop word lists to filter out less meaningful high-frequency terms
-
-Remember: TF-IDF is most informative when you have a diverse corpus with clear differences between documents.
-:::
-
-In the next chapter, we'll use these TF-IDF insights to explore **text similarity measures**, learning how to quantify how similar or different texts are from one another using techniques like cosine similarity and Euclidean distance.
 
