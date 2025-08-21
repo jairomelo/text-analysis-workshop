@@ -202,6 +202,8 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
    
   <ul>
   <li><a href="#lexical-density-as-quality-indicator" id="toc-lexical-density-as-quality-indicator" class="nav-link active" data-scroll-target="#lexical-density-as-quality-indicator">Lexical Density as Quality Indicator</a></li>
+  <li><a href="#coefficient-of-variation" id="toc-coefficient-of-variation" class="nav-link" data-scroll-target="#coefficient-of-variation">Coefficient of Variation</a></li>
+  <li><a href="#zipfian-distribution" id="toc-zipfian-distribution" class="nav-link" data-scroll-target="#zipfian-distribution">Zipfian Distribution</a></li>
   </ul>
 </nav>
     </div>
@@ -268,21 +270,24 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 <p>After loading our text data, we can now proceed to analyze its lexical density.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Calculate lexical density</span></span>
-<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>kafka_lexical_density <span class="ot">&lt;-</span> kafka_texts <span class="sc">%&gt;%</span></span>
+<div class="sourceCode cell-code" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Tokenize and count words </span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>kafka_word_counts <span class="ot">&lt;-</span> kafka_texts <span class="sc">%&gt;%</span></span>
 <span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>    <span class="fu">unnest_tokens</span>(word, text) <span class="sc">%&gt;%</span></span>
 <span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>    <span class="fu">anti_join</span>(stop_words) <span class="sc">%&gt;%</span> <span class="co"># Remove stop words to match with previous analysis</span></span>
-<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>    <span class="fu">count</span>(version, word) <span class="sc">%&gt;%</span></span>
-<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>    <span class="fu">group_by</span>(version) <span class="sc">%&gt;%</span></span>
-<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>    <span class="fu">summarise</span>(</span>
-<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>        <span class="at">total_words =</span> <span class="fu">sum</span>(n),</span>
-<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a>        <span class="at">unique_words =</span> <span class="fu">n_distinct</span>(word),</span>
-<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a>        <span class="at">lexical_density =</span> (<span class="fu">n_distinct</span>(word) <span class="sc">/</span> <span class="fu">sum</span>(n)) <span class="sc">*</span> <span class="dv">100</span>) <span class="sc">%&gt;%</span></span>
-<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a>    <span class="fu">arrange</span>(lexical_density)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>    <span class="fu">count</span>(version, word)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stderr">
 <pre><code>Joining with `by = join_by(word)`</code></pre>
 </div>
-<div class="sourceCode cell-code" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>kafka_lexical_density</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Calculate lexical density</span></span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>kafka_lexical_density <span class="ot">&lt;-</span> kafka_word_counts <span class="sc">%&gt;%</span></span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>    <span class="fu">group_by</span>(version) <span class="sc">%&gt;%</span></span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>    <span class="fu">summarise</span>(</span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>        <span class="at">total_words =</span> <span class="fu">sum</span>(n),</span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a>        <span class="at">unique_words =</span> <span class="fu">n_distinct</span>(word),</span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a>        <span class="at">lexical_density =</span> (<span class="fu">n_distinct</span>(word) <span class="sc">/</span> <span class="fu">sum</span>(n)) <span class="sc">*</span> <span class="dv">100</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a>    <span class="fu">arrange</span>(lexical_density)</span>
+<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a>kafka_lexical_density</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code># A tibble: 3 × 4
   version total_words unique_words lexical_density
@@ -293,6 +298,136 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 <p>Our sample is small enough to be understandable without requiring any visualization. Even using the same text, it’s possible to see how the lexical density varies across different versions. In some way, we can adventure the hypothesis that noise in text data is equivalent to a high lexical density. In our case, the clean text has a lexical density of 73.9% while the dirty text has a lexical density of 93.8%.</p>
+<p>So, let set the lexical variation as the level of noise in the text. Additionaly, we can perform other analyses to further investigate the quality of our texts, such as finding the coefficient of variation, the Shannon entropy, and visualize the Zipf distribution.</p>
+</section>
+<section id="coefficient-of-variation" class="level2">
+<h2 class="anchored" data-anchor-id="coefficient-of-variation">Coefficient of Variation</h2>
+<p>The coefficient of variation (CV) measures how much variability exists relative to the average value. It is calculated as the ratio of the standard deviation to the mean, and is often expressed as a percentage. A higher CV indicates greater variability in relation to the mean.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb8"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Calculate coefficient of variation and combine with lexical density metrics</span></span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>kafka_cv <span class="ot">&lt;-</span> kafka_word_counts <span class="sc">%&gt;%</span></span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>    <span class="fu">group_by</span>(version) <span class="sc">%&gt;%</span></span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>    <span class="fu">summarise</span>(</span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a>        <span class="at">mean_freq =</span> <span class="fu">mean</span>(n),</span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a>        <span class="at">sd_freq =</span> <span class="fu">sd</span>(n),</span>
+<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a>        <span class="at">cv =</span> (sd_freq <span class="sc">/</span> mean_freq) <span class="sc">*</span> <span class="dv">100</span>,</span>
+<span id="cb8-8"><a href="#cb8-8" aria-hidden="true" tabindex="-1"></a>        <span class="at">.groups =</span> <span class="st">'drop'</span></span>
+<span id="cb8-9"><a href="#cb8-9" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb8-10"><a href="#cb8-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-11"><a href="#cb8-11" aria-hidden="true" tabindex="-1"></a><span class="co"># Combine with lexical density data to have the full picture</span></span>
+<span id="cb8-12"><a href="#cb8-12" aria-hidden="true" tabindex="-1"></a>kafka_metrics <span class="ot">&lt;-</span> kafka_lexical_density <span class="sc">%&gt;%</span></span>
+<span id="cb8-13"><a href="#cb8-13" aria-hidden="true" tabindex="-1"></a>    <span class="fu">left_join</span>(kafka_cv, <span class="at">by =</span> <span class="st">"version"</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb8-14"><a href="#cb8-14" aria-hidden="true" tabindex="-1"></a>    <span class="fu">arrange</span>(lexical_density)</span>
+<span id="cb8-15"><a href="#cb8-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-16"><a href="#cb8-16" aria-hidden="true" tabindex="-1"></a>kafka_metrics</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 3 × 7
+  version total_words unique_words lexical_density mean_freq sd_freq    cv
+  &lt;chr&gt;         &lt;int&gt;        &lt;int&gt;           &lt;dbl&gt;     &lt;dbl&gt;   &lt;dbl&gt; &lt;dbl&gt;
+1 clean           165          122            73.9      1.35   1.81  134. 
+2 messy           189          154            81.5      1.23   1.52  124. 
+3 dirty           336          315            93.8      1.07   0.421  39.4</code></pre>
+</div>
+</div>
+<p>These results are already revealing an interesting pattern. As the text quality deteriorates, lexical density increases dramatically and the coefficient of variation decreases. In clean text, you have natural language patterns where some words appear much more frequently than others (high CV = 134%). In dirty text, most words appear only once due to OCR creating unique “words” from errors (low CV = 39.4%). In consequence, a lower CV suggests worse quality. We can visualize this trend by calculating the Zipfian distribution for each version.</p>
+</section>
+<section id="zipfian-distribution" class="level2">
+<h2 class="anchored" data-anchor-id="zipfian-distribution">Zipfian Distribution</h2>
+<p>Zipf’s law describes the frequency of terms in a language, where a few terms are very common while many others are rare. According to this law, the frequency of a word is inversely proportional to its rank in the frequency table. We can visualize the distribution of term frequencies to see if our texts follow this pattern. A Zipfian distribution indicates that a small number of terms dominate usage, while many others are used infrequently—a hallmark of natural language.</p>
+<p>Zipfian analysis typically combines two different measurements: theoretical predictions based on Zipf’s law and empirical observations from our actual data. Comparing these can give us a quantitative sense of how close to natural language patterns each text version is.</p>
+<p>Let’s first calculate and visualize these distributions:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb10"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Calculate empirical and theoretical Zipf distributions</span></span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>kafka_zipf <span class="ot">&lt;-</span> kafka_word_counts <span class="sc">%&gt;%</span></span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(version) <span class="sc">%&gt;%</span></span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">arrange</span>(<span class="fu">desc</span>(n)) <span class="sc">%&gt;%</span></span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a>    <span class="at">empirical_rank =</span> <span class="fu">row_number</span>(),</span>
+<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a>    <span class="at">total_words_version =</span> <span class="fu">sum</span>(n),</span>
+<span id="cb10-8"><a href="#cb10-8" aria-hidden="true" tabindex="-1"></a>    <span class="at">empirical_prob =</span> n <span class="sc">/</span> total_words_version</span>
+<span id="cb10-9"><a href="#cb10-9" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
+<span id="cb10-10"><a href="#cb10-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb10-11"><a href="#cb10-11" aria-hidden="true" tabindex="-1"></a>    <span class="at">raw_zipf =</span> <span class="dv">1</span> <span class="sc">/</span> empirical_rank,</span>
+<span id="cb10-12"><a href="#cb10-12" aria-hidden="true" tabindex="-1"></a>    <span class="at">zipf_sum =</span> <span class="fu">sum</span>(raw_zipf),</span>
+<span id="cb10-13"><a href="#cb10-13" aria-hidden="true" tabindex="-1"></a>    <span class="at">theoretical_prob =</span> raw_zipf <span class="sc">/</span> zipf_sum</span>
+<span id="cb10-14"><a href="#cb10-14" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
+<span id="cb10-15"><a href="#cb10-15" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ungroup</span>()</span>
+<span id="cb10-16"><a href="#cb10-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-17"><a href="#cb10-17" aria-hidden="true" tabindex="-1"></a>kafka_zipf</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 591 × 9
+   version word           n empirical_rank total_words_version empirical_prob
+   &lt;chr&gt;   &lt;chr&gt;      &lt;int&gt;          &lt;int&gt;               &lt;int&gt;          &lt;dbl&gt;
+ 1 clean   gatekeeper    19              1                 165        0.115  
+ 2 messy   doorkeeper    19              1                 189        0.101  
+ 3 clean   law            8              2                 165        0.0485 
+ 4 dirty   doorkeeper     7              1                 336        0.0208 
+ 5 messy   law            6              2                 189        0.0317 
+ 6 clean   entry          5              3                 165        0.0303 
+ 7 clean   inside         4              4                 165        0.0242 
+ 8 clean   gate           3              5                 165        0.0182 
+ 9 dirty   hed            3              2                 336        0.00893
+10 dirty   law            3              3                 336        0.00893
+# ℹ 581 more rows
+# ℹ 3 more variables: raw_zipf &lt;dbl&gt;, zipf_sum &lt;dbl&gt;, theoretical_prob &lt;dbl&gt;</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb12"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Create the Zipf visualization</span></span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>kafka_zipf <span class="sc">%&gt;%</span></span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="at">x =</span> empirical_rank)) <span class="sc">+</span></span>
+<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_line</span>(<span class="fu">aes</span>(<span class="at">y =</span> empirical_prob, <span class="at">color =</span> <span class="st">"Empirical"</span>), <span class="at">linewidth =</span> <span class="dv">1</span>) <span class="sc">+</span></span>
+<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_line</span>(<span class="fu">aes</span>(<span class="at">y =</span> theoretical_prob, <span class="at">color =</span> <span class="st">"Theoretical Zipf"</span>), <span class="at">linetype =</span> <span class="st">"dashed"</span>, <span class="at">linewidth =</span> <span class="dv">1</span>) <span class="sc">+</span></span>
+<span id="cb12-6"><a href="#cb12-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_x_log10</span>() <span class="sc">+</span></span>
+<span id="cb12-7"><a href="#cb12-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_y_log10</span>() <span class="sc">+</span></span>
+<span id="cb12-8"><a href="#cb12-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_color_manual</span>(<span class="at">values =</span> <span class="fu">c</span>(<span class="st">"Empirical"</span> <span class="ot">=</span> <span class="st">"steelblue"</span>, <span class="st">"Theoretical Zipf"</span> <span class="ot">=</span> <span class="st">"red"</span>)) <span class="sc">+</span></span>
+<span id="cb12-9"><a href="#cb12-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">facet_wrap</span>(<span class="sc">~</span>version, <span class="at">scales =</span> <span class="st">"free"</span>, <span class="at">labeller =</span> <span class="fu">labeller</span>(<span class="at">version =</span> str_to_title)) <span class="sc">+</span></span>
+<span id="cb12-10"><a href="#cb12-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(</span>
+<span id="cb12-11"><a href="#cb12-11" aria-hidden="true" tabindex="-1"></a>    <span class="at">title =</span> <span class="st">"Empirical Rank-Frequency vs Theoretical Zipf"</span>,</span>
+<span id="cb12-12"><a href="#cb12-12" aria-hidden="true" tabindex="-1"></a>    <span class="at">subtitle =</span> <span class="st">"Comparing observed word frequencies with theoretical Zipf distribution"</span>,</span>
+<span id="cb12-13"><a href="#cb12-13" aria-hidden="true" tabindex="-1"></a>    <span class="at">x =</span> <span class="st">"Rank (descending frequency)"</span>,</span>
+<span id="cb12-14"><a href="#cb12-14" aria-hidden="true" tabindex="-1"></a>    <span class="at">y =</span> <span class="st">"Probability (normalized frequency)"</span>,</span>
+<span id="cb12-15"><a href="#cb12-15" aria-hidden="true" tabindex="-1"></a>    <span class="at">color =</span> <span class="st">"Distribution Type"</span></span>
+<span id="cb12-16"><a href="#cb12-16" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">+</span></span>
+<span id="cb12-17"><a href="#cb12-17" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_minimal</span>() <span class="sc">+</span></span>
+<span id="cb12-18"><a href="#cb12-18" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme</span>(</span>
+<span id="cb12-19"><a href="#cb12-19" aria-hidden="true" tabindex="-1"></a>    <span class="at">legend.position =</span> <span class="st">"bottom"</span>,</span>
+<span id="cb12-20"><a href="#cb12-20" aria-hidden="true" tabindex="-1"></a>    <span class="at">panel.grid.minor =</span> <span class="fu">element_line</span>(<span class="at">linetype =</span> <span class="st">"dotted"</span>, <span class="at">color =</span> <span class="st">"grey80"</span>),</span>
+<span id="cb12-21"><a href="#cb12-21" aria-hidden="true" tabindex="-1"></a>    <span class="at">strip.text =</span> <span class="fu">element_text</span>(<span class="at">size =</span> <span class="dv">12</span>, <span class="at">face =</span> <span class="st">"bold"</span>)</span>
+<span id="cb12-22"><a href="#cb12-22" aria-hidden="true" tabindex="-1"></a>  )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="04-textQuality_files/figure-html/unnamed-chunk-5-1.png" class="img-fluid figure-img" width="960"></p>
+</figure>
+</div>
+</div>
+</div>
+<p>We can observe how the clean text closely follows the expected Zipfian curve for the most frequent words, with the characteristic steep decline that defines natural language patterns. The messy text shows moderate deviation from the theoretical curve, particularly in the middle ranks, while still maintaining some adherence to Zipfian structure. The dirty text exhibits the most dramatic departure from the expected pattern—the empirical distribution becomes notably flatter with extended horizontal segments, indicating that OCR errors have created many unique ‘words’ that appear with identical low frequencies. This flattening disrupts the natural frequency hierarchy where a few words should dominate usage while most others remain rare, creating instead an artificial abundance of singleton terms that break the fundamental linguistic structure captured by Zipf’s law.</p>
+<p>While these patterns are visually apparent, we can obtain a more precise quantitative measure of “naturalness” by calculating the average Zipf deviation for each text version:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb13"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Calculate Zipf deviation metrics</span></span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>kafka_zipf_deviation <span class="ot">&lt;-</span> kafka_zipf <span class="sc">%&gt;%</span></span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(version) <span class="sc">%&gt;%</span></span>
+<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarise</span>(</span>
+<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Calculate average deviation between empirical and theoretical probabilities</span></span>
+<span id="cb13-6"><a href="#cb13-6" aria-hidden="true" tabindex="-1"></a>    <span class="at">avg_zipf_deviation =</span> <span class="fu">mean</span>(<span class="fu">abs</span>(empirical_prob <span class="sc">-</span> theoretical_prob) <span class="sc">/</span> theoretical_prob) <span class="sc">*</span> <span class="dv">100</span>,</span>
+<span id="cb13-7"><a href="#cb13-7" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Spearman correlation between rank and frequency</span></span>
+<span id="cb13-8"><a href="#cb13-8" aria-hidden="true" tabindex="-1"></a>    <span class="at">spearman_correlation =</span> <span class="fu">cor</span>(empirical_rank, empirical_prob, <span class="at">method =</span> <span class="st">"spearman"</span>),</span>
+<span id="cb13-9"><a href="#cb13-9" aria-hidden="true" tabindex="-1"></a>    <span class="at">.groups =</span> <span class="st">'drop'</span></span>
+<span id="cb13-10"><a href="#cb13-10" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
+<span id="cb13-11"><a href="#cb13-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">arrange</span>(avg_zipf_deviation)</span>
+<span id="cb13-12"><a href="#cb13-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-13"><a href="#cb13-13" aria-hidden="true" tabindex="-1"></a>kafka_zipf_deviation</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 3 × 3
+  version avg_zipf_deviation spearman_correlation
+  &lt;chr&gt;                &lt;dbl&gt;                &lt;dbl&gt;
+1 clean                 121.               -0.553
+2 messy                 149.               -0.498
+3 dirty                 214.               -0.345</code></pre>
+</div>
+</div>
+<p>These numerical results confirm our visual observations and provide precise quality indicators. What we observe is that high-quality text exhibits lower average Zipf deviation and stronger negative Spearman correlation. The dirty text shows dramatically high average Zipf deviation and weak Spearman correlation, indicating significant departure from expected Zipfian distribution. We can observe a clear progression of degradation from clean to dirty text: <code>121% → 149% → 214%</code> for Zipf deviation, and <code>-0.553 → -0.498 → -0.345</code> for Spearman correlation.</p>
+<p>In practical terms, these calculations allow us to quantify the “naturalness” of each text version. For text cleaning workflows, progressively reducing Zipf deviation while increasing the coefficient of variation would help calibrate the fine-tuning of text normalization processes, providing objective metrics for preprocessing decisions.</p>
 
 
 </section>
