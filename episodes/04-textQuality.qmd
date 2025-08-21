@@ -50,11 +50,14 @@ kafka_texts
 After loading our text data, we can now proceed to analyze its lexical density.
 
 ```{r}
-# Calculate lexical density
-kafka_lexical_density <- kafka_texts %>%
+# Tokenize and count words 
+kafka_word_counts <- kafka_texts %>%
     unnest_tokens(word, text) %>%
     anti_join(stop_words) %>% # Remove stop words to match with previous analysis
-    count(version, word) %>%
+    count(version, word)
+
+# Calculate lexical density
+kafka_lexical_density <- kafka_word_counts %>%
     group_by(version) %>%
     summarise(
         total_words = sum(n),
@@ -67,3 +70,106 @@ kafka_lexical_density
 
 Our sample is small enough to be understandable without requiring any visualization. Even using the same text, it's possible to see how the lexical density varies across different versions. In some way, we can adventure the hypothesis that noise in text data is equivalent to a high lexical density. In our case, the clean text has a lexical density of 73.9% while the dirty text has a lexical density of 93.8%. 
 
+So, let set the lexical variation as the level of noise in the text. Additionaly, we can perform other analyses to further investigate the quality of our texts, such as finding the coefficient of variation, the Shannon entropy, and visualize the Zipf distribution.
+
+## Coefficient of Variation
+
+The coefficient of variation (CV) measures how much variability exists relative to the average value. It is calculated as the ratio of the standard deviation to the mean, and is often expressed as a percentage. A higher CV indicates greater variability in relation to the mean.
+
+```{r}
+# Calculate coefficient of variation and combine with lexical density metrics
+kafka_cv <- kafka_word_counts %>%
+    group_by(version) %>%
+    summarise(
+        mean_freq = mean(n),
+        sd_freq = sd(n),
+        cv = (sd_freq / mean_freq) * 100,
+        .groups = 'drop'
+    )
+
+# Combine with lexical density data to have the full picture
+kafka_metrics <- kafka_lexical_density %>%
+    left_join(kafka_cv, by = "version") %>%
+    arrange(lexical_density)
+
+kafka_metrics
+```
+
+These results are already revealing an interesting pattern. As the text quality deteriorates, lexical density increases dramatically and the coefficient of variation decreases. In clean text, you have natural language patterns where some words appear much more frequently than others (high CV = 134%). In dirty text, most words appear only once due to OCR creating unique "words" from errors (low CV = 39.4%). In consequence, a lower CV suggests worse quality. We can visualize this trend by calculating the Zipfian distribution for each version.
+
+## Zipfian Distribution
+
+Zipf's law describes the frequency of terms in a language, where a few terms are very common while many others are rare. According to this law, the frequency of a word is inversely proportional to its rank in the frequency table. We can visualize the distribution of term frequencies to see if our texts follow this pattern. A Zipfian distribution indicates that a small number of terms dominate usage, while many others are used infrequently—a hallmark of natural language.
+
+Zipfian analysis typically combines two different measurements: theoretical predictions based on Zipf's law and empirical observations from our actual data. Comparing these can give us a quantitative sense of how close to natural language patterns each text version is.
+
+Let's first calculate and visualize these distributions:
+
+```{r}
+#| fig-height: 6
+#| 
+# Calculate empirical and theoretical Zipf distributions
+kafka_zipf <- kafka_word_counts %>%
+  group_by(version) %>%
+  arrange(desc(n)) %>%
+  mutate(
+    empirical_rank = row_number(),
+    total_words_version = sum(n),
+    empirical_prob = n / total_words_version
+  ) %>%
+  mutate(
+    raw_zipf = 1 / empirical_rank,
+    zipf_sum = sum(raw_zipf),
+    theoretical_prob = raw_zipf / zipf_sum
+  ) %>%
+  ungroup()
+
+kafka_zipf
+
+# Create the Zipf visualization
+kafka_zipf %>%
+  ggplot(aes(x = empirical_rank)) +
+  geom_line(aes(y = empirical_prob, color = "Empirical"), linewidth = 1) +
+  geom_line(aes(y = theoretical_prob, color = "Theoretical Zipf"), linetype = "dashed", linewidth = 1) +
+  scale_x_log10() +
+  scale_y_log10() +
+  scale_color_manual(values = c("Empirical" = "steelblue", "Theoretical Zipf" = "red")) +
+  facet_wrap(~version, scales = "free", labeller = labeller(version = str_to_title)) +
+  labs(
+    title = "Empirical Rank-Frequency vs Theoretical Zipf",
+    subtitle = "Comparing observed word frequencies with theoretical Zipf distribution",
+    x = "Rank (descending frequency)",
+    y = "Probability (normalized frequency)",
+    color = "Distribution Type"
+  ) +
+  theme_minimal() +
+  theme(
+    legend.position = "bottom",
+    panel.grid.minor = element_line(linetype = "dotted", color = "grey80"),
+    strip.text = element_text(size = 12, face = "bold")
+  )
+```
+
+We can observe how the clean text closely follows the expected Zipfian curve for the most frequent words, with the characteristic steep decline that defines natural language patterns. The messy text shows moderate deviation from the theoretical curve, particularly in the middle ranks, while still maintaining some adherence to Zipfian structure. The dirty text exhibits the most dramatic departure from the expected pattern—the empirical distribution becomes notably flatter with extended horizontal segments, indicating that OCR errors have created many unique 'words' that appear with identical low frequencies. This flattening disrupts the natural frequency hierarchy where a few words should dominate usage while most others remain rare, creating instead an artificial abundance of singleton terms that break the fundamental linguistic structure captured by Zipf's law.
+
+While these patterns are visually apparent, we can obtain a more precise quantitative measure of "naturalness" by calculating the average Zipf deviation for each text version:
+
+```{r}
+# Calculate Zipf deviation metrics
+kafka_zipf_deviation <- kafka_zipf %>%
+  group_by(version) %>%
+  summarise(
+    # Calculate average deviation between empirical and theoretical probabilities
+    avg_zipf_deviation = mean(abs(empirical_prob - theoretical_prob) / theoretical_prob) * 100,
+    # Spearman correlation between rank and frequency
+    spearman_correlation = cor(empirical_rank, empirical_prob, method = "spearman"),
+    .groups = 'drop'
+  ) %>%
+  arrange(avg_zipf_deviation)
+
+kafka_zipf_deviation
+```
+
+These numerical results confirm our visual observations and provide precise quality indicators. What we observe is that high-quality text exhibits lower average Zipf deviation and stronger negative Spearman correlation. The dirty text shows dramatically high average Zipf deviation and weak Spearman correlation, indicating significant departure from expected Zipfian distribution. We can observe a clear progression of degradation from clean to dirty text: `121% → 149% → 214%` for Zipf deviation, and `-0.553 → -0.498 → -0.345` for Spearman correlation.
+
+In practical terms, these calculations allow us to quantify the "naturalness" of each text version. For text cleaning workflows, progressively reducing Zipf deviation while increasing the coefficient of variation would help calibrate the fine-tuning of text normalization processes, providing objective metrics for preprocessing decisions.
